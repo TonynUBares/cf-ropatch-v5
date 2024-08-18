@@ -1,0 +1,303 @@
+/*
+CREDITS:
+Kronos - Original Doom 2.5 sprites
+Pisstepank - reload frames
+Alt-fire sound - Battlefield 2142 (EA\Dice)
+Projectile bounce sound - Epic games
+ID Software - original weapon graphic model, every other sound, projectile graphics
+Eriance - Graphics that I used to create the pickup
+Ammo pickups - Zrrion the Insect
+
+I recolored it, made the thingy on the left, the exhaust port
+of some kind to have animation like the original gun from ID.
+Also, made the pickup. Just sayin'!
+*/
+
+actor PetrovecClip : Ammo
+{
+	Inventory.Amount 1
+	Inventory.MaxAmount 20
+	Ammo.BackpackAmount 0
+	Ammo.BackpackMaxAmount 20
+	Inventory.Icon "TNT1A0" //TKGGX0
+	+INVENTORY.IGNORESKILL
+}
+
+actor PetrovecTrigger : Inventory { Inventory.MaxAmount 1 }
+actor TwasEmpty : Inventory { Inventory.MaxAmount 1 }
+
+
+actor PetrovecGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You've got the ''Petrovec'' serbian XT-500 vearetelium rifle! This gun is imbued with the wisdom of a falcon! (7)"
+	Obituary "%o was blasted by %k's ''Petrovec'' vearetelium rifle! %k removed %h like a kebab."
+	States
+	{
+	Spawn:
+		TKGG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Petrovec",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Petrovec",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("VearAmmo",30)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+actor Petrovec : DoomWeapon 24538
+{
+	//$Category Weapons
+	//$Title Petrovec
+	//$Sprite TKGGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You've got the ''Petrovec'' serbian XT-500 vearetelium rifle! This gun is imbued with the wisdom of a falcon! (7)"
+	Obituary "%o was blasted by %k's ''Petrovec'' vearetelium rifle! %k removed %h like a kebab."
+	Weapon.UpSound "Petrovec/Up"
+	Weapon.SelectionOrder 2
+	Weapon.AmmoType "PetrovecClip"
+	Weapon.AmmoGive 0
+	Weapon.AmmoUse 1
+	Weapon.AmmoType2 "VearAmmo"
+	Weapon.AmmoGive2 30
+	Weapon.AmmoUse2 0
+	Weapon.Kickback 65
+	Weapon.SlotNumber 7
+	Weapon.SlotPriority 28.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.4
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	Scale 0.85
+	+AMMO_OPTIONAL
+	+ALT_AMMO_OPTIONAL
+	+NOAUTOFIRE
+	+NOALERT
+	States
+	{
+	Spawn:
+		TKGG X -1
+		Stop
+		
+	Ready:
+		TKGG Y 0 A_JumpIf(CountInv("PetrovecClip") || CountInv("VearAmmo"),1)
+		Goto EmptyReady
+		TKGU A 0 A_PlaySound("Petrovec/Start",5,1.0,1)
+		TKGG Z 2 A_WeaponReady(WRF_NOBOB)
+		TKGU ABC 2 A_WeaponReady(WRF_NOBOB)
+		TKGG A 0 A_PlaySound("Petrovec/Loop",5,1.0,1)
+		TKGG ABC 2 A_WeaponReady(WRF_NOBOB)
+	ReadyMain:
+		TKGG Y 0 A_JumpIf(CountInv("TwasEmpty"),"IsNewAmmoCheck")
+		TKGG Y 0 A_JumpIf(CountInv("VearAmmo"),1)
+		Goto EmptyReady
+		TKGG ABC 3 A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+	EmptyReady:
+		TKGG Y 0 A_GiveInventory("TwasEmpty",1)
+		TKGG Y 3 A_WeaponReady(WRF_ALLOWRELOAD)
+		Goto ReadyMain 
+	IsNewAmmoCheck:
+		TKGG A 0 A_JumpIf(CountInv("VearAmmo"),"Wheee")
+		TKGG A 0 A_TakeInventory("TwasEmpty",1)
+		Goto ReadyMain
+	Wheee:
+		TKGG A 0 A_TakeInventory("TwasEmpty",1)
+		Goto Ready
+		
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		TKGU C 0 {
+			A_ZoomFactor(1.0);
+			Return A_JumpIf(CountInv("VearAmmo"),1);
+		}
+		Goto DeselectNoAmmo
+		TKGU C 0 A_PlaySound("Petrovec/End",5)
+		TKGU CBA 1 A_Lower(12)
+		Goto DeselectNoAmmo+1
+	DeselectNoAmmo:
+		TKGG Y 0 A_StopSound(5)
+		TKGG Y 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+		TKGG Y 0 A_JumpIf(CountInv("VearAmmo"),1)
+		Goto Hnnng
+		TKGG A 0 {
+			A_TakeInventory("TwasEmpty",1);
+			A_PlaySound("Petrovec/Start",5,1.0,1);
+		}
+	Hnnng:
+		TKGG Y 1 A_Raise(12)
+		Loop
+	Fire:
+		TKGG A 0 A_JumpIf(CountInv("VearAmmo"),1)
+		Goto Nope
+		TKGF A 1 Bright {
+			A_WeaponOffset(3,3+32,WOF_INTERPOLATE);
+			A_TakeInventory("VearAmmo",1,TIF_NOTAKEINFINITE);
+			A_AlertMonsters;
+			A_Recoil(3.0);
+			A_GiveInventory("PetrovecTrigger",1);
+			A_PlaySound("Petrovec/Fire",1);
+			A_PlaySound("Petrovec/AddFire",6);
+			A_PlaySound("Petrovec/Ambient",5);
+			A_FireCustomMissile("PetrovecBolt",frandom(0.5,-0.5),0,5,0,0,frandom(0.5,-0.5));
+			A_SetPitch(Pitch-2.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(Angle-2.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+		}
+		TKGF B 1 Bright {
+			A_WeaponOffset(7,7+32,WOF_INTERPOLATE);
+			A_SetPitch(Pitch-1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(Angle-1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); }
+		}
+		TKGF C 1 A_WeaponOffset(8,8+32,WOF_INTERPOLATE)
+		TKGF D 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.965); } A_WeaponOffset(6,6+32,WOF_INTERPOLATE); }
+		TKGF E 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } A_WeaponOffset(3,3+32,WOF_INTERPOLATE); }
+		TKGG Z 0 A_ReFire
+		TKGF F 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); } A_TakeInventory("PetrovecTrigger",1); A_WeaponOffset(2,2+32,WOF_INTERPOLATE); A_WeaponReady(WRF_NOBOB|WRF_NOSWITCH); }
+		TKGG Z 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } A_WeaponReady(WRF_NOBOB|WRF_NOSWITCH); A_WeaponOffset(1,1+32,WOF_INTERPOLATE); }
+		TKGG Z 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } A_WeaponReady(WRF_NOBOB|WRF_NOSWITCH); A_WeaponOffset(0,32,WOF_INTERPOLATE); }
+		TKGG Z 2 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } A_WeaponReady(WRF_NOBOB|WRF_NOSWITCH); }
+		Goto Ready
+		
+	AltFire:
+		TKGF A 0 A_JumpIf(CountInv("PetrovecClip"),1)
+		Goto Nope
+		TKGF A 1 Bright {
+			A_WeaponOffset(3,3+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+			A_TakeInventory("PetrovecClip",1,TIF_NOTAKEINFINITE);
+			A_AlertMonsters;
+			A_Recoil(3.0);
+			A_SetBlend("Yellow",0.2,15);
+			A_GiveInventory("PetrovecTrigger",1);
+			A_PlaySound("Petrovec/AltFire",1);
+			A_PlaySound("Petrovec/Ambient",6);
+			A_PlaySound("Petrovec/AltFire",5);
+			A_FireCustomMissile("PetrovecBolt2",frandom(0.5,-0.5),1,5,0,0,frandom(0.5,-0.5));
+			A_SetPitch(Pitch-3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(Angle-3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TKGF B 1 Bright {
+			A_WeaponOffset(7,7+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); }
+			A_SetPitch(Pitch-1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(Angle-1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TKGF C 1 A_WeaponOffset(8,8+32,WOF_INTERPOLATE)
+		TKGF D 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.965); } A_WeaponOffset(6,6+32,WOF_INTERPOLATE); }
+		TKGF E 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } A_WeaponOffset(3,3+32,WOF_INTERPOLATE); }
+		TKGF F 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); } A_WeaponOffset(2,2+32,WOF_INTERPOLATE); }
+		TKGG Z 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } A_WeaponOffset(1,1+32,WOF_INTERPOLATE); }
+		TKGG Z 0 A_ReFire
+		TKGG Z 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } A_TakeInventory("PetrovecTrigger",1); A_WeaponReady(WRF_NOBOB|WRF_NOSWITCH); A_WeaponOffset(0,32,WOF_INTERPOLATE); }
+		TKGG Z 2 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } A_WeaponReady(WRF_NOBOB|WRF_NOSWITCH); }
+		Goto Ready
+	Nope:
+		TKGN A 0 A_JumpIfInventory("PetrovecTrigger",1,"NopeAfterFire")
+		TKGN A 0 A_PlaySound("Petrovec/Nope")
+		TKGG Y 1 A_WeaponOffset(1,1+32,WOF_INTERPOLATE)
+		TKGG Y 1 A_WeaponOffset(3,3+32,WOF_INTERPOLATE)
+		TKGG Y 1 A_WeaponOffset(4,4+32,WOF_INTERPOLATE)
+		TKGG Y 1 A_WeaponOffset(2,2+32,WOF_INTERPOLATE)
+		TKGG Y 6 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		Goto ReadyMain
+	NopeAfterFire:
+		TKGU C 0 {
+			A_TakeInventory("PetrovecTrigger",1);
+			A_PlaySound("Petrovec/End",5);
+			A_WeaponOffset(0,32,WOF_INTERPOLATE);
+		}
+		TKGU CBA 2
+		TKGG Y 2
+		Goto ReadyMain
+	Nope2:
+		TKGG A 0 A_JumpIf(CountInv("PetrovecTrigger"),"DoctorNope")
+		TKGG A 0 A_JumpIf(CountInv("VearAmmo"),1)
+		Goto Nope
+		TKGG A 0 {
+			A_WeaponOffset(0,32,WOF_INTERPOLATE);
+			A_PlaySound("Petrovec/Nope");
+			A_PlaySound("Petrovec/End",5);
+		}
+		TKGU CBA 2
+		TKGG Z 8
+		Goto Ready
+   DoctorNope:
+		TKGG A 0 {
+			A_TakeInventory("PetrovecTrigger",1);
+			A_PlaySound("Petrovec/Nope");
+		}
+		TKGG A 1 A_WeaponOffset(4,36,WOF_INTERPOLATE)
+		TKGG A 1 A_WeaponOffset(2,34,WOF_INTERPOLATE)
+		TKGG B 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		TKGG B 1 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		TKGG C 2
+		TKGG ABC 2
+		Goto Ready
+		
+	ReadyReload:
+		TNT1 A 0 A_JumpIf(CountInv("VearAmmo"),2)
+		TKGG Y 3 A_WeaponReady
+		Goto ReadyMain
+		TKGG ABC 3 A_WeaponReady
+		Goto ReadyMain
+	Reload:
+		TNT1 A 0 A_JumpIfInventory("PetrovecClip",0,"ReadyReload")
+		TNT1 A 0 A_JumpIf(CountInv("VearAmmo"),1)
+		Goto ReadyReload
+	ReloadMain:
+		TKGF A 0 A_JumpIf(CountInv("VearAmmo"),"Unload")
+		TKGR AB 2
+		TKGR C 1 A_WeaponOffset(-1,1+32,WOF_INTERPOLATE)
+		TKGR C 1 A_WeaponOffset(-2,2+32,WOF_INTERPOLATE)
+		TKGR D 1 A_WeaponOffset(-3,3+32,WOF_INTERPOLATE)
+		TKGR C 1 A_WeaponOffset(-1,1+32,WOF_INTERPOLATE)
+		TKGR D 0 {
+			A_PlaySound("Petrovec/Out");
+			A_WeaponOffset(0,32,WOF_INTERPOLATE);
+		}
+		TKGR FKG 2
+		TKGR H 12
+		TKGR IJLMNO 1
+	ReloadWorking:
+		TNT1 A 0 A_TakeInventory("VearAmmo",2,TIF_NOTAKEINFINITE)
+		TNT1 A 0 A_GiveInventory("PetrovecClip",1)
+		TNT1 A 0 A_JumpIfInventory("PetrovecClip",0,2)
+		TNT1 A 0 A_JumpIf(CountInv("VearAmmo") >= 2,2)
+		TNT1 A 0
+		Goto ReloadFinish
+		TNT1 A 0
+		Goto ReloadWorking
+	ReloadFinish:
+		TKGR S 0 A_PlaySound("Petrovec/In",6)
+		TKGR P 2
+		TKGR Q 1 A_WeaponOffset(1,-1+32,WOF_INTERPOLATE)
+		TKGR Q 1 A_WeaponOffset(2,-2+32,WOF_INTERPOLATE)
+		TKGR Q 1 A_WeaponOffset(3,-3+32,WOF_INTERPOLATE)
+		TKGR Q 1 A_WeaponOffset(1,-1+32,WOF_INTERPOLATE)
+		TKGR Q 0 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		TKGR RSTU 2
+		TKGG Z 6
+		Goto Ready
+	Unload:
+		TKGU C 0 A_PlaySound("Petrovec/End",5)
+		TKGU CBA 2
+		TKGG Z 8
+		Goto ReloadMain+2
+	Flash:
+		TNT1 A 2 A_Light2
+		TNT1 A 4 A_Light1
+		TNT1 A 0 A_Light0
+		Stop
+	}
+}

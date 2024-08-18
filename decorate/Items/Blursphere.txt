@@ -1,0 +1,106 @@
+/*
+SCREAMER SPHERE:
+Sprite - Vader
+Sound - CutmanMike
+*/
+
+ACTOR Screamersphere : PowerupGiver //FEAR ME, COWAAAARDS!
+{
+	Inventory.PickupSound "Items/Screamer"
+	Inventory.Amount 1
+	Powerup.Duration -60
+	Powerup.Type "ScreamerFrightener"
+	Powerup.Color "Yellow" 0.1
+	Inventory.PickupMessage "Screamersphere!"
+  	Renderstyle "Add"
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.FANCYPICKUPSOUND
+	+INVENTORY.ALWAYSPICKUP
+	+INVENTORY.HUBPOWER
+	+INVENTORY.INVBAR
+	+INVENTORY.ADDITIVETIME
+	+FLOATBOB
+	States
+	{
+	Spawn:
+		TEZZ ABCDE 2 Bright
+		Loop
+	}
+}
+
+actor PowerScreamerFrightener : PowerFrightener
+{
+	Inventory.Icon "TEZZA0" 
+}
+
+/*
+RED SPHERE:
+Sprite - Doom (ID Software)
+Sound - Doom 3 (ID Software)
+*/
+
+ACTOR REDsphere : PowerupGiver
+{
+	Inventory.PickupSound "items/RED"
+	Inventory.Amount 1
+	Powerup.Duration -60
+	Powerup.Type "REDDamage"
+	Powerup.Color "Red" 0.1
+	Inventory.PickupMessage "REDsphere!"
+  	Renderstyle "Add"
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.FANCYPICKUPSOUND
+	+INVENTORY.ALWAYSPICKUP
+	+INVENTORY.HUBPOWER
+	+INVENTORY.INVBAR
+	+INVENTORY.ADDITIVETIME
+	+FLOATBOB
+	States
+	{
+	Spawn:
+		DRED WXYZYX 2 Bright
+		Loop
+	}
+}
+
+/*
+BLU SPHERE:
+Sprite - Doom (ID Software)
+Sound - Diablo 2 (Blizzard Ent.)
+*/
+
+actor PowerREDDamage : PowerDamage
+{
+	DamageFactor "Normal", 2
+	Inventory.Icon "DREDW0" 
+}
+
+ACTOR BLUsphere : PowerupGiver
+{
+	Inventory.PickupSound "items/BLU"
+	Inventory.Amount 1
+	Powerup.Duration -60
+	Powerup.Type "BLUDamage"
+	Powerup.Color "Cyan" 0.1
+	Inventory.PickupMessage "BLUsphere!"
+  	Renderstyle "Add"
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.FANCYPICKUPSOUND
+	+INVENTORY.ALWAYSPICKUP
+	+INVENTORY.HUBPOWER
+	+INVENTORY.INVBAR
+	+INVENTORY.ADDITIVETIME
+	+FLOATBOB
+	States
+	{
+	Spawn:
+		DBLU ABCDCB 2 Bright
+		Loop
+	}
+}
+
+actor PowerBLUDamage : PowerProtection
+{
+	DamageFactor "Normal", 0.5
+	Inventory.Icon "DBLUA0" 
+}

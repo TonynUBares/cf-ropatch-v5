@@ -1,0 +1,600 @@
+/*
+CREDITS:
+INFO - Frankensprite - a sprite made of parts of other sprites.
+Just like frankenstein is a mashup of other people's limbs. Crazy, eh?
+
+Frankensprite - Mophead561, bits from 3DRealms (Duke Nukem 3D)
+Projectile - KeksDose
+
+Sounds:
+Up - Epic Games (UT2004)
+Charge, Fire - Westwood (C&C Renegade)
+Add Fire 1 - Blizzard (Starcraft 2)
+Add Fire 2 - EA (C&C3)
+Impact - ?
+Alt-Fire - ?
+Alt-Fire Recharge - ID (ET: Quake Wars)
+Recharge finish - ?
+
+Minibelisk loop, explode - ID (Quake 4)
+*/
+//Charge trigger
+
+
+Actor ZoomedDischargeCounter : Inventory { Inventory.MaxAmount 999 }
+Actor MinibeliskDischarge : Inventory { Inventory.MaxAmount 1 } //In case of cheating - discard all the extra tokens.
+
+Actor MinibeliskCharge : Ammo
+{
+	Inventory.PickupMessage "Picked up a MINIBELISK OVERHEAT COUNTER. IF YOU READ THIS THEN YOUR DUMB."
+	Inventory.Amount 1
+	Inventory.MaxAmount 3
+	Ammo.BackpackAmount 0
+	Ammo.BackpackMaxAmount 3
+	Inventory.Icon TNT1A0 //"OBLGX0"
+	Scale 0.1
+	States
+	{
+	Spawn:
+		OBLG X -1
+		Stop
+	}
+}
+
+
+actor StachanovGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "Picked up a ''Stachanov'' portabelisk of light! Show 'em the light! Show 'em the overtime! (7)"
+	Obituary "%o was burned to ashes by %k's ''Stachanov''."
+	States
+	{
+	Spawn:
+		OBLG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Stachanov",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Stachanov",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("NukeCellAmmo",30)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+ACTOR Stachanov : ROWeapon 24511
+{
+	//$Category Weapons
+	//$Title Stachanov
+	//$Sprite OBLGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "Picked up a ''Stachanov'' portabelisk of light! Show 'em the light! Show 'em the overtime! (7)"
+	Obituary "%o was burned to ashes by %k's ''Stachanov''."
+	Weapon.UpSound "Stachanov/Up"
+	Weapon.SelectionOrder 2
+	Weapon.AmmoType "NukeCellAmmo"
+	Weapon.AmmoUse 2
+	Weapon.AmmoGive 30
+	Weapon.AmmoType2 "MinibeliskCharge"
+	Weapon.AmmoUse2 0
+	Weapon.AmmoGive2 0
+	Weapon.Kickback 125
+	Weapon.SlotNumber 7
+	Weapon.SlotPriority 30.0
+	Weapon.BobStyle InverseSmooth
+	Weapon.BobSpeed 1.4
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	Decal "StachanovDecal"
+	Scale 0.65
+	+NOALERT
+	States
+	{
+	Spawn:
+		OBLG X -1
+		Stop
+	Ready:
+		OBLG A 0 A_JumpIf(CountInv("MinibeliskDischarge"),"SomeoneCheatedHere")
+		OBLG BCDBCD 2 A_WeaponReady(WRF_NOFIRE)
+	ReadyMain:
+		//OBLG A 0 A_JumpIfInventory("MinibeliskCharge",1,"Discharge")
+		OBLG A 0 A_JumpIf(CountInv("Zoomed"),"ZoomedReady")
+		OBLG A 1 A_WeaponReady(WRF_ALLOWZOOM)
+		Loop
+	SomeoneCheatedHere:
+		OBLG A 0 A_TakeInventory("MinibeliskDischarge",1)
+		OBLG A 0 A_TakeInventory("MinibeliskCharge",0)
+		Goto Ready
+	/*Discharge:
+		OBLG A 0 A_JumpIfInventory("Zoomed",1,"ZoomedDischarge")
+		OBLG A 25 A_WeaponReady(WRF_ALLOWZOOM)
+		OBLG A 0 A_PlaySound("Minibelisk/Charge",5,0.9)
+		OBLG BCDBCDBCDBCDBCDBCD 3 A_WeaponReady(WRF_ALLOWZOOM)
+		OBLG A 0 A_PlaySound("Minibelisk/Ready",5,0.5)
+		OBLG A 0 A_TakeInventory("MinibeliskCharge",1)
+		OBLG Y 9 Bright A_WeaponReady(WRF_ALLOWZOOM)
+		Goto ReadyMain*/
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		OBLG A 0 A_TakeInventory("Zoomed",1)
+		OBLG A 1 A_Raise(12)
+		Wait
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		OBLG A 0 A_JumpIf(CountInv("Zoomed"),"Unzoom")
+		OBLG A 0 {
+			A_ZoomFactor(1.0);
+			A_StopSound(5);
+			//A_TakeInventory("ZoomedDischargeCounter",999);
+		}
+		OBLG A 0 A_JumpIf(CountInv("Zoomed"),"ZoomedDeselect")
+		OBLG A 0 A_SetTranslucent(1.0,0)
+		OBLG A 1 A_Lower(12)
+		Wait
+   Fire:
+		//OBLF A 0 A_TakeInventory("ZoomedDischargeCounter",999)
+		OBLF A 0 A_JumpIf(CountInv("Zoomed"),"ZoomedFire")
+		OBLG A 4
+		OBLF A 0 A_ReFire("Charge1A")
+		OBLF A 0 {
+			//A_FireCustomMissile("ObeliskProjectile",0,1,12.5,-2.0,0,0);
+			A_RailAttack(3000,8,1,"none","red",RGF_SILENT,0.0,"StachanovImpact",0,0,0,0,32.0,0,"StachanovRail");
+			A_SetBlend("Red",0.25,15);
+			if(GetCvar("RO_QuakeFactor")) { A_QuakeEx(2,2,2,15,0,32,"none",QF_SCALEDOWN); }
+		}
+	FireMain:
+		OBLF A 0 {
+			A_WeaponOffset(0.0, 32.0); //Reset offset in case of charged fire.
+			A_StopSound(5);
+			A_PlaySound("Stachanov/Fire",1);
+			A_PlaySound("Stachanov/AddFire",4);
+			A_GunFlash;
+			A_AlertMonsters;
+		}
+		OBLF A 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } A_WeaponOffset(12.0,12.0,WOF_ADD|WOF_INTERPOLATE); }
+		OBLG B 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } A_WeaponOffset(2.0,2.0,WOF_ADD|WOF_INTERPOLATE); }
+		OBLG C 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE); }
+		OBLG D 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } A_WeaponOffset(-2.0,-2.0,WOF_ADD|WOF_INTERPOLATE); }
+		OBLG B 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } A_WeaponOffset(-6.0,-6.0,WOF_ADD|WOF_INTERPOLATE); }
+		OBLG C 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } A_WeaponOffset(-3.0,-3.0,WOF_ADD|WOF_INTERPOLATE); }
+		OBLG D 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } A_WeaponOffset(-2.0,-2.0,WOF_ADD|WOF_INTERPOLATE); }
+		OBLG BCD 2
+		OBLG BCD 2 A_ReFire
+		OBLG A 2 A_ReFire
+		OBLG A 1 A_ClearReFire
+		goto ReadyMain
+		
+	Charge1A: //Stage 1, aka "looks like he's gonna rack up some more power."
+		OBLG A 0 {
+			A_PlaySound("Stachanov/Charge",5,1.0,1);
+			if(GetCvar("RO_QuakeFactor")) { A_Quake(1, 9, 0, 3, "none"); }
+		}
+		OBLG BBBCCCDDD 1 { A_SetBlend("Red",0.1,6); A_WeaponOffset(0.0 + frandom(0.5,-0.5), 32.0 + frandom(0.5,-0.5), WOF_INTERPOLATE); }
+		TNT1 A 0 A_ReFire("Charge1B")
+		Goto Fire+3
+	Charge1B:
+		OBLG D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(1, 9, 0, 3, "none"); } }
+		OBLG BBBCCCDDD 1 { A_SetBlend("Red",0.1,6); A_WeaponOffset(0.0 + frandom(0.5,-0.5), 32.0 + frandom(0.5,-0.5), WOF_INTERPOLATE); }
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 4, 1)
+		Goto Fire+3
+		TNT1 A 0 A_ReFire("Charge1C")
+		Goto ChargedFire1
+	Charge1C:
+		OBLG D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(1, 9, 0, 3, "none"); } }
+		OBLG BBBCCC 1 { A_SetBlend("Red",0.1,6); A_WeaponOffset(0.0 + frandom(0.5,-0.5), 32.0 + frandom(0.5,-0.5), WOF_INTERPOLATE); }
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 4, 1)
+		Goto Fire+3
+		TNT1 A 0 A_ReFire("Charge2A")
+		Goto ChargedFire1
+
+	Charge2A: //Stage 2, aka "Should we stay in his line of fire? I don't think so."
+		OBLG D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(2, 6, 0, 3, "none"); } }
+		OBLG BBCCDD 1 { A_SetBlend("Red",0.15,6); A_WeaponOffset(0.0 + frandom(1.0,-1.0), 32.0 + frandom(1.0,-1.0), WOF_INTERPOLATE); }
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 6, 1)
+		Goto ChargedFire1
+		TNT1 A 0 A_ReFire("Charge2B")
+		Goto ChargedFire2
+	Charge2B:
+		OBLG D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(2, 6, 0, 3, "none"); } }
+		OBLG BBCCDD 1 { A_SetBlend("Red",0.15,6); A_WeaponOffset(0.0 + frandom(1.0,-1.0), 32.0 + frandom(1.0,-1.0), WOF_INTERPOLATE); }
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 6, 1)
+		Goto ChargedFire1
+		TNT1 A 0 A_ReFire("Charge2C")
+		Goto ChargedFire2
+	Charge2C:
+		OBLG D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(2, 6, 0, 3, "none"); } }
+		OBLG BBCCDD 1 { A_SetBlend("Red",0.15,6); A_WeaponOffset(0.0 + frandom(1.0,-1.0), 32.0 + frandom(1.0,-1.0), WOF_INTERPOLATE); }
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 6, 1)
+		Goto ChargedFire1
+		TNT1 A 0 A_ReFire("Charge2D")
+		Goto ChargedFire2
+	Charge2D:
+		OBLG D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(2, 6, 0, 3, "none"); } }
+		OBLG BBCCDD 1 { A_SetBlend("Red",0.15,6); A_WeaponOffset(0.0 + frandom(1.0,-1.0), 32.0 + frandom(1.0,-1.0), WOF_INTERPOLATE); }
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 6, 1)
+		Goto ChargedFire1
+		TNT1 A 0 A_ReFire("Charge3A")
+		Goto ChargedFire2
+
+	Charge3A:	//Stage 3, aka "HOLYSHITHESGONNABLOWMYASSOFF!!"
+		OBLG D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(2, 6, 0, 3, "none"); } }
+		OBLG BC 1 { A_SetBlend("Red",0.2,6); A_WeaponOffset(0.0 + frandom(1.5,-1.5), 32.0 + frandom(1.5,-1.5), WOF_INTERPOLATE); }
+		OBLG D 1 { A_SetBlend("Red",0.18,6); A_WeaponOffset(0.0 + frandom(1.5,-1.5), 32.0 + frandom(1.5,-1.5), WOF_INTERPOLATE); }
+		OBLG BC 1 { A_SetBlend("Red",0.2,6); A_WeaponOffset(0.0 + frandom(1.5,-1.5), 32.0 + frandom(1.5,-1.5), WOF_INTERPOLATE); }
+		OBLG D 1 { A_SetBlend("Red",0.18,1); A_WeaponOffset(0.0 + frandom(1.5,-1.5), 32.0 + frandom(1.5,-1.5), WOF_INTERPOLATE); }
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 8, 1)
+		Goto ChargedFire2
+		TNT1 A 0 A_ReFire("Charge3B")
+		Goto ChargedFire3
+	Charge3B:
+		OBLG D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(2, 6, 0, 3, "none"); } }
+		OBLG BC 1 { A_SetBlend("Red",0.2,6); A_WeaponOffset(0.0 + frandom(2.0,-2.0), 32.0 + frandom(2.0,-2.0), WOF_INTERPOLATE); }
+		OBLG D 1 { A_SetBlend("Red",0.18,6); A_WeaponOffset(0.0 + frandom(2.0,-2.0), 32.0 + frandom(2.0,-2.0), WOF_INTERPOLATE); }
+		OBLG BC 1 { A_SetBlend("Red",0.2,6); A_WeaponOffset(0.0 + frandom(2.0,-2.0), 32.0 + frandom(2.0,-2.0), WOF_INTERPOLATE); }
+		OBLG D 1 { A_SetBlend("Red",0.18,6); A_WeaponOffset(0.0 + frandom(2.0,-2.0), 32.0 + frandom(2.0,-2.0), WOF_INTERPOLATE); }
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 8, 1)
+		Goto ChargedFire2
+		TNT1 A 0 A_ReFire("Charge3C")
+		Goto ChargedFire3
+	Charge3C:
+		OBLG D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(2, 6, 0, 3, "none"); } }
+		OBLG BC 1 { A_SetBlend("Red",0.2,6); A_WeaponOffset(0.0 + frandom(2.5,-2.5), 32.0 + frandom(2.5,-2.5), WOF_INTERPOLATE); }
+		OBLG D 1 { A_SetBlend("Red",0.18,6); A_WeaponOffset(0.0 + frandom(2.5,-2.5), 32.0 + frandom(2.5,-2.5), WOF_INTERPOLATE); }
+		OBLG BC 1 { A_SetBlend("Red",0.2,6); A_WeaponOffset(0.0 + frandom(2.5,-2.5), 32.0 + frandom(2.5,-2.5), WOF_INTERPOLATE); }
+		OBLG D 1 { A_SetBlend("Red",0.18,6); A_WeaponOffset(0.0 + frandom(2.5,-2.5), 32.0 + frandom(2.5,-2.5), WOF_INTERPOLATE); }
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 8, 1)
+		Goto ChargedFire2
+		TNT1 A 0 A_ReFire("Charge3D")
+		Goto ChargedFire3
+	Charge3D:
+		OBLG D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(3, 6, 0, 3, "none"); } }
+		OBLG BC 1 { A_SetBlend("Red",0.2,6); A_WeaponOffset(0.0 + frandom(3.0,-3.0), 32.0 + frandom(3.0,-3.0), WOF_INTERPOLATE); }
+		OBLG D 1 { A_SetBlend("Red",0.18,6); A_WeaponOffset(0.0 + frandom(3.0,-3.0), 32.0 + frandom(3.0,-3.0), WOF_INTERPOLATE); }
+		OBLG BC 1 { A_SetBlend("Red",0.2,6); A_WeaponOffset(0.0 + frandom(3.0,-3.0), 32.0 + frandom(3.0,-3.0), WOF_INTERPOLATE); }
+		OBLG D 1 { A_SetBlend("Red",0.18,6); A_WeaponOffset(0.0 + frandom(3.0,-3.0), 32.0 + frandom(3.0,-3.0), WOF_INTERPOLATE); }
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 8, "ChargedFire3")
+		Goto ChargedFire2
+
+	ChargedFire1:
+		OBLF A 0 {
+			A_PlaySound("Stachanov/Charged1",6);
+			A_SetBlend("Red",0.3,20);
+			A_TakeInventory("NukeCellAmmo",2,TIF_NOTAKEINFINITE);
+			A_RailAttack(3000,8,0,"none","red",RGF_SILENT,0.0,"StachanovImpact",0,0,0,0,32.0,0,"StachanovRail");
+			//A_FireCustomMissile("ObeliskProjectile1",0,1,12.5,-2,0,0);
+			if(GetCvar("RO_QuakeFactor")) { A_QuakeEx(2,2,2,20,0,32,"none",QF_SCALEDOWN); }
+		}
+		Goto FireMain
+	ChargedFire2:
+		OBLF A 0 {
+			A_PlaySound("Stachanov/Charged2",6);
+			A_SetBlend("Red",0.35,25);
+			A_TakeInventory("NukeCellAmmo",4,TIF_NOTAKEINFINITE);
+			A_RailAttack(6000,8,1,"none","red",RGF_SILENT,0.0,"StachanovImpact",0,0,0,0,32.0,0,"StachanovRail2");
+			//A_FireCustomMissile("ObeliskProjectile2",0,1,12.5,-2,0,0);
+			if(GetCvar("RO_QuakeFactor")) { A_QuakeEx(3,3,3,20,0,32,"none",QF_SCALEDOWN); }
+		}
+		Goto FireMain
+	ChargedFire3:
+		OBLF A 0 {
+			A_PlaySound("Stachanov/Charged3",6);
+			A_SetBlend("Red",0.4,30);
+			A_TakeInventory("NukeCellAmmo",6,TIF_NOTAKEINFINITE);
+			A_RailAttack(9001,8,1,"none","red",RGF_SILENT,0.0,"StachanovImpact",0,0,0,0,32.0,0,"StachanovRail3");
+			//A_FireCustomMissile("ObeliskProjectile3",0,1,12.5,-2,0,0);
+			if(GetCvar("RO_QuakeFactor")) { A_QuakeEx(4,4,4,20,0,32,"none",QF_SCALEDOWN); }
+		}
+		Goto FireMain
+	  
+	AltFire:
+		//OBLF A 0 A_TakeInventory("ZoomedDischargeCounter",999)
+		OBLF A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 8,1)
+		Goto HeckNo
+		OBLF A 0 A_JumpIf(CountInv("Zoomed"),"ZoomedAltFire")
+		OBLF A 0 A_JumpIfInventory("MinibeliskCharge",0,"HeckNo")
+
+		OBLF A 1 Bright {
+			A_TakeInventory("NukeCellAmmo",8,TIF_NOTAKEINFINITE);
+			A_GiveInventory("MinibeliskCharge",1);
+			A_SetBlend("Red",0.25,15);
+			A_PlaySound("Minibelisk/Fire",6,0.8);
+			A_PlaySound("Stachanov/Fire",1);
+			A_FireCustomMissile("MinibeliskSpawner",0,1,12.5,-2,0,0);
+			A_StopSound(5);
+			A_GunFlash;
+			A_AlertMonsters;
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); }
+			A_SetAngle(Angle - 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(12.0, 12.0, WOF_ADD|WOF_INTERPOLATE);
+		}
+		OBLG B 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); }
+			A_SetAngle(Angle - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(2.0, 2.0, WOF_ADD|WOF_INTERPOLATE);
+		}
+		OBLG C 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); }
+			A_SetAngle(Angle - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE);
+		}
+		OBLG D 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE); }
+		OBLG B 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } A_WeaponOffset(-6.0, -6.0, WOF_ADD|WOF_INTERPOLATE); }
+		OBLG C 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE); }
+		OBLG D 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE); }
+		OBLG BCDBCD 2
+		OBLG A 2
+		OBLG A 1 A_ClearReFire
+		goto ReadyMain
+	HeckNo:
+		OBLG Y 10 A_JumpIf(CountInv("Zoomed"),"ZoomedHeckNo")
+		OBLG Y 10 A_PlaySound("Minibelisk/Nope",5,0.5)
+		OBLG A 6
+		Goto ReadyMain
+
+	ZoomedReady:
+		//XBSZ A 0 A_JumpIfInventory("MinibeliskCharge",1,"ZoomedDischarge")
+		XBSZ A 1 A_WeaponReady(WRF_NOBOB|WRF_ALLOWZOOM)
+		Goto ReadyMain
+
+	ZoomedFire:
+		//OBLG A 0 A_TakeInventory("ZoomedDischargeCounter",999)
+		OBLG A 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ A 4
+		OBLF A 0 A_ReFire("ZoomedCharge1A")
+		OBLF A 0 {
+			A_FireCustomMissile("ObeliskProjectile",0,1,0,-3,0,0.0);
+			A_SetBlend("Red",0.15,20);
+			if(GetCvar("RO_QuakeFactor")) { A_QuakeEx(1,1,1,15,0,32,"none",QF_SCALEDOWN); }
+		}
+	ZoomedFireMain:
+		OBLF A 0 {
+			A_PlaySound("Stachanov/Fire",1);
+			A_PlaySound("Stachanov/AddFire",5);
+			A_AlertMonsters;
+			A_GunFlash;
+		}
+		XBSZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.95); } A_SetPitch(pitch-0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		XBSZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.97); } A_SetPitch(pitch-0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		XBSZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.98); } A_SetPitch(pitch-0.15*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		XBSZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.99); } A_SetPitch(pitch+0.15*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		XBSZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(3.00); } }
+		XBSZ B 1 Bright  A_SetPitch(pitch+0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE)
+		XBSZ BB 1 Bright A_SetPitch(pitch+0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE)
+		XBSZ B 4
+		XBSZ A 9
+		Goto ReadyMain
+	  
+	ZoomedCharge1A:
+		XBSZ C 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ C 0 {
+			A_PlaySound("Stachanov/Charge",5,1.0,1);
+			if(GetCvar("RO_QuakeFactor")) { A_Quake(1, 9, 0, 3, "none"); }
+		}
+		XBSZ BBBBBBBBB 1 A_SetBlend("Red",0.05,2)
+		TNT1 A 0 A_ReFire("ZoomedCharge1B")
+		Goto ZoomedFire+3
+	ZoomedCharge1B:
+		XBSZ C 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ C 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(1, 9, 0, 3, "none"); } }
+		XBSZ CCCCCCCCC 1 A_SetBlend("Red",0.05,2)
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 4, 1)
+		Goto ZoomedFire+3
+		TNT1 A 0 A_ReFire("ZoomedCharge1C")
+		Goto ZoomedFire1
+	ZoomedCharge1C:
+		XBSZ C 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ C 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(1, 9, 0, 3, "none"); } }
+		XBSZ CCCCCCCCC 1 A_SetBlend("Red",0.05,2)
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 4, 1)
+		Goto ZoomedFire+5
+		TNT1 A 0 A_ReFire("ZoomedCharge2A")
+		Goto ZoomedFire1
+
+	ZoomedCharge2A:
+		XBSZ D 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(2, 6, 0, 3, "none"); } }
+		XBSZ DDDDDD 1 A_SetBlend("Red",0.1,2)
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 6, 1)
+		Goto ZoomedFire1
+		TNT1 A 0 A_ReFire("ZoomedCharge2B")
+		Goto ZoomedFire2
+	ZoomedCharge2B:
+		XBSZ D 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(2, 6, 0, 3, "none"); } }
+		XBSZ DDDDDD 1 A_SetBlend("Red",0.1,2)
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 6, 1)
+		Goto ZoomedFire1
+		TNT1 A 0 A_ReFire("ZoomedCharge2C")
+		Goto ZoomedFire2
+	ZoomedCharge2C:
+		XBSZ D 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(2, 6, 0, 3, "none"); } }
+		XBSZ DDDDDD 1 A_SetBlend("Red",0.1,2)
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 6, 1)
+		Goto ZoomedFire1
+		TNT1 A 0 A_ReFire("ZoomedCharge2D")
+		Goto ZoomedFire2
+	ZoomedCharge2D:
+		XBSZ D 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ D 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(2, 6, 0, 3, "none"); } }
+		XBSZ DDDDDD 1 A_SetBlend("Red",0.1,2)
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 6, 1)
+		Goto ZoomedFire1
+		TNT1 A 0 A_ReFire("ZoomedCharge3A")
+		Goto ZoomedFire2
+
+	ZoomedCharge3A:
+		XBSZ E 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ E 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(3, 6, 0, 3, "none"); } }
+		XBSZ EEEEEE 1 A_SetBlend("Red",0.15,2)
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 8, 1)
+		Goto ZoomedFire2
+		TNT1 A 0 A_ReFire("ZoomedCharge3B")
+		Goto ZoomedFire3
+	ZoomedCharge3B:
+		XBSZ E 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ E 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(3, 6, 0, 3, "none"); } }
+		XBSZ EEEEEE 1 A_SetBlend("Red",0.15,2)
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 8, 1)
+		Goto ZoomedFire2
+		TNT1 A 0 A_ReFire("ZoomedCharge3C")
+		Goto ZoomedFire3
+	ZoomedCharge3C:
+		XBSZ E 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ E 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(3, 6, 0, 3, "none"); } }
+		XBSZ EEEEEE 1 A_SetBlend("Red",0.15,2)
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 8, 1)
+		Goto ZoomedFire2
+		TNT1 A 0 A_ReFire("ZoomedCharge3D")
+		Goto ZoomedFire3
+	ZoomedCharge3D:
+		XBSZ E 0 A_JumpIfNoAmmo("UnZoom")
+		XBSZ E 0 { if(GetCvar("RO_QuakeFactor")) { A_Quake(3, 6, 0, 3, "none"); } }
+		XBSZ EEEEEE 1 A_SetBlend("Red",0.15,2)
+		TNT1 A 0 A_JumpIf(CountInv("NukeCellAmmo") >= 8, "ZoomedFire3")
+		Goto ZoomedFire2
+
+	ZoomedFire1:
+		OBLF A 0 {
+			A_SetBlend("Red",0.2,20);
+			A_PlaySound("Stachanov/Charged1",6);
+			A_TakeInventory("NukeCellAmmo",2,TIF_NOTAKEINFINITE);
+			A_RailAttack(175,0,0,"none","red",RGF_SILENT,0.0,"StachanovImpact",0,0,0,0,32.0,0,"StachanovRail");
+			//A_FireCustomMissile("ObeliskProjectile1",0,1,0,-3,0,0.0);
+			if(GetCvar("RO_QuakeFactor")) { A_QuakeEx(1,1,1,20,0,32,"none",QF_SCALEDOWN); }
+			A_SetPitch(pitch-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		Goto ZoomedFireMain
+	ZoomedFire2:
+		OBLF A 0 {
+			A_SetBlend("Red",0.3,25);
+			A_PlaySound("Stachanov/Charged2",6);
+			A_TakeInventory("NukeCellAmmo",4,TIF_NOTAKEINFINITE);
+			A_RailAttack(250,0,0,"none","red",RGF_SILENT,0.0,"StachanovImpact",0,0,0,0,32.0,0,"StachanovRail2");
+			//A_FireCustomMissile("ObeliskProjectile2",0,1,0,-3,0,0.0);
+			if(GetCvar("RO_QuakeFactor")) { A_QuakeEx(2,2,2,20,0,32,"none",QF_SCALEDOWN); }
+			A_SetPitch(pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		Goto ZoomedFireMain
+	ZoomedFire3:
+		OBLF A 0 {
+			A_SetBlend("Red",0.4,30);
+			A_PlaySound("Stachanov/Charged3",6);
+			A_TakeInventory("NukeCellAmmo",6,TIF_NOTAKEINFINITE);
+			A_RailAttack(350,0,0,"none","red",RGF_SILENT,0.0,"StachanovImpact",0,0,0,0,32.0,0,"StachanovRail3");
+			//A_FireCustomMissile("ObeliskProjectile3",0,1,0,-3,0,0.0);
+			if(GetCvar("RO_QuakeFactor")) { A_QuakeEx(3,3,3,20,0,32,"none",QF_SCALEDOWN); }
+			A_SetPitch(pitch-0.75*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		Goto ZoomedFireMain
+	ZoomedAltFire:
+		OBLF A 0 A_JumpIfInventory("NukeCellAmmo",8,1)
+		Goto ZoomedHeckNo
+		OBLF A 0 A_JumpIfInventory("MinibeliskCharge",0,"ZoomedHeckNo")
+
+		OBLF A 0 {
+			A_TakeInventory("NukeCellAmmo",8,TIF_NOTAKEINFINITE);
+			A_GiveInventory("MinibeliskCharge",1);
+			A_SetBlend("Red",0.6,30);
+			A_FireCustomMissile("MinibeliskSpawner",0,1,0,-3,0,0.0);
+			A_AlertMonsters;
+			A_GunFlash;
+			A_PlaySound("Minibelisk/Fire",6,0.8);
+			A_PlayWeaponSound("Stachanov/Fire");
+		}
+		XBSZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.95); } A_SetPitch(pitch-0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		XBSZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.97); } A_SetPitch(pitch-0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		XBSZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.98); } A_SetPitch(pitch-0.15*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		XBSZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.99); } A_SetPitch(pitch+0.15*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		XBSZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(3.00); } A_SetPitch(pitch+0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		XBSZ B 1 Bright A_SetPitch(pitch+0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE)
+		XBSZ BB 1 Bright
+		XBSZ BBBB 1 A_SetBlend("Red",0.2,3)
+		XBSZ AAAAAAAAAAAAA 1 A_SetBlend("Red",0.2,1)
+		Goto ReadyMain
+	ZoomedHeckNo:
+		XBSZ B 10 A_PlaySound("Minibelisk/Nope",5,0.7)
+		XBSZ A 6
+		Goto ZoomedReady
+	Zoom:
+		//OBLG A 0 A_TakeInventory("ZoomedDischargeCounter",999)
+		OBLG A 0 A_JumpIfInventory("Zoomed",1,"UnZoom")
+		OBLG A 0 {
+			A_GiveInventory("Zoomed",1);
+			A_PlaySound("Stachanov/Zoom",5,1.0,1);
+		}
+		OBLG A 1 A_SetBlend("Black",0.15,3)
+		OBLG A 1 A_SetBlend("Black",0.3,3)
+		OBLG A 1 A_SetBlend("Black",0.45,3)
+		OBLG A 1 A_SetBlend("Black",0.6,3)
+		OBLG A 1 A_SetBlend("Black",0.75,3)
+		OBLG A 1 A_SetBlend("Black",0.9,3)
+		OBLG A 1 A_SetBlend("Black",1.0,15)
+		
+		XBSZ A 1 { A_SetBlend("Black",0.9,3); A_SetTranslucent(0.98,0); A_ZoomFactor(3.0); }
+		XBSZ A 1 { A_SetBlend("Black",0.85,3); A_SetTranslucent(0.96,0); }
+		XBSZ A 1 { A_SetBlend("Black",0.75,3); A_SetTranslucent(0.84,0); }
+		XBSZ A 1 { A_SetBlend("Black",0.65,3); A_SetTranslucent(0.82,0); }
+		XBSZ A 1 { A_SetBlend("Black",0.55,3); A_SetTranslucent(0.81,0); }
+		XBSZ A 1 { A_SetBlend("Black",0.45,3); A_SetTranslucent(0.8,0); A_StopSound(5); }
+		
+		XBSZ A 1 A_SetBlend("Black",0.35,3)
+		XBSZ A 1 A_SetBlend("Black",0.25,3)
+		XBSZ A 1 A_SetBlend("Black",0.15,3)
+		XBSZ A 1 A_SetBlend("Black",0.05,3)
+		Goto ZoomedReady
+	UnZoom:
+		XBSZ A 0 {
+			A_PlaySound("Stachanov/Zoom",5,1.0,1);
+			A_TakeInventory("Zoomed",1);
+		}
+		XBSZ A 1 { A_SetBlend("Black",0.15,3); A_SetTranslucent(0.9,0); }
+		XBSZ A 1 { A_SetBlend("Black",0.3,3); A_SetTranslucent(0.92,0); }
+		XBSZ A 1 { A_SetBlend("Black",0.45,3); A_SetTranslucent(0.94,0); }
+		XBSZ A 1 { A_SetBlend("Black",0.6,3); A_SetTranslucent(0.96,0); A_ZoomFactor(1.0); }
+		XBSZ A 1 { A_SetBlend("Black",0.75,3); A_SetTranslucent(0.98,0); }
+		XBSZ A 1 { A_SetBlend("Black",0.9,3); A_SetTranslucent(1,0); }
+		
+		XBSZ AAAAAA 1 A_SetBlend("Black",1,11)
+      
+		OBLG A 0 A_StopSound(5)
+		OBLG A 15 A_SetBlend("Black",0.9,15)
+		Goto ReadyMain
+	/*ZoomedDischarge:
+	Stage1:
+		XBSZ A 0 A_JumpIfInventory("ZoomedDischargeCounter",25,"Stage1Finish")
+		XBSZ A 0 A_GiveInventory("ZoomedDischargeCounter",1)
+		XBSZ A 0 A_SetBlend("Red",0.2,2)
+		XBSZ A 1 A_WeaponReady(WRF_NOBOB|WRF_ALLOWZOOM)
+		Loop
+	  Stage1Finish:
+		OBLG A 0 A_PlaySound("Minibelisk/Charge",5,0.9)
+		Goto Stage2
+	  Stage2:
+		XBSZ A 0 A_JumpIfInventory("ZoomedDischargeCounter",78,"Stage2Finish")
+		XBSZ A 0 A_GiveInventory("ZoomedDischargeCounter",1)
+		XBSZ A 0 A_SetBlend("Red",0.2,2)
+		XBSZ A 1 A_WeaponReady(WRF_NOBOB|WRF_ALLOWZOOM)
+		Loop
+	  Stage2Finish:
+		XBSZ A 0 A_PlaySound("Minibelisk/Ready",5,0.5)
+		XBSZ A 0 A_TakeInventory("MinibeliskCharge",1)
+		XBSZ A 0 A_TakeInventory("ZoomedDischargeCounter",999)
+		XBSZ A 0 A_SetBlend("Red",0.3,28)
+		XBSZ B 13 A_WeaponReady(WRF_NOBOB|WRF_ALLOWZOOM)
+		Goto ZoomedReady*/
+	Flash:
+		TNT1 A 5 bright A_Light2
+		TNT1 A 3 bright A_Light1
+		TNT1 A 0 bright A_Light0
+		stop
+	}
+}

@@ -1,0 +1,365 @@
+/*
+CREDITS:
+Sprites - Inferno Interactive (Shadow Warrior expansion)
+Rip - Zero X. Diamond
+Original scripting by Woodchuck, refined by KeksDose, refined further by... ME! WITH SHODDY DECORATE!.. Something.
+
+Sounds:
+Up - ?
+Fire - ?
+Add Fire - ? (Uhhhh, I didn't pay attention too much from where I get sounds for that, it seems.)
+Full - ID (Doom 3)
+*/
+
+Actor ZwergClip : Ammo
+{
+	Inventory.Amount 20
+	Inventory.MaxAmount 20
+	ammo.backpackamount 0
+	ammo.backpackmaxamount 20
+	Inventory.Icon "TNT1A0" //"CSGGX0"
+}
+
+Actor ZwergModifier : Inventory { Inventory.MaxAmount 20 }
+
+
+actor SchwarzerZwergGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Schwarzer Zwerg'' chain-fed super shotgun! Here kid,go commit a crime and let pure shells as pure evidence"
+	Obituary "%o was evidently botched by %k's ''Schwarzer Zwerg''."
+	States
+	{
+	Spawn:
+		ZWRG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("SchwarzerZwerg",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("SchwarzerZwerg",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("ErasusAmmo",20)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+Actor SchwarzerZwerg : ROWeapon 24503
+{
+	//$Category Weapons
+	//$Title Schwarzer Zwerg
+	//$Sprite CSGGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Schwarzer Zwerg'' chain-fed super shotgun! Here kid,go commit a crime and let pure shells as pure evidence"
+	Obituary "%o was evidently botched by %k's ''Schwarzer Zwerg''."
+	Weapon.UpSound "Zwerg/Up"
+	Weapon.SelectionOrder 6
+	Weapon.AmmoType "ErasusAmmo"
+	Weapon.AmmoType2 "ZwergClip"
+	Weapon.AmmoUse 2
+	Weapon.AmmoUse2 0
+	Weapon.AmmoGive 20
+	Weapon.AmmoGive2 0
+	Weapon.Kickback 35
+	Weapon.SlotNumber 3
+	Weapon.SlotPriority 30.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.4
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	Tag "Schwarzer Zwerg"
+	+NOALERT
+	+AMMO_OPTIONAL
+	States
+	{
+	Spawn:
+		ZWRG X -1
+		Stop
+	Ready:
+		ZWRG A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+	Nope:
+		ZWRG A 8 { A_WeaponReady(WRF_NOFIRE); A_PlaySound("Zwerg/Full",1); A_Overlay(3,"ZwergLight"); }
+		ZWRG A 8 { A_WeaponReady(WRF_NOFIRE); A_Overlay(3,""); }
+		Goto Ready
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		ZWRG A 0 {
+			A_ZoomFactor(1.0);
+			A_Overlay(3,"");
+			A_Overlay(2,"");
+		}
+		ZWRG A 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		ZWRG A 1 A_Raise(12)
+		Wait
+	Fire:
+		ZWRG A 0 A_JumpIfInventory("ZwergClip", 2, "PowerFire")
+		ZWRG A 0 A_JumpIfInventory("ErasusAmmo", 2, 1)
+		Goto Nope
+		ZWRG A 0 {
+			A_PlaySound("Zwerg/Fire", 5);
+			A_PlaySound("Zwerg/Firey", 6, 0.7);
+			A_GiveInventory("ErasusCasing", 2);
+			A_AlertMonsters;
+		}
+		ZWRG A 0 { If(A_JumpIf(CountInv("QuadUpgrade") >= 1, "Null")) {
+				A_SetBlend("Blue", 0.05, 12);
+				A_PlaySound("Quad/Shot", 1);
+				A_FireBullets(14.5, 2.75, 30, 36, "QuadPuff",1);
+		} Else {
+				A_FireBullets(14.5, 2.75, 30, 18, "ErasusPuff",1);
+			}
+		}
+      Goto Refraction
+	Refraction:
+		ZWRG A 0 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); }
+			A_Recoil(3.0);
+			A_Overlay(2,"ZwergGunflash");
+			A_Overlay(3,"ZwergGunflashLight");
+		}
+		ZWRG A 1 Bright {
+			A_WeaponOffset(3.0 + frandom(4.0, -4.0), 35.0 + frandom(0.0, 4.0), WOF_INTERPOLATE);
+			A_SetPitch(Pitch - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		ZWRG A 1 Bright {
+			A_WeaponOffset(7.0 + frandom(4.0, -4.0), 39.0 + frandom(0.0, 4.0), WOF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.75*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.75*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		ZWRG A 1 {
+			A_WeaponOffset(9.0 + frandom(3.0, -3.0), 41.0 + frandom(0.0, 3.0), WOF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_Overlay(3,"ZwergLight");
+			A_ZoomFactor(1.0);
+		}
+		ZWRG A 1 {
+			A_WeaponOffset(10.0 + frandom(3.0, -3.0), 42.0 + frandom(0.0, 3.0), WOF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		ZWRG A 0 A_ReFire
+		ZWRG A 1 {
+			A_WeaponOffset(9.0 + frandom(2.0, -2.0), 41.0 + frandom(0.0, 2.0), WOF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		ZWRG A 1 {
+			A_WeaponOffset(7.0 + frandom(2.0, -2.0), 39.0 + frandom(0.0, 2.0), WOF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		ZWRG A 1 {
+			A_WeaponOffset(6.0 + frandom(2.0, -2.0), 37.0 + frandom(0.0, 2.0), WOF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.125*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.125*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_PlaySound("Zwerg/Load", 4);
+		}
+		ZWRG A 1 A_WeaponOffset(4.0 + frandom(1.0, -1.0), 35.0 + frandom(0.0, 1.0), WOF_INTERPOLATE)
+		ZWRG A 1 A_WeaponOffset(2.0 + frandom(0.5, -0.5), 33.0 + frandom(0.0, 0.5), WOF_INTERPOLATE)
+		ZWRG A 1 A_WeaponOffset(0.0, 32.0, WOF_INTERPOLATE)
+		
+		ZWRG BB 1 A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG CC 1 A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 2
+		ZWRG BCA 2
+		ZWRG A 3
+		ZWRG A 1 A_Overlay(3,"")
+		Goto Ready
+	Hold:
+		ZWRG A 0 A_JumpIfNoAmmo("Nope")
+		ZWRG A 0 {
+			A_PlaySound("Zwerg/Fire", 5);
+			A_PlaySound("Zwerg/Firey", 6, 0.7);
+			A_Recoil(2.0);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2, 2, 2, 4, 0, 32, "none", QF_SCALEDOWN); }
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); }
+			A_GiveInventory("ErasusCasing",2);
+		}
+		ZWRG A 0 { If(A_JumpIf(CountInv("QuadUpgrade") >= 1, "Null")) {
+				A_SetBlend("Blue",0.05,12);
+				A_PlaySound("Quad/Shot",1);
+				A_FireBullets(14.5, 2.75, 30, 36, "QuadPuff",1);
+		} Else {
+				A_FireBullets(14.5, 2.75, 30, 18, "ErasusPuff",1);
+			}
+		}
+		Goto HoldRefraction
+	HoldRefraction:
+		ZWRG A 1 Bright {
+			A_Overlay(2,"ZwergGunflash");
+			A_Overlay(3,"ZwergGunflashLight");
+			A_WeaponOffset(3.0 + frandom(4.0, -4.0), 35.0 + frandom(0.0, 4.0), WOF_INTERPOLATE);
+			A_SetPitch(Pitch - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9425); }
+		}
+		ZWRG A 1 Bright {
+			A_WeaponOffset(7.0 + frandom(4.0, -4.0), 39.0 + frandom(0.0, 4.0), WOF_INTERPOLATE);
+			A_SetPitch(Pitch-0.75*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle-0.75*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.945); }
+		}
+		ZWRG B 1 {
+			 A_WeaponOffset(9.0 + frandom(3.0, -3.0), 41.0 + frandom(0.0, 3.0), WOF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9475); }
+			A_Overlay(3,"ZwergLight");
+		
+		}
+		ZWRG C 1 {
+			A_WeaponOffset(10.0 + frandom(3.0, -3.0), 42.0 + frandom(0.0, 3.0), WOF_INTERPOLATE);
+			A_SetPitch(Pitch-0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle-0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.945); }
+		}
+		ZWRG A 0 A_JumpIfNoAmmo(2)
+		ZWRG A 0 A_ReFire
+		ZWRG A 0 A_PlaySound("Zwerg/Load", 4)
+		ZWRG A 1 { A_WeaponOffset(9.0 + frandom(2.0, -2.0), 41.0 + frandom(0.0, 2.0), WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		ZWRG A 1 { A_WeaponOffset(7.0 + frandom(2.0, -2.0), 39.0 + frandom(0.0, 2.0), WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		ZWRG A 1 { A_WeaponOffset(5.0 + frandom(2.0, -2.0), 37.0 + frandom(0.0, 2.0), WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		ZWRG B 1 { A_WeaponOffset(3.0 + frandom(1.0, -1.0), 35.0 + frandom(0.0, 1.0), WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		ZWRG B 1 { A_WeaponOffset(1.0 + frandom(0.5, -0.5), 33.0 + frandom(0.0, 0.5), WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } }
+		ZWRG C 1 { A_WeaponOffset(0.0, 32.0, WOF_INTERPOLATE); 											if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		ZWRG C 1 {																						if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		ZWRG A 1 { 																						if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		ZWRG A 1
+		ZWRG BB 1 A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG CC 1 A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 5
+		ZWRG A 1 A_Overlay(3,"")
+		Goto Ready
+	PowerFire:
+		//YE OLDE STANDARD FIRE CRAP
+		ZWRG A 0 {
+			A_TakeInventory("ZwergClip",1);
+			A_GiveInventory("ZwergModifier",1);
+		}
+		ZWRG A 0 A_JumpIf(CountInv("ZwergClip") && CountInv("ZwergModifier") < 20, "PowerFire")
+	PowerFireExecute:
+		ZWRG A 0 {
+			A_Overlay(2,"ZwergGunflash");
+			A_Overlay(3,"ZwergGunflashLight");
+			A_AlertMonsters;
+			A_PlaySound("Zwerg/Fire", 5);
+			A_PlaySound("Zwerg/Firey", 6, 0.7);
+		}
+		//QUAD UPGRADE BULLSHEET
+		ZWRG A 0 A_JumpIfInventory("QuadUpgrade",1,"QuadTrueFire")
+		ZWRG A 0 A_FireBullets(14.5 + CountInv("ZwergModifier") * 0.85,
+								2.75 + CountInv("ZwergModifier") * 0.4,
+								30 * CountInv("ZwergModifier"), 18, "ErasusPuff", 0)
+		Goto Pootis
+	QuadTrueFire:
+		ZWRG A 0 A_SetBlend("Blue",0.05,12)
+		ZWRG A 0 A_FireBullets(14.5 + CountInv("ZwergModifier") * 0.85,
+								2.75 + CountInv("ZwergModifier") * 0.4,
+								30 * CountInv("ZwergModifier"), 36, "QuadPuff", 0)
+		ZWRG A 0 A_PlaySound("Quad/Shot",1)
+		Goto Pootis
+		//ZWERG CLIP MACHINATIONS
+	Pootis:
+		ZWRG A 1 Bright {
+			A_WeaponOffset(3.0, 35.0, WOF_INTERPOLATE);
+			A_Recoil(3.0 + (CountInv("ZwergModifier") * 2.0));
+			A_SetPitch(pitch - (CountInv("ZwergModifier") * 0.95), SPF_INTERPOLATE);
+			A_SetAngle(angle - (CountInv("ZwergModifier") * 0.65), SPF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0 -(CountInv("ZwergModifier") * 0.0075)); }
+			A_GiveInventory("ErasusCasing", CountInv("ZwergModifier"));
+		}
+		//MAIN FIRE ANIM CRAP
+	Spencer:
+		ZWRG A 0 A_TakeInventory("ZwergModifier",0x7FFFFFFF)
+		ZWRG A 1 BRIGHT A_WeaponOffset(6.0, 6.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 1 { A_WeaponOffset(4.0, 4.0, WOF_ADD|WOF_INTERPOLATE); A_Overlay(3,"ZwergLight"); }
+		ZWRG A 1 A_WeaponOffset(2.0, 2.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 1 A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 1 { A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }  A_PlaySound("Zwerg/Load", 4); }
+		ZWRG A 1 { A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		ZWRG A 1 { A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		ZWRG A 1 A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 1 A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 1 A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 1 A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 1 A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 1
+		ZWRG BB 1 A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG CC 1 A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 2
+		ZWRG BC 2
+		ZWRG A 5
+		ZWRG A 1 A_Overlay(3,"")
+		Goto Ready
+	AltFire:
+		ZWRG A 0 A_JumpIfInventory("ErasusAmmo", 2, 1)
+		Goto Nope
+		ZWRG A 0 A_JumpIfInventory("ZwergClip", 0, "Nope")
+		
+		ZWRG A 0 { 
+			A_PlaySound("Zwerg/Alt", 5);
+			A_TakeInventory("ErasusAmmo", 1, TIF_NOTAKEINFINITE);
+			A_GiveInventory("ZwergClip", 1);
+			A_Overlay(3,"ZwergLight");
+		}
+		ZWRG BB 1 A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG CC 1 A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE)
+		ZWRG A 2
+		ZWRG A 0 A_TakeInventory("ErasusAmmo", 1, TIF_NOTAKEINFINITE)
+		ZWRG A 0 A_GiveInventory("ZwergClip", 1)
+		ZWRG BCA 2
+		ZWRG A 0 A_Overlay(3,"")
+		ZWRG A 0 A_WeaponReady(WRF_NOBOB|WRF_NOPRIMARY)
+		Goto Ready
+	Reload:
+		ZWRG A 0 A_JumpIfInventory("ErasusAmmo", 0, "NopeItsFull")
+		ZWRG A 0 A_JumpIfInventory("ZwergClip", 1, 2)
+		ZWRG A 0 A_Print("\c[white]There are no shells to unload.")
+		Goto Nope
+	ReloadLoop:
+		ZWRG A 0 A_JumpIfInventory("ErasusAmmo",0,"ReturnShells")
+		ZWRG A 0 A_JumpIfInventory("ZwergClip", 1, 1)
+		Goto ReturnShells
+		ZWRG A 0 A_TakeInventory("ZwergClip", 1)
+		ZWRG A 0 A_GiveInventory("ErasusAmmo", 1)
+		Goto ReloadLoop
+	ReturnShells:
+		ZWRG A 0 {
+			A_PlaySound("Zwerg/Alt", 5);
+			A_Print("\c[white]Unloaded shells...");
+			A_Overlay(3,"ZwergLight");
+		}
+		ZWRG AB 2
+		ZWRG C 2
+		ZWRG AB 2
+		ZWRG C 2
+		ZWRG A 6 A_Overlay(3,"")
+		Goto Ready
+	NopeItsFull:
+		ZWRG A 0 A_Print("\c[white]Ammo capacity reached full; cannot proceed with the unload process.")
+		Goto Nope
+	ZwergGunflash:
+		ZWRG E 1 Bright A_Light2
+		ZWRG F 1 Bright
+		TNT1 A 2
+		TNT1 A 6 A_Light1
+		TNT1 A 0 A_Light0
+		Stop
+	ZwergGunflashLight:
+		ZWRG D 1 Bright
+		Loop
+	ZwergLight:
+		ZWRG D 1
+		Loop
+	}
+}

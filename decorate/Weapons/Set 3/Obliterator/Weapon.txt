@@ -1,0 +1,369 @@
+/*
+CREDITS:
+
+Sounds:
+Fire sound - ?? - I didn't document it back then, and I can't retrieve original author. It's from FPSBanana before it had a major rehaul, so I can't find it now.
+Up sound - Doom 3 (ID Software)
+Rev up, Loop, Stop sounds - Serious Sam 3 & Wolfenstein 3 (Raven Software, Croteam)
+A10 BRRRRT - nicStage
+A10 Flight - C&C3 (EA Games)
+A10 Napalm - C&C1 (Westwood Studios)
+A10 Marker - Wolf 2009 (Raven Software)
+
+Graphics:
+A10 Voxel - MigEater
+Gun graphics source - Bulletstorm (People can Fly, Epic Games)
+Gun graphics & sounds rip - Folks from AEoD, you save the day again, and I owe you huge thanks for that!
+Gunflash - Bane
+Pickup - Zrrion the Insect
+Part of the pickup - Eriance
+Bomb projectiles - Vaecrius
+MiG Projectile and touchups by me!
+
+Have you ever wondered how awesome it would be to have a minigun that shoots Obliteration?
+Yeah, me too.
+*/
+
+ACTOR ObliteratorSpun : Inventory { Inventory.MaxAmount 1 }
+ACTOR ObliteratorTrigger : ObliteratorSpun {}
+ACTOR ObliteratorCycle : ObliteratorSpun { Inventory.MaxAmount 4 }
+ACTOR ObliterationCooldown : ObliteratorSpun { Inventory.MaxAmount 350 }
+
+actor ObliteratorGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You've got the Volga Corp. ''Obliterator'' minigun! *slaps the weapon* This babe can some combar jets out of nowhere"
+	Obituary "%o didn't obey his Master, so %k obliterated poor fella."
+	States
+	{
+	Spawn:
+		MOBG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Obliterator",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Obliterator",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("Boolet",120)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+ACTOR Obliterator : Weapon 24533
+{
+	//$Category Weapons
+	//$Title Obliterator
+	//$Sprite FCKGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You've got the Volga Corp. ''Obliterator'' minigun! *slaps the weapon* This babe can some combar jets out of nowhere"
+	Obituary "%o didn't obey his Master, so %k obliterated poor fella."
+	Weapon.UpSound "Weapons/ObliteratorUp"
+	Weapon.SelectionOrder 5
+	Weapon.AmmoType "Boolet"
+	Weapon.AmmoGive 120
+	Weapon.AmmoUse 1
+	Weapon.AmmoType2 "RawketAmmo"
+	Weapon.AmmoGive2 0
+	Weapon.AmmoUse2 0
+	Weapon.Kickback 60
+	Weapon.SlotNumber 4
+	Weapon.SlotPriority 27.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.2
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	Decal "UnionScorch"
+	+AMMO_OPTIONAL
+	+NOALERT
+	States
+	{
+	Spawn:
+		MOBG X -1
+		Stop
+	Screen:
+		MOBS A 1 A_JumpIf(CountInv("ObliterationCooldown"),1)
+		Loop
+		MOBS B 1
+		Loop
+	Ready:
+		MOBG A 0 A_Overlay(2,"Screen")
+	ReadyMain:
+		MOBG A 0 A_ZoomFactor(1.0)
+		MOBG A 0 A_JumpIf(CountInv("ObliteratorSpun"),"ReadyObliteratorSpun")
+		MOBG A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+	Reload:
+		MOBG A 0 A_JumpIf(!CountInv("ObliterationCooldown"),2)
+		MOBG A 35 {
+			A_WeaponReady;
+			A_Print("\c[white]Obliteration marker is still under cooldown.");
+			A_PlaySound("intermission/tick",6);
+			Return A_JumpIf(CountInv("ObliteratorSpun"),"Donk"); //SpunThrowEnd
+		}
+		Goto ReadyMain
+		MOBG A 0 A_JumpIf(CountInv("RawketAmmo") >= 15,2)
+		MOBG A 35 {
+			A_WeaponReady;
+			A_Print("\c[white]You need at least 15 rockets to throw an obliteration marker.");
+			A_PlaySound("intermission/tick",6);
+			Return A_JumpIf(CountInv("ObliteratorSpun"),"Donk"); //SpunThrowEnd
+		}
+		Goto ReadyMain
+		MOBE A 0 A_JumpIf(CountInv("ObliteratorSpun"),"SpunThrow")
+		MOBE A 31 {
+			A_Overlay(3,"ThrowStuff");
+			A_GiveInventory("ObliterationCooldown",350);
+		}
+		MOBG A 4
+		Goto ReadyMain
+	Donk:
+		MOBG ABCDABCDABCDABCDABCDABCDABCDABCDABC 1 A_WeaponReady
+		Goto ReadyObliteratorSpun
+	SpunThrow:
+		MOBE A 0 {
+			A_Overlay(3,"ThrowStuff");
+			A_TakeInventory("RawketAmmo",15,TIF_NOTAKEINFINITE);
+			A_GiveInventory("ObliterationCooldown",350);
+			ACS_NamedExecute("Slowride",0,100,0,0);
+			A_PlaySound("Weapons/ObliteratorLoop",5,0.7,1); //A_PlaySound("Weapons/ObliteratorStop",5,0.7);
+		}
+		MOBE ABCDABCDABCDABCDABCDABCDABCDABC 1
+		MOBG DABC 1
+		Goto ReadyObliteratorSpun
+	/*SpunThrow:
+		MOBE A 0 {
+			A_Overlay(3,"ThrowStuff");
+			A_TakeInventory("RawketAmmo",10,TIF_NOTAKEINFINITE);
+			A_GiveInventory("ObliterationCooldown",350);
+			ACS_NamedExecute("Slowride",0,100,0,0);
+			A_PlaySound("Weapons/ObliteratorStop",5,0.7);
+		}
+		MOBE ABCDABCDABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB)
+		MOBE A 0 A_TakeInventory("ObliteratorSpun",1)
+		MOBE ABCD 2 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB)
+		MOBE ABC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB)
+		MOBE D 4 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB)
+		MOBG A 5
+		Goto ReadyMain
+	SpunThrowEnd:
+		MOBG A 0 {
+			ACS_NamedExecute("Slowride",0,100,0,0);
+			A_PlaySound("Weapons/ObliteratorStop",5,0.7);
+		}
+		MOBG ABCDABCDABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB)
+		MOBG A 0 A_TakeInventory("ObliteratorSpun",1)
+		MOBG ABCD 2 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB)
+		MOBG ABC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB)
+		MOBG D 4 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB)
+		Goto ReadyMain*/
+	ThrowStuff:
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-160,128)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-170,134,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-181,142,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-190,153,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-194,165,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-198,178,WOF_INTERPOLATE)
+		TNT1 A 7 A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1)
+		
+		TROW A 1 {
+			A_OverlayOffset(OverlayID(),244,32+13);
+			A_SpawnItemEx("ObliterationMarker",0,0,height*0.5,cos(pitch)*30,0,-sin(pitch)*30,0,SXF_SETTARGET|SXF_TRANSFERTRANSLATION|SXF_TRANSFERPITCH);
+			//A_FireCustomMissile("ObliterationMarker",0,0,-12,0,FPF_TRANSFERTRANSLATION); //Wow this shit is flawed; if you fire projectile too close and it dies immediately, the translation does not carry over... I have a feeling that target does not, too, for whatever reason.
+			A_TakeInventory("RawketAmmo",10,TIF_NOTAKEINFINITE);
+			A_PlaySound("Items/Throw",6,1.0);
+		}
+		TROW A 1 A_OverlayOffset(OverlayID(),228,23,WOF_INTERPOLATE)
+		TROW A 1 A_OverlayOffset(OverlayID(),203,35,WOF_INTERPOLATE)
+		TROW B 1 A_OverlayOffset(OverlayID(),186,70)
+		TROW B 1 A_OverlayOffset(OverlayID(),176,83,WOF_INTERPOLATE)
+		TROW B 1 A_OverlayOffset(OverlayID(),166,114,WOF_INTERPOLATE)
+		TROW C 1 A_OverlayOffset(OverlayID(),143,135)
+		TROW C 1 A_OverlayOffset(OverlayID(),131,153,WOF_INTERPOLATE)
+		TROW C 1 A_OverlayOffset(OverlayID(),126,165,WOF_INTERPOLATE)
+		
+		TNT1 A 3 A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,0)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-198,178)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-194,165,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-190,153,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-181,142,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-170,134,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-160,128,WOF_INTERPOLATE)
+		Stop
+	ReadyObliteratorSpun:
+		MOBG A 0 {
+			A_PlaySound("Weapons/ObliteratorLoop",5,0.7,1);
+			A_AlertMonsters;
+		}
+		MOBG ABCDABCDABCD 1 A_WeaponReady(WRF_ALLOWRELOAD)
+		MOBG A 0 A_TakeInventory("ObliteratorTrigger",1)
+		MOBG A 0 A_JumpIf(CountInv("ObliteratorSpun"),"ReadyObliteratorSpun")
+	//^ If it's still spun, loop it.
+		MOBG A 0 {
+			A_PlaySound("Obliterator/Stop",5,0.7);
+			ACS_NamedExecute("Slowride",0,100,0,0);
+			A_AlertMonsters;
+		}
+		MOBG ABCDABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_ALLOWRELOAD)
+		MOBG ABCDA 2 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_ALLOWRELOAD)
+		MOBG BC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_ALLOWRELOAD)
+		MOBG D 4 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_ALLOWRELOAD)
+		Goto ReadyMain
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		MOBG A 0 A_JumpIf(CountInv("ObliteratorSpun"),"DeselectObliteratorSpun")
+		MOBG A 0 {
+			A_ZoomFactor(1.0);
+			A_StopSound(1);
+			A_StopSound(5);
+			A_StopSound(6);
+			A_Overlay(2,"none");
+		}
+		MOBG A 1 A_Lower(12)
+		Wait
+	DeselectObliteratorSpun:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectObliteratorSpunLoop:
+		MOBG A 0 {
+			ACS_NamedExecute("Slowride",0,100,0,0);
+			A_PlaySound("Weapons/ObliteratorStop",5,0.7);
+			A_ZoomFactor(1.0);
+			A_StopSound(1);
+			A_StopSound(6);
+			A_TakeInventory("ObliteratorSpun",1);
+			A_Overlay(2,"none");
+		}
+		MOBG ABCDABCD 1
+		MOBG ABCDA 2
+		MOBG BC 2
+		MOBG D 4
+		Goto Deselect+2
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+		MOBG A 1 A_Raise
+		Wait
+	Fire:
+		MOBG A 0 A_JumpIfNoAmmo("Ready")
+		MOBG A 0 A_JumpIf(CountInv("ObliteratorSpun"),"Hold")
+		MOBG A 0 {
+			A_PlaySound("Weapons/ObliteratorStart",5,0.7);
+			A_GiveInventory("ObliteratorSpun",1);
+		}
+		MOBG ABCD 3 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_ALLOWRELOAD)
+		MOBG ABCD 2 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_ALLOWRELOAD)
+		MOBG ABCDABCDABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_ALLOWRELOAD)
+		Goto ReadyObliteratorSpun
+	Hold:
+		MOBG A 0 A_JumpIfNoAmmo("HoldNoAmmo")
+		goto TrueHold
+	TrueHold:
+		MOBG A 0 {
+			ACS_NamedExecute("Slowride",0,60,0,0);
+			A_PlaySound("Weapons/ObliteratorFire",6,1.0,1);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); }
+			A_GiveInventory("ObliteratorTrigger",1);
+		}
+     HoldLoop:
+		MOBG A 0 {
+			A_CheckReload;
+			A_AlertMonsters;
+			A_GiveInventory("BooletCasing",1);
+			A_GunFlash;
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(5,5,2,2,0,192,"none"); }
+			A_Recoil(0.3);
+			A_SetPitch(pitch - 0.35 * GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle - 0.35 * GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_FireCustomMissile("MiGMissile",frandom(6.0,-6.0),1,9+frandom(3.0,-3.0),frandom(1.0,-1.0),0,frandom(-3.0,3.0));
+			A_GiveInventory("ObliteratorCycle",1);
+		}
+		MOBG A 0 A_JumpIf(CountInv("ObliteratorCycle") == 4, "FireAnimD")
+		MOBG A 0 A_JumpIf(CountInv("ObliteratorCycle") == 3, "FireAnimC")
+		MOBG A 0 A_JumpIf(CountInv("ObliteratorCycle") == 2, "FireAnimB")
+		MOBG A 0 A_JumpIf(CountInv("ObliteratorCycle") == 1, "FireAnimA")
+	FireAnimA:
+		MOBF A 0
+		Goto FireMain
+	FireAnimB:
+		MOBF B 0
+		Goto FireMain
+	FireAnimC:
+		MOBF C 0
+		Goto FireMain
+	FireAnimD:
+		MOBF D 0 A_TakeInventory("ObliteratorCycle",4)
+		Goto FireMain
+	FireMain:
+		"####" "#" 1 Bright A_WeaponOffset(10 + frandom(7.0, -7.0), 42 + frandom(7.0, -7.0), WOF_INTERPOLATE)
+		Goto Endler
+	Endler:
+		MOBR A 0 A_ReFire
+		MOBG A 0 {
+			ACS_NamedExecute("Slowride",0,100,0,0);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(5,5,5,8,0,192,"none",QF_SCALEDOWN); }
+			A_StopSound(1);
+			A_StopSound(6);
+		}
+		MOBG A 1 { A_WeaponOffset(7.0,45.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.915); } } //A_WeaponReady
+		MOBG B 1 { A_WeaponOffset(6.0,44.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); } }
+		MOBG C 1 { A_WeaponOffset(5.0,42.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } }
+		MOBG D 1 { A_WeaponOffset(4.0,40.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		MOBG A 1 { A_WeaponOffset(3.0,38.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		MOBG B 1 { A_WeaponOffset(2.0,36.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		MOBG C 1 { A_WeaponOffset(1.0,34.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		MOBG D 1 { A_WeaponOffset(0.0,32.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		MOBG A 0 A_ZoomFactor(1.0)
+		Goto ReadyMain
+	HoldNoAmmo:
+		MOBG A 0 A_JumpIf(CountInv("ObliteratorSpun"),"RotateNoAmmo")
+		Goto ReadyMain
+	RotateNoAmmo:
+		MOBG A 0 A_JumpIf(CountInv("ObliteratorTrigger"),"HoldAStop")
+		MOBG A 0 {
+			A_StopSound(1);
+			A_StopSound(6);
+			A_AlertMonsters;
+		}
+		MOBG ABCDABCDABCD 1
+		Goto Ready
+	HoldAStop:
+		MOBG A 0 {
+			ACS_NamedExecute("Slowride",0,100,0,0);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(5,5,5,8,0,192,"none",QF_SCALEDOWN); }
+			A_StopSound(1);
+			A_StopSound(6);
+			A_TakeInventory("ObliteratorTrigger",1);
+		}
+		MOBG A 1 { A_WeaponOffset(7.0,45.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.915); } } //A_WeaponReady
+		MOBG B 1 { A_WeaponOffset(6.0,44.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); } }
+		MOBG C 1 { A_WeaponOffset(5.0,42.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } }
+		MOBG D 1 { A_WeaponOffset(4.0,40.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		MOBG A 1 { A_WeaponOffset(3.0,38.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		MOBG B 1 { A_WeaponOffset(2.0,36.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		MOBG C 1 { A_WeaponOffset(1.0,34.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		MOBG D 1 { A_WeaponOffset(0.0,32.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		MOBG A 0 A_ZoomFactor(1.0)
+		Goto HoldNoAmmo
+	AltFire:
+		MOBG A 0 A_JumpIf(CountInv("ObliteratorSpun"),1)
+		Goto Ready
+		MOBG A 0 {
+			ACS_NamedExecute("Slowride",0,100,0,0);
+			A_PlaySound("Weapons/ObliteratorStop",5,0.7);
+		}
+		MOBG ABCDABCDABCD 1 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_ALLOWRELOAD)
+		MOBG A 0 A_TakeInventory("ObliteratorSpun",1)
+		MOBG ABCD 2 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_ALLOWRELOAD)
+		MOBG ABC 2 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_ALLOWRELOAD)
+		MOBG D 4 A_WeaponReady(WRF_NOFIRE|WRF_NOBOB|WRF_ALLOWRELOAD)
+		MOBG D 0 A_ClearReFire
+		Goto ReadyMain
+	Flash:
+		TNT1 A 4 A_Light1
+		TNT1 A 3 A_Light2
+		TNT1 A 0 A_Light0
+		Stop
+	}
+}

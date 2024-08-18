@@ -1,0 +1,110 @@
+/*
+CREDITS:
+Propably not his work, but I dunno original source... sprites made from certain pickups from Wildweasel's mech mod. Check it out!
+Variations made by me.
+
+Sounds:
+Blizzard (Starcraft II)
+*/
+
+Actor Shield : BasicArmorBonus
+{
+	Armor.SaveAmount 1000000
+	Armor.MaxSaveAmount 1000000
+	Armor.SavePercent 100
+	Inventory.Icon "SH05A0"
+	Scale 0.75
+	-ALWAYSPICKUP
+}
+
+Actor ShieldCharge : Shield
+{
+	Height 6
+	Armor.SaveAmount 5
+	Inventory.PickupMessage "Picked up a shield charge."
+	Inventory.PickupSound "misc/shieldpurple"
+	Inventory.Icon "SH05A0"
+	scale 0.75
+	States
+	{
+		Spawn:
+		SH05 A -1
+		Stop
+	}
+}
+
+Actor MaintenanceShield : Shield
+{
+	Height 8
+	Armor.SaveAmount 250
+	Inventory.PickupMessage "Picked up a maintenance-class shield."
+	Inventory.PickupSound "misc/shieldblue"
+	Inventory.Icon "SH25A0"
+	states
+	{
+	Spawn:
+		SH25 A 15
+		SH25 BCDCB 2
+		loop
+	}
+}
+
+Actor SupportShield : Shield
+{
+	Height 10
+	Armor.SaveAmount 500
+	Inventory.PickupMessage "Picked up a support-class shield."
+	Inventory.PickupSound "misc/shieldgreen"
+	Inventory.Icon "SH50A0"
+	states
+	{
+	Spawn:
+		SH50 A 15
+		SH50 BCDEFG 2
+		loop
+	}
+}
+
+Actor AssaultShield : Shield
+{
+	Height 17
+	Armor.SaveAmount 1000
+	Inventory.PickupMessage "Picked up an assault-class shield."
+	Inventory.PickupSound "misc/shieldyellow"
+	Inventory.Icon "SH1TA0"
+	states
+	{
+	Spawn:
+		SH1T A 15
+		SH1T BCDEFGH 2
+		loop
+	}
+}
+
+Actor ConquerorShield : Shield
+{
+	Height 21
+	Armor.SaveAmount 2000
+	Inventory.PickupMessage "Picked up a conqueror-class shield!"
+	Inventory.PickupSound "misc/shieldred"
+	Inventory.Icon "SH2TA0"
+	states
+	{
+	Spawn:
+		SH2T A 15
+		SH2T BCDEFGHI 2
+		loop
+	}
+}
+
+actor ROGreenArmorSpawner : RandomSpawner replaces GreenArmor
+{
+    DropItem "MaintenanceShield" 255 1
+    DropItem "SupportShield" 255 1
+}
+
+actor ROBlueArmorSpawner : RandomSpawner replaces BlueArmor
+{
+    DropItem "AssaultShield" 255 1
+    DropItem "ConquerorShield" 255 1
+}

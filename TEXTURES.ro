@@ -1,0 +1,13 @@
+Graphic "M_DOOM", 641, 270
+{
+	XScale 2.5
+	YScale 3.0
+	Patch "RO_MDOOM", 0, 0
+}
+
+Graphic "MDOOMHD", 641, 270
+{
+	XScale 2.5
+	YScale 3.0
+	Patch "RO_MDOOM", 0, 0
+}

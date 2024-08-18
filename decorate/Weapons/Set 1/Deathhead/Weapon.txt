@@ -1,0 +1,201 @@
+/*
+CREDITS:
+
+Sprites:
+Original weapon - Epic Games (UT99)
+Rip - AEoD Team
+Main projectile - base by IMX, President People
+Cluster - Enjay
+Nuke/Stalin - Pillowblaster
+Stalin pickup - 3D Realms (Shadow Warrior)
+
+Sounds:
+Up - A mix, soo... one part is surely from Epic Games (UT99)
+Fire, Add, Reload - ? (Heck of mixing, probably)
+Flight, nuke explosion - Westwood (C&C Renegade)
+Fire mode - ID Software (Quake 2)
+*/
+
+actor StalinActive : Inventory { Inventory.MaxAmount 1 }	//Amplifier active token.
+ACTOR HeadMode : Inventory { Inventory.MaxAmount 2 }		//Deathhead firing mode. (Dumb/guided/personally guided nukes.)
+
+
+actor DeathheadGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Death Head'' MIRV missile launcher! You feel the soul of stalin in this weapon"
+	Obituary "%o wasn't expecting a rain of joy from %k's ''Death Head''."
+	States
+	{
+	Spawn:
+		HEDG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Deathhead",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Deathhead",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("HeadAmmo",5)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+ACTOR Deathhead : ROWeapon 24512
+{
+	//$Category Weapons
+	//$Title Death's Head
+	//$Sprite HEDGX0
+	Tag "Death Head Launcher"
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Death Head'' MIRV missile launcher! You feel the soul of stalin in this weapon"
+	Obituary "%o wasn't expecting a rain of joy from %k's ''Death Head''."
+	Weapon.UpSound "Deathhead/Up"
+	Weapon.SelectionOrder 1
+	Weapon.AmmoType "HeadAmmo"
+	Weapon.AmmoGive 5
+	Weapon.AmmoUse 1
+	Weapon.AmmoType2 "HeadAmmo"
+	Weapon.AmmoUse2 5
+	Weapon.Kickback 20
+	Weapon.SlotNumber 8
+	Weapon.SlotPriority 30.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.2
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	+ALT_AMMO_OPTIONAL
+	+NOAUTOFIRE
+	States
+	{
+	Spawn:
+		HEDG X -1
+		Stop
+	Ready:
+		HEDT B 0 A_JumpIfInventory("HeadMode",2,3)
+		HEDT A 0 A_JumpIfInventory("HeadMode",1,2)
+		HEDG A 0
+		"####" "#" 1 A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		HEDG A 0 SetPlayerProperty(0,0,PROP_FROZEN)
+		HEDT B 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		HEDG A 0 {
+			If(random(1,100) <= GetCvar("RO_Voices")) {
+				A_PlaySound("Deathhead/Taunt",2);
+			}
+		}
+		HEDT B 1 A_Raise(12)
+		Wait
+	MissileInFlight:
+		HEDF A 1
+		Goto Ready
+	Fire:
+		HEDF A 0 A_FireCustomMissile("DeathheadWarhead",0,1,15,0)
+	BoomKa:
+		HEDF A 0 {
+			A_GunFlash;
+			A_PlaySound("Deathhead/Fire",1);
+			A_PlaySound("Deathhead/AddFire",6,0.8);
+			A_PlaySound("Deathhead/Reload",5,0.8);
+			if(GetCvar("RO_QuakeRecoil")) {
+				A_QuakeEx(5,5,5,35,0,128,"none",QF_SCALEDOWN);
+				A_QuakeEx(5,5,5,35,0,128,"none",QF_SCALEDOWN|QF_WAVE,0.7,0.7,0.7);
+			}
+		}
+	StalinTheKart:
+		HEDF A 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } A_WeaponOffset(2.0, 2.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_Recoil(3.0); }
+		HEDF A 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9);  } A_WeaponOffset(5.0, 5.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_Recoil(7.0); }
+		HEDF B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } A_WeaponOffset(7.0, 7.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_Recoil(10.0); }
+		HEDF B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.82); } A_WeaponOffset(9.0, 9.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle - 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch - 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_Recoil(5.0); }
+		HEDF C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.83); } A_WeaponOffset(6.0, 6.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle - 4.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch - 4.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_Recoil(3.0); }
+		HEDF C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.84); } A_WeaponOffset(4.0, 4.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_Recoil(2.0); }
+		HEDF D 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.87); } A_WeaponOffset(3.0, 3.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_Recoil(1.0); }
+		HEDF D 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.89); } A_WeaponOffset(2.0, 2.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		HEDF E 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		HEDF E 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		HEDF F 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		HEDF F 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle + 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch + 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		HEDF G 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle + 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch + 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		HEDF G 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle + 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch + 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		HEDF G 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); }  A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle + 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch + 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		HEDF H 1 		{ 					 								   A_WeaponOffset(-4.0, -4.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle + 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch + 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		HEDF H 1 		{					 								   A_WeaponOffset(-4.0, -4.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle + 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch + 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		HEDF I 1 		{ 					 								   A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle + 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch + 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		HEDF I 1 		{					 								   A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE); A_SetAngle(Angle + 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); A_SetPitch(Pitch + 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE); }
+		HEDF I 1 		{ 					 								   A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE); }
+		HEDF I 1 		{					 								   A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE); }
+		HEDF H 1 		{ 					 								   A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE); }
+		HEDF H 1 		{					 								   A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE); }
+		HEDF G 1 		{ 					 								   A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE); }
+		HEDF G 1 		{					 								   A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE); }
+		HEDG A 1 		{					 								   A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE); }
+		//HEDG A 20 //We all love absurd firing rate, right?
+		Goto Ready
+
+	AltFire:
+		TNT1 A 0 A_JumpIfInventory("StalinActive",1,"StalinLaunch")	//Iz zupernuk aktiv?
+		TNT1 A 0 A_JumpIfInventory("HeadAmmo",5,"Wolololo")			//Makes sure there's enough ammo to launch
+		Goto Ready
+	Wolololo:
+		HEDG A 0 {
+			if(CountInv("HeadMode") >= 2) { A_FireCustomMissile("NuclearMissile",0,1,0,0); }
+			else if(CountInv("HeadMode") == 1) { A_FireCustomMissile("NuclearMissileGuided",0,1,0,0); }
+			else					 { A_FireCustomMissile("Ro_DeathheadNuke",0,1,0,0); }
+		}
+		Goto BoomKa
+	StalinLaunch:
+		HEDF A 0 {
+			if(!GetCvar("RO_InfiniteAmp")) { A_TakeInventory("StalinActive",1); A_TakeInventory("Stalin",1); }
+			A_PlaySound("Deathhead/Fire",1);
+			A_PlaySound("Deathhead/Reload",5,0.8);
+			A_PlaySound("Stalinowicz/Warn",6,1.0,0,ATTN_NONE);
+			A_PlaySound("Stalinowicz/Fire",0);
+			A_GunFlash;
+			A_Recoil(20.0);
+			A_AlertMonsters;
+			if(CountInv("HeadMode") >= 2) { A_FireCustomMissile("StalinWarhead",0,0,0,0); }
+			else if(CountInv("HeadMode") == 1) { A_FireCustomMissile("StalinWarheadGuided",0,0,0,0); }
+			else 					 { A_FireCustomMissile("Ro_DeathheadClusterNuke",0,0,0,0); }
+		}
+		Goto StalinTheKart
+	Reload:
+		TNT1 A 0 A_JumpIfInventory("HeadMode",2,"UnReload")
+		TNT1 A 0 A_JumpIfInventory("HeadMode",1,"DumbModoo")
+		Goto GuideModoo
+	DumbModoo:
+		TNT1 A 0 A_GiveInventory("HeadMode",1)
+		HEDT B 0 A_Print("\c[gray]Dumb mode.")
+		Goto Modlet
+	GuideModoo:
+		TNT1 A 0 A_GiveInventory("HeadMode",1)
+		HEDT A 0 A_Print("\c[red]Guided mode.")
+		Goto Modlet
+	UnReload:
+		TNT1 A 0 A_TakeInventory("HeadMode",2)
+		HEDG A 0 A_Print("\c[green]True guided mode.")
+		Goto Modlet
+	Modlet:
+		"####" "#" 0 {
+			A_PlaySound("Deathhead/Mode",6,0.9);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2,2,2,15,0,2,"none",QF_SCALEDOWN); }
+		}
+		"####" "###############" 1 { A_WeaponOffset(0.0 + frandom(2.0,-2.0), 32.0 + frandom(2.0,-2.0), WOF_INTERPOLATE); A_Weaponready(WRF_NOSWITCH|WRF_NOBOB|WRF_NOFIRE); }
+		"####" "#" 1 { A_WeaponOffset(0.0, 32.0, WOF_INTERPOLATE); A_Weaponready(WRF_NOSWITCH|WRF_NOBOB); }
+		"####" "#########" 1 { A_Weaponready(WRF_NOSWITCH|WRF_NOBOB); }
+		Goto Ready
+	Flash:
+		TNT1 A 10 Bright A_Light2
+		TNT1 A 15 Bright A_Light1
+		TNT1 A 0 Bright A_Light0
+		Stop
+	}
+}

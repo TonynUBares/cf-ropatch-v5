@@ -1,0 +1,181 @@
+//Chainsaw replacements
+class NewChainsawSpawner : Actor
+{
+	Default
+	{
+		+NOINTERACTION
+	}
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(RO_ClassRestriction) { A_SpawnItemEx("ChainsawSpawnerRestricted",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+			else { A_SpawnItemEx("ChainsawSpawner",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+		}
+		Stop;
+	}
+}
+
+class ChainsawSpawnerRestricted : RORestrictPiece
+{
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(random(0,1) == 0) {
+				invoker.TypeTwo = 0;
+				A_SpawnItemEx("PorzygunYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("RazorjackMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("BerserkerFistAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			} else {
+				invoker.TypeTwo = 1;
+				A_SpawnItemEx("CaberYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("ExcalibatMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("PowercubeAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			}
+			Return ResolveState(Null);
+		}
+		TNT1 A 1;
+		Wait;
+	Pickup:
+		TNT1 A 0 A_JumpIf(CountInv("YuriTrigger"),"YuriWeapon");
+		TNT1 A 0 A_JumpIf(CountInv("MartyTrigger"),"MartyWeapon");
+		TNT1 A 0 A_JumpIf(CountInv("AloszaTrigger"),"AloshaWeapon");
+		Fail;
+	YuriWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"YuriWeapon2");
+		TNT1 A 0 { if(CountInv("Porzygun")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("PorzygunGiver"); thingtogive.touch(self); }
+		Stop;
+	YuriWeapon2:
+		TNT1 A 0 { if(CountInv("Caber")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("CaberGiver"); thingtogive.touch(self); }
+		Stop;
+	MartyWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"MartyWeapon2");
+		TNT1 A 0 { if(CountInv("Razorjack")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("RazorjackGiver"); thingtogive.touch(self); }
+		Stop;
+	MartyWeapon2:
+		TNT1 A 0 { if(CountInv("Excalibat")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("ExcalibatPickup"); thingtogive.touch(self); }
+		Stop;
+	AloshaWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"AloshaWeapon2");
+		TNT1 A 0 { if(CountInv("BerserkerFist")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("BerserkerFistGiver"); thingtogive.touch(self); }
+		Stop;
+	AloshaWeapon2:
+		TNT1 A 0 { if(CountInv("Powercube")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("PowercubePickup"); thingtogive.touch(self); }
+		Stop;
+	Nope:
+		TNT1 A 0;
+		Fail;
+	}
+}
+
+class PorzygunYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+	}
+
+	States
+	{
+	Spawn:
+		MACG X -1;
+		Stop;
+	}
+}
+
+class CaberYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+	}
+	
+	States
+	{
+	Spawn:
+		CBRG X -1;
+		Stop;
+	}
+}
+
+class RazorjackMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+	}
+	
+	States
+	{
+	Spawn:
+		RAZG X -1;
+		Stop;
+	}
+}
+
+class ExcalibatMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+		Scale 0.5;
+		+FLOATBOB
+	}
+	
+	States
+	{
+	Spawn:
+		XBAT X 1 Bright {
+			if(GetCvar("RO_ClassRestriction")) {
+			A_SpawnItemEx("ExcalibatParticleClass",
+				frandom(-3.0,3.0),frandom(-3.0,3.0),frandom(10.0,50.0),
+				0,0,frandom(0.5,0.75),0,SXF_CLIENTSIDE,0);
+			} else {
+				A_SpawnItemEx("ExcalibatParticle",
+				frandom(-3.0,3.0),frandom(-3.0,3.0),frandom(10.0,50.0),
+				0,0,frandom(0.5,0.75),0,SXF_CLIENTSIDE,0);
+			}
+		}
+		Loop;
+	}
+}
+
+class BerserkerFistAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+	}
+	
+	States
+	{
+	Spawn:
+		BERY A -1;
+		Stop;
+	}
+}
+
+
+class PowercubeAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+		+FLOATBOB
+	}
+	
+	States
+	{
+	Spawn:
+		CUBX ABCDEFGH 2;
+		Loop;
+	}
+}

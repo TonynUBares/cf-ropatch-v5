@@ -1,0 +1,436 @@
+class Ro_TitleScript : EventHandler {
+	// TO MOVE:
+	Array <string> tip_text;
+	Array <double> tip_x_offset;
+	Font tip_font;
+	int tip_line_count;
+	vector2 tip_pos;
+	vector2 tip_resolution;
+	double tip_scale;
+	double tip_alpha;
+	double old_tip_alpha;
+	double bg_alpha;
+	double old_bg_alpha;
+	int tip_drawn_line_count;
+	int tip_screen_y_pos;
+	int tip_screen_height;
+	
+	Font prompt_font;
+	string prompt_text;
+	double prompt_x_offset;
+	vector2 prompt_pos;
+	double old_prompt_alpha;
+	double prompt_alpha;
+	int prompt_glow_tics;
+	
+	override void OnRegister () {
+		title_sprite = TexMan.CheckForTexture("ro_mdoom", TexMan.type_any);
+		star_sprite = TexMan.CheckForTexture("titlepic", TexMan.type_any);
+		ResetTitleAnim();
+		star_alpha		= 1;
+		
+		/*prompt_text = "HIT START, TOVARICH";
+		prompt_max_len = prompt_text.length();
+		prompt_len = 0;
+		prompt_tics = 0;
+		prompt_width = bigfont.StringWidth(prompt_text);
+		
+		explosion_mo.clear();
+		
+		for(let i = 0; i < 4; i++)
+		for(let j = 0; j < 8; j++) {
+			let letters = "abcdefghijklmnopqrstuvwxyz";
+			explosion_sprite [i] [j] = TexMan.CheckForTexture(
+				"exp" .. (i + 6) .. letters.CharAt(j) .. "0",
+				TexMan.type_any);
+		}*/
+	}
+	
+	override void WorldLoaded (WorldEvent event) {
+		switch(random(0, 2)) {
+		default:
+		case 0:
+			S_ChangeMusic("rotitle1");
+			break;
+		case 1:
+			S_ChangeMusic("rotitle2");
+			break;
+		case 2:
+			S_ChangeMusic("rotitle3");
+			break;
+		}
+	}
+	
+	override void WorldTick () {
+		// Position the stuff. This time it's done every tick cuz the player is very likely to
+		// change screen settings, so why not.
+		let aspect_ratio	= Screen.GetAspectRatio();
+		screen_width		= Screen.GetWidth();
+		screen_height		= Screen.GetHeight();
+		
+		title_resolution	= 600 * (aspect_ratio, 1);
+		title_pos			= (0.5 * title_resolution.x, 0.35 * title_resolution.y);
+		tip_resolution		= title_resolution / tip_scale;
+		tip_pos				= (0.5 * tip_resolution.x, 0.825 * tip_resolution.y);
+		let tip_to_screen	= screen_height / tip_resolution.y;
+		tip_screen_y_pos	= int(tip_pos.y * tip_to_screen);
+		tip_screen_height	= int(8 * tip_line_count * tip_to_screen);
+		prompt_pos			= (0.5 * tip_resolution.x, 0.75 * tip_resolution.y);
+		star_resolution		= 500 * (aspect_ratio, 1);
+		star_pos			= (0.5 * star_resolution.x, 0.5 * star_resolution.y);
+		
+		/*prompt_resolution	= 300 * (aspect_ratio, 1);
+		prompt_pos			= (0.5 * prompt_resolution.x, 0.8 * prompt_resolution.y) - (0.5 * prompt_width, 0);
+		
+		explosion_resolution	= 300 * (aspect_ratio, 1);
+		prompt_to_explosion		= prompt_resolution.y / explosion_resolution.y;
+		
+		explosion_pos		= prompt_to_explosion * prompt_pos;
+		explosion_width		= prompt_to_explosion * prompt_width;*/
+		
+		// kd: Say it! Say the thing!
+		// if(0 == tics) {
+			// S_Sound("warpoc/acknowledge", 1);
+		// }
+		
+		// kd: Do the fading.
+		old_star_alpha		= star_alpha;
+		old_fade_alpha		= fade_alpha;
+		old_title_alpha		= title_alpha;
+		old_tip_alpha		= tip_alpha;
+		old_bg_alpha		= bg_alpha;
+		old_prompt_alpha	= prompt_alpha;
+		
+		if(30 <= star_tics && star_tics <= 60) {
+			star_alpha = (60 - tics) / 30.0;
+		}
+		
+		if(50 <= tics && tics <= 100) {
+			fade_alpha = (100 - tics) / 50.0;
+		}
+		
+		if(120 == tics) {
+			S_Sound("warpoc/summon", 1);
+		}
+		
+		if(120 <= tics && tics <= 230) {
+			title_alpha = (tics - 120) / 110.0;
+		}
+		
+		// kd: Make the tip of the day appear like a briefing text from Command and Conquer.
+		if(250 <= tics && tics <= 270) {
+			bg_alpha = (tics - 250) / 20.0;
+		}
+		
+		if(275 <= tics && tics % 7 == 0 && tip_drawn_line_count < tip_line_count) {
+			tip_drawn_line_count++;
+			tip_alpha = 1;
+		}
+		
+		if(0 < tip_alpha) {
+			tip_alpha -= 0.1;
+		}
+		
+		if(330 <= tics && tics <= 360) {
+			prompt_alpha = (tics - 330) / 30.0;
+		}
+		
+		if(370 <= tics) {
+			prompt_glow_tics++;
+		}
+		
+		// Type text with EXPLOSIONS.
+		/*if(220 <= tics && prompt_len < prompt_max_len && tics % 7 == 0) {
+			prompt_tics++;
+			
+			if(prompt_tics <= 2) {
+				prompt_len++;
+				prompt_tics = 0;
+			}
+				
+			let explo_prompt_pos = (
+				explosion_pos.x + 1.0 * (prompt_len + 0.5 * (prompt_tics == 1)) / prompt_max_len * explosion_width,
+				explosion_pos.y,
+				0);
+			
+			let mo = Actor.Spawn(
+				"Ro_TitleExplosion",
+				explo_prompt_pos * prompt_to_explosion);
+			
+			if(NULL != mo) {
+				explosion_mo.push(mo);
+			}
+		}*/
+		
+		// Clear dead explosions away.
+		/*for(let i = explosion_mo.size() - 1; 0 <= i; i--)
+		if(NULL == explosion_mo [i]) {
+			explosion_mo.delete(i);
+		}*/
+		
+		tics++;
+		star_tics++;
+	}
+	
+	void ResetTitleAnim () {
+		fade_alpha		= 1;
+		title_alpha		= 0;
+		prompt_alpha	= 0;
+		tip_alpha		= 0;
+		bg_alpha		= 0;
+		
+		// kd: Select a tip of the day.
+		let tip_count_setting = StringTable.Localize("$title_tip_count");
+		let tip_count = tip_count_setting.ToInt();
+		let tip_index = random(1, tip_count);
+		let tip_string = StringTable.Localize("$title_tip_" .. tip_index);
+		
+		tip_font = smallfont;
+		tip_scale = 2;
+		
+		// kd: The tip is drawn to scale with the title sprite.
+		let size = TexMan.GetScaledSize(title_sprite);
+		let lines = tip_font.BreakLines(tip_string, int(size.x / tip_scale));
+		
+		tip_drawn_line_count = 0;
+		tip_line_count = lines.count();
+		tip_text.clear();
+		tip_x_offset.clear();
+		tip_text.reserve(tip_line_count);
+		tip_x_offset.reserve(tip_line_count);
+		
+		for(int i = 0; i < tip_line_count; i++) {
+			let current_line = lines.StringAt(i);
+			tip_text [i] = current_line;
+			tip_x_offset [i] = 0.5 * tip_font.StringWidth(Current_line);
+		}
+		
+		// kd: The "tip of the day" title:
+		if(0 < tip_line_count) {
+			tip_line_count++;
+			let tip_title = StringTable.Localize("$title_tip");
+			tip_text.insert(0, tip_title);
+			tip_x_offset.insert(0, 0.5 * tip_font.StringWidth(tip_title));
+		}
+		
+		// kd: The "hit start" prompt:
+		prompt_font = bigfont;
+		prompt_text = StringTable.Localize("$title_prompt");
+		prompt_x_offset = 0.5 * prompt_font.StringWidth(prompt_text);
+		
+		tics = 0;
+	}
+	
+	override void RenderOverlay (RenderEvent event) {
+		let t			= event.fractic;
+		let t_inv		= 1 - t;
+		let draw_alpha	= t * title_alpha + t_inv * old_title_alpha;
+		let draw_y		= title_pos.y - 50 * sin(90 * draw_alpha);
+		
+		Screen.DrawTexture(
+			title_sprite,
+			true,
+			title_pos.x,
+			draw_y,
+			DTA_CENTEROFFSET, true,
+			DTA_ALPHA, draw_alpha,
+			DTA_KEEPRATIO, true,
+			DTA_VIRTUALWIDTHF, title_resolution.x,
+			DTA_VIRTUALHEIGHTF, title_resolution.y);
+		
+		Screen.DrawTexture(
+			title_sprite,
+			true,
+			title_pos.x,
+			draw_y,
+			DTA_CENTEROFFSET, true,
+			DTA_ALPHA, sin(draw_alpha * 180),
+			// DTA_FILLCOLOR, Color(0xff, 0xff, 0),
+			DTA_FILLCOLOR, Color(0x80, 0, 0),
+			DTA_LEGACYRENDERSTYLE, style_shaded,
+			// DTA_LEGACYRENDERSTYLE, style_subtract,
+			DTA_KEEPRATIO, true,
+			DTA_VIRTUALWIDTHF, title_resolution.x,
+			DTA_VIRTUALHEIGHTF, title_resolution.y);
+		
+		// Tip background:
+		draw_alpha		= t * bg_alpha + t_inv * old_bg_alpha;
+		
+		Screen.Dim(
+			0x00000000,
+			0.3691337 * draw_alpha,
+			0,
+			tip_screen_y_pos - 4,
+			screen_width,
+			tip_screen_height + 8);
+		
+		// Tip:
+		draw_alpha		= t * tip_alpha + t_inv * old_tip_alpha;
+		
+		for(int i = 0; i < tip_drawn_line_count; i++) {
+			Screen.DrawText(
+				tip_font,
+				i == 0 ? Font.cr_white : Font.cr_untranslated,
+				tip_pos.x - tip_x_offset [i],
+				tip_pos.y + 8 * i,
+				tip_text [i],
+				DTA_KEEPRATIO, true,
+				DTA_VIRTUALWIDTHF, tip_resolution.x,
+				DTA_VIRTUALHEIGHTF, tip_resolution.y);
+		}
+		
+		if(0 < tip_drawn_line_count && tip_drawn_line_count <= tip_line_count) {
+			let i = tip_drawn_line_count - 1;
+			
+			Screen.DrawText(
+				tip_font,
+				Font.cr_gold,
+				tip_pos.x - tip_x_offset [i],
+				tip_pos.y + 8 * i,
+				tip_text [i],
+				DTA_KEEPRATIO, true,
+				DTA_VIRTUALWIDTHF, tip_resolution.x,
+				DTA_VIRTUALHEIGHTF, tip_resolution.y,
+				DTA_ALPHA, draw_alpha);
+		}
+		
+		// "Press start" prompt:
+		draw_alpha		= t * prompt_alpha + t_inv * old_prompt_alpha;
+		
+		Screen.DrawText(
+			prompt_font,
+			Font.cr_untranslated,
+			prompt_pos.x - prompt_x_offset,
+			prompt_pos.y,
+			prompt_text,
+			DTA_KEEPRATIO, true,
+			DTA_VIRTUALWIDTHF, tip_resolution.x,
+			DTA_VIRTUALHEIGHTF, tip_resolution.y,
+			DTA_ALPHA, draw_alpha);
+		
+		Screen.DrawText(
+			prompt_font,
+			Font.cr_gold,
+			prompt_pos.x - prompt_x_offset,
+			prompt_pos.y,
+			prompt_text,
+			DTA_KEEPRATIO, true,
+			DTA_VIRTUALWIDTHF, tip_resolution.x,
+			DTA_VIRTUALHEIGHTF, tip_resolution.y,
+			DTA_ALPHA, 0.5 * (1 - cos(prompt_glow_tics * 360.0 / 25)) );
+		
+		// Dim:
+		draw_alpha		= t * fade_alpha + t_inv * old_fade_alpha;
+		
+		Screen.Dim(
+			0x00000000,
+			draw_alpha,
+			0,
+			0,
+			screen_width,
+			screen_height);
+		
+		// Star:
+		draw_alpha	= t * star_alpha + t_inv * old_star_alpha;
+		
+		Screen.DrawTexture(
+			star_sprite,
+			true,
+			star_pos.x,
+			star_pos.y,
+			DTA_CENTEROFFSET, true,
+			DTA_ALPHA, draw_alpha,
+			DTA_KEEPRATIO, true,
+			DTA_VIRTUALWIDTHF, star_resolution.x,
+			DTA_VIRTUALHEIGHTF, star_resolution.y);
+		
+		// Text prompt
+		/*Screen.DrawText(
+			bigfont,
+			font.cr_red,
+			prompt_pos.x,
+			prompt_pos.y,
+			prompt_text,
+			DTA_TEXTLEN, prompt_len,
+			DTA_KEEPRATIO, true,
+			DTA_VIRTUALWIDTHF, prompt_resolution.x,
+			DTA_VIRTUALHEIGHTF, prompt_resolution.y);
+		
+		// EXPLOSIONS
+		for(let i = explosion_mo.size() - 1; 0 <= i; i--) {
+			let mo = explosion_mo [i];
+			
+			if(NULL == mo) {
+				continue;
+			}
+			
+			Screen.DrawTexture(
+				explosion_sprite [mo.special1] [mo.frame],
+				false,
+				mo.pos.x,
+				mo.pos.y,
+				// 100,
+				// 100,
+				DTA_CENTEROFFSET, true,
+				DTA_LEGACYRENDERSTYLE, style_add,
+				DTA_ALPHA, 0.8,
+				DTA_VIRTUALWIDTHF, explosion_resolution.x,
+				DTA_VIRTUALHEIGHTF, explosion_resolution.y);
+		}*/
+	}
+	
+	int tics;
+	int star_tics;
+	int screen_width;
+	int screen_height;
+	
+	TextureId title_sprite;
+	double title_alpha;
+	double old_title_alpha;
+	vector2 title_pos;
+	vector2 title_resolution;
+	
+	TextureId star_sprite;
+	double star_alpha;
+	double old_star_alpha;
+	vector2 star_pos;
+	vector2 star_resolution;
+	
+	double fade_alpha;
+	double old_fade_alpha;
+	
+	/*String prompt_text;
+	int prompt_len;
+	int prompt_max_len;
+	int prompt_width;
+	int prompt_tics;
+	vector2 prompt_pos;
+	vector2 prompt_resolution;
+	
+	Array <Actor> explosion_mo;
+	vector2 explosion_resolution;
+	double prompt_to_explosion;
+	vector2 explosion_pos;
+	double explosion_width;
+	
+	TextureId explosion_sprite [4] [8];*/
+}
+
+// kd: Here's a shortcut you'll love.
+/*
+class Ro_TitleExplosion : Actor {
+	default {
+		+NOINTERACTION
+	}
+	
+	override void PostBeginPlay () {
+		special1 = random(0, 3);
+	}
+	
+	states {
+	spawn:
+		EXP5 ABCDEFGH 2;
+		stop;
+	}
+}
+*/

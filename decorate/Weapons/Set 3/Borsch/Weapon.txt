@@ -1,0 +1,235 @@
+/*
+CREDITS:
+Gun graphics - Weapon from Evolve by Turtle Rock, initial sprite made by Zrrion the Insect, extended and gave an extra polish by me, pickup by me as well
+Gun animations - Sgt. Shivers
+Sounds - There's many of them, but most of them are ID\Raven's job. Can't name those specific ones source. (Charge, slide, fireadd2)
+Lightnings and fancy smoke, impact flare - Keksdose
+Pulsing ring - Kronos
+Giant purple ball - Raven Software
+Black hole graphics - Zero Prophet
+Lenin graphics - Zrrion the Insect
+*/
+
+actor BorschGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You've got the ''Borsch'' annihilation generator mark MLLCXXIX! You pick up BIG SUCK"
+	Obituary "%o was torn apart into small bits and compressed like a zip file by %k's ''Borsch''."
+	States
+	{
+	Spawn:
+		BRSG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Borsch",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Borsch",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("VoidAmmo",100)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+Actor Borsch : Weapon 24541
+{
+	//$Category Weapons
+	//$Title Borsch
+	//$Sprite LDGGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You've got the ''Borsch'' annihilation generator mark MLLCXXIX! You pick up BIG SUCK"
+	Obituary "%o was torn apart into small bits and compressed like a zip file by %k's ''Borsch''."
+	Weapon.UpSound "Borsch/Slide" //"Borsch/Up"
+	Weapon.AmmoGive 100
+	Weapon.AmmoType "VoidAmmo"
+	Weapon.AmmoUse 12
+	Weapon.AmmoType2 "VoidAmmo"
+	Weapon.AmmoUse2 60
+	Weapon.KickBack 0
+	Weapon.SlotNumber 8
+	Weapon.SlotPriority 27.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.2
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	Scale 0.8
+	+NOAUTOFIRE
+	States
+	{
+	Spawn:
+		BRSG X -1
+		Stop
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		BRSG A 1 A_Raise(12)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		BRSG A 0 A_StopSound(5)
+		BRSG A 1 A_Lower(12)
+		Wait
+	Ready:
+		BRSG A 0 A_PlaySound("Borsch/Idle",5,0.8,1)
+		BRSG BCDEFGHIJKLMNOPQRSTU 1 A_WeaponReady
+		Loop
+	Fire:
+		BRSF A 1 Bright {
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2, 2, 4, 12, 0, 2,"none", QF_SCALEDOWN); }
+			A_GunFlash;
+			A_SetBlend("Purple",0.3,15);
+			A_Recoil(10.0);
+			A_PlaySound("Borsch/Fire",1);
+			A_PlaySound("Borsch/Add1",5);
+			A_FireCustomMissile("DarkWeave", 0, 1, 2, 3);
+			A_WeaponOffset(26,58,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); }
+			A_SetPitch(pitch-3.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-2.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		BRSF B 1 Bright {
+			A_WeaponOffset(20,52,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); }
+			A_SetPitch(pitch-2.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-1.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		BRSF C 1 Bright {
+			A_WeaponOffset(16,48,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); }
+			A_SetPitch(pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		BRSF D 1 Bright {
+			A_WeaponOffset(13,45,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); }
+			A_SetPitch(pitch-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		BRSF E 1 Bright { A_WeaponOffset(10,42,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.935); } }
+		BRSF F 1 Bright { A_WeaponOffset(8,40,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.945); } }
+		BRSG A 1 { A_WeaponOffset(6,38,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		BRSG A 1 { A_WeaponOffset(4,36,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		BRSG A 1 { A_WeaponOffset(2,34,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		BRSG A 1 { A_WeaponOffset(1,33,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		BRSG A 1 { A_Weaponoffset(0,32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		BRSG A 4 A_ZoomFactor(1.0)
+		BRSG A 20
+		Goto Ready
+	AltFire:
+		BRSG A 0 A_JumpIfInventory("LeninActive",1,"GlobalOrangeJuiceMutilator")
+		BRSG A 0 {
+			A_PlaySound("Borsch/Charge",5,0.9,1);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2, 2, 2, 18, 0, 2,"none", QF_SCALEUP); }
+		}
+		BRSC ABCDEFGHI 4 Bright
+		BRSF A 1 Bright {
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2, 2, 4, 25, 0, 2,"none", QF_SCALEDOWN); }
+			A_StopSound(5);
+			A_GunFlash;
+			A_SetBlend("Purple",0.9,25);
+			A_Recoil(20.0);
+			A_PlaySound("Borsch/Fire",1);
+			A_PlaySound("Borsch/Add1",5);
+			A_PlaySound("Borsch/Add2",6);
+			A_FireCustomMissile("BorschHoleProjectile", 0, 1, 2, 3);
+			A_WeaponOffset(26,58,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); }
+			A_SetPitch(pitch-5.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+
+		BRSF B 1 Bright {
+			A_WeaponOffset(20,52,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.825); }
+			A_SetPitch(pitch-3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-1.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		BRSF C 1 Bright {
+			A_WeaponOffset(16,48,WOF_INTERPOLATE); 
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); }
+			A_SetPitch(pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		BRSF D 1 Bright {
+			A_WeaponOffset(13,45,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); }
+			A_SetPitch(pitch-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		BRSF E 1 Bright { A_WeaponOffset(10,42,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } }
+		BRSF F 1 Bright { A_WeaponOffset(8,40,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		BRSG A 1 { A_WeaponOffset(6,38,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		BRSG A 1 { A_WeaponOffset(4,36,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		BRSG A 1 { A_WeaponOffset(2,34,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		BRSG A 1 { A_WeaponOffset(1,33,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		BRSG A 5 { A_WeaponOffset(0,32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		BRSG A 20
+		Goto Ready
+	GlobalOrangeJuiceMutilator:
+		BRSG A 0 {
+			A_PlaySound("Borsch/Charge",5,0.9,1);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2, 2, 2, 18, 0, 2,"none", QF_SCALEUP); }
+		}
+		BRSC ABCDEFGHI 4 Bright
+		BRSF A 1 Bright {
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2, 2, 4, 25, 0, 2,"none", QF_SCALEDOWN); }
+			A_StopSound(5);
+			A_GunFlash;
+			A_SetBlend("Purple",0.9,25);
+			A_Recoil(20.0);
+			A_PlaySound("Borsch/Fire",1);
+			A_PlaySound("Borsch/Add1",5);
+			A_PlaySound("Borsch/Add2",6);
+			if(!GetCVar("RO_InfiniteAmp")) {
+				A_TakeInventory("Lenin",1);
+				A_TakeInventory("LeninActive",1);
+			}
+			A_FireCustomMissile("BorschHoleClusterProjectile", 0, 0, 2, 3);
+			A_WeaponOffset(26,58,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); }
+			A_SetPitch(pitch-5.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+
+		BRSF B 1 Bright {
+			A_WeaponOffset(20,52,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.825); }
+			A_SetPitch(pitch-3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-1.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		BRSF C 1 Bright {
+			A_WeaponOffset(16,48,WOF_INTERPOLATE); 
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); }
+			A_SetPitch(pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		BRSF D 1 Bright {
+			A_WeaponOffset(13,45,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); }
+			A_SetPitch(pitch-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		BRSF E 1 Bright { A_WeaponOffset(10,42,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } }
+		BRSF F 1 Bright { A_WeaponOffset(8,40,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		BRSG A 1 { A_WeaponOffset(6,38,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		BRSG A 1 { A_WeaponOffset(4,36,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		BRSG A 1 { A_WeaponOffset(2,34,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		BRSG A 1 { A_WeaponOffset(1,33,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		BRSG A 5 { A_WeaponOffset(0,32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		BRSG A 50
+		Goto Ready
+	Flash:
+		TNT1 A 12 A_Light2
+		TNT1 A 4 A_Light1
+		TNT1 A 0 A_Light0
+		Stop
+	AltFlash:
+		TNT1 A 8 A_Light2
+		TNT1 A 4 A_Light1
+		TNT1 A 0 A_Light0
+		Stop
+	}
+}

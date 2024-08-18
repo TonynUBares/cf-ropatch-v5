@@ -1,0 +1,537 @@
+/*Super Berserker Fists alias Tank Fists
+
+Credits:
+Donald Duck for hugeass doomguy arms! I shoddily extended them a little~
+Robocyte for a Dumbbell model I used for the dumbbell attack.
+Xenogenocide for metalized Tank theme from Left 4 Dead.
+Valve for sounds and general idea.
+I made the pickup for it from Cage's missile ammo box.
+
+*/
+
+
+Actor BerserkerFistGiver : CustomInventory
+{
+  Scale 0.8
+  Inventory.Amount 1
+  Inventory.MaxAmount 0
+  Inventory.InterHubAmount 0
+	Tag "Berserker Pack"
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You've got the 'instant berserker' pack! this one rapes the vanilla one"
+	Obituary "%o was obliterated by %k's berserker rage."
+  States
+  {
+  Spawn:
+	BERY A 1
+	Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("BerserkerFist",1,"Remove")
+  All:
+	TNT1 A 0 A_GiveInventory("BerserkerFist",1)
+	Stop
+  Remove:
+    TNT1 A 0
+    Stop
+  }
+}
+
+actor BerserkerFist : Weapon 24529
+{
+	//$Category Weapons
+	//$Title Berserker Pack
+	//$Sprite BERYA0
+	Tag "Berserker Pack"
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You've got the 'instant berserker' pack! this one rapes the vanilla one"
+	Obituary "%o was obliterated by %k's berserker rage."
+	Weapon.UpSound ""
+	Weapon.SelectionOrder 7
+	Weapon.SlotNumber 1
+	Weapon.SlotPriority 28.0
+	Weapon.Kickback 15000
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 2.0
+	Weapon.BobRangeY 1.5
+	Weapon.BobRangeX 0.8
+	AttackSound ""
+	+NOALERT
+	+NOAUTOAIM
+	States
+	{
+	Spawn:
+		BERY A -1
+		Stop
+	Ready:
+		TNT1 A 0 A_GiveInventory("BerserkerRoarCounter",1)
+		TNT1 A 0 A_JumpIfInventory("BerserkerRoarCounter",210,"CheckScream")
+		TFSI A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM)
+		Loop
+	LeftFist:
+		TFSI A 1 {
+			A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,1);
+		}
+		Loop
+	LuchadoreHandle:
+		TNT1 A 1 { If(Z == FloorZ && !CountInv("PowerLuchadoreCooldown") && GetPlayerInput(INPUT_BUTTONS) & BT_JUMP) { A_Overlay(9,"LUCHADOOOORE"); } }
+		Loop
+	LUCHADOOOORE:
+		TNT1 A 0 {
+			A_GiveInventory("LuchadorePower");
+			A_PlaySound("Tank/Jump",1,0.8);
+			if(random(0,4) == 0) { A_PlaySound("Tank/Luchadore",5); }
+			A_SpawnItemEx("TankLuchadoreShock",0,0,0,0,0,0,0,SXF_CLIENTSIDE);
+			if(GetPlayerInput(INPUT_BUTTONS) & (BT_LEFT | BT_MOVELEFT)) {
+				A_ChangeVelocity(0.0,10.0,0.0,CVF_RELATIVE);
+			}
+			if(GetPlayerInput(INPUT_BUTTONS) & (BT_RIGHT | BT_MOVERIGHT)) {
+				A_ChangeVelocity(0.0,-10.0,0.0,CVF_RELATIVE);
+			}
+			if(GetPlayerInput(INPUT_BUTTONS) & (BT_FORWARD)) {
+				A_ChangeVelocity(10.0,0.0,0.0,CVF_RELATIVE);
+			}
+			if(GetPlayerInput(INPUT_BUTTONS) & (BT_BACK)) {
+				A_ChangeVelocity(-10.0,0.0,0.0,CVF_RELATIVE);
+			}
+			A_ChangeVelocity(velx,vely,20.0,CVF_REPLACE);
+		}
+		Stop
+	Zoom:
+		TNT1 A 0 A_JumpIfInventory("TankMusicTrigger",1,"TakeReload")
+		TNT1 A 0 {
+			A_GiveInventory("TankMusicTrigger",1);
+			ACS_NamedExecute("TankMusicStop");
+		}
+		TFSI A 14 A_WeaponReady
+		Goto Ready
+	TakeReload:
+		TNT1 A 0 {
+			A_TakeInventory("TankMusicTrigger",1);
+			ACS_NamedExecute("TankMusicStart");
+		}
+		TFSI A 14 A_WeaponReady
+		Goto Ready
+	CheckScream:
+		TNT1 A 0 {
+			A_TakeInventory("BerserkerRoarCounter",999);
+			if(random(1,256) <= 128) {
+				A_AlertMonsters;
+				A_Playsound("Tank/Rumble",5);
+			}
+		}
+		TNT1 A 0
+		Goto Ready
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		TNT1 A 0 {
+			A_SetScale(1.0);
+			A_ZoomFactor(1.0);
+			A_Overlay(8,"none");
+			ACS_NamedExecute("Slowride",0,100,0,0);
+			A_TakeInventory("PowerFrightener",1);
+			A_TakeInventory("PowerTankDamage",1);
+			A_TakeInventory("BerserkerTrigger",1);
+			A_TakeInventory("BerserkerRoarCounter",999);
+			A_TakeInventory("BerserkerAttackCounter",9);
+			A_TakeInventory("BerserkerConnected",1);
+			ACS_NamedExecute("TankMusicStop");
+			A_Gravity;
+		}
+		TFSI A 1 A_Lower(12)
+		Loop
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+		TNT1 A 0 {
+			A_TakeInventory("BerserkerConnected",1);
+			A_SetScale(2.0);
+			A_Overlay(8,"LuchadoreHandle");
+			A_Overlay(-2,"LeftFist");
+			A_ZoomFactor(0.9);
+			ACS_NamedExecute("Slowride",0,50,0,0);
+			A_GiveInventory("TankProtector",1);
+			A_GiveInventory("BerserkerTrigger",1);
+		}
+		TNT1 A 0 A_JumpIfInventory("TankMusicTrigger",1,"DAMUZAK")
+	SelectLoop:
+		TFSI A 1 A_Raise(12)
+		Loop
+	DAMUZAK:
+		TNT1 A 0 {
+			ACS_NamedExecute("TankMusicStop");
+			A_PlaySound("Tank/Theme",7,0.9,1,ATTN_NORM);
+		}
+		Goto SelectLoop
+	AttackScream:
+		TNT1 A 0 A_Jump(128,3)
+		TNT1 A 0 A_PlaySound("Tank/Attack",6)
+		TNT1 A 0 A_AlertMonsters
+		TNT1 A 0 A_TakeInventory("BerserkerAttackCounter",9)
+		Goto FireMain
+	Fire:
+		TNT1 A 0 A_JumpIf(!CountInv("PowerThrustPunchCooldown") && GetPlayerInput(INPUT_BUTTONS) & BT_CROUCH, "ThrustPunch")
+		TNT1 A 0 A_Overlay(-2,"LeftDown")
+		TFSI A 1 A_OverlayOffset(OverlayID(),11,32+13,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),22,32+26,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),32,32+47,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),44,32+69,WOF_INTERPOLATE)
+		TNT1 A 5
+		TNT1 A 0 A_JumpIf(!CountInv("PowerThrustPunchCooldown") && GetPlayerInput(INPUT_BUTTONS) & BT_CROUCH, "ThrustPunchMain")
+		Goto FireMain
+	LeftDown:
+		TNT1 A 0 A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,1)
+		TFSI A 1 A_OverlayOffset(OverlayID(),11,13)
+		TFSI A 1 A_OverlayOffset(OverlayID(),22,26,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),32,47,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),44,69,WOF_INTERPOLATE)
+		TNT1 A 5
+		Stop
+	FireMain:
+		TNT1 A 0 A_GiveInventory("BerserkerAttackCounter",1)
+		TNT1 A 0 A_JumpIfInventory("BerserkerAttackCounter",5,"AttackScream")
+		TNT1 A 0 A_PlaySound("Tank/Swing",1)
+		TNT1 A 0 {
+			if(!CountInv("BerserkerSide")) {
+				A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,1);
+				A_GiveInventory("BerserkerSide",1);
+			} else {
+				A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,0);
+				A_TakeInventory("BerserkerSide",1);
+			}
+		}
+	Punch:
+		TNT1 A 2
+		TFST D 1 A_OverlayOffset(OverlayID(),317,107)
+		TFST D 1 A_OverlayOffset(OverlayID(),271,87,WOF_INTERPOLATE)
+		TFST D 1 A_OverlayOffset(OverlayID(),184,75,WOF_INTERPOLATE)
+		TFST B 1 {
+			A_OverlayOffset(OverlayID(),146,77,WOF_INTERPOLATE);
+			If(CountInv("BerserkerSide")) {
+				A_FireCustomMissile("TankExplosivePunchLeft");
+			} else {
+				A_FireCustomMissile("TankExplosivePunch");
+			}
+		}
+		TFST A 1 { A_OverlayOffset(OverlayID(),127,87,WOF_INTERPOLATE); Return A_JumpIf(CountInv("BerserkerConnected"),"PunchCracker"); }
+		TFST A 1 { A_OverlayOffset(OverlayID(),113,93,WOF_INTERPOLATE); Return A_JumpIf(CountInv("BerserkerConnected"),"PunchCracker"); }
+		TFST A 1 { A_OverlayOffset(OverlayID(),118,100,WOF_INTERPOLATE); Return A_JumpIf(CountInv("BerserkerConnected"),"PunchCracker"); }
+		TFST A 1 A_OverlayOffset(OverlayID(),125,104,WOF_INTERPOLATE)
+		TFST C 1
+		TFST C 1 { A_OverlayOffset(OverlayID(),141,111,WOF_INTERPOLATE); A_ZoomFactor(0.9); }
+		TFST D 1 A_OverlayOffset(OverlayID(),204,140,WOF_INTERPOLATE)
+		TFST D 1 A_OverlayOffset(OverlayID(),246,159,WOF_INTERPOLATE)
+		TNT1 A 0 A_OverlayOffset(OverlayID(),0,0)
+		TNT1 A 4
+		TNT1 AAAA 1 {
+			If(GetPlayerInput(INPUT_BUTTONS) & BT_CROUCH && GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK) { A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,0); Return State("AltFire"); }
+			If(GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK) { A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,0); Return State("DumbbellHell"); }
+			If(!CountInv("PowerThrustPunchCooldown") && GetPlayerInput(INPUT_BUTTONS) & BT_CROUCH && GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK) { Return State("ThrustPunchMain"); }
+			If(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK) { Return State("FireMain"); }
+			Return State("");
+		}
+		TNT1 A 0 A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,0)
+		Goto Backdown
+	PunchCracker:
+		/*TFST A 0 {
+			if(A_CheckFloor("Null")) { Return State(""); }
+			A_LowGravity;
+			A_Recoil(-3);
+			A_ChangeVelocity(0,0,15.0,CVF_RELATIVE);
+			Return State("");
+		}*/
+		TFST A 0 A_TakeInventory("BerserkerConnected",1)
+		TFST AAA 1 A_OverlayOffset(OverlayID(),127+frandom(8.0,-8.0),87+frandom(8.0,-8.0),WOF_INTERPOLATE)
+		//TFST A 0 A_Gravity
+		TFST A 0 A_ZoomFactor(0.9)
+		TFST AAAAA 1 A_OverlayOffset(OverlayID(),127+frandom(8.0,-8.0),87+frandom(8.0,-8.0),WOF_INTERPOLATE)
+		
+		Goto Punch+6
+	Backdown:
+		TNT1 A 0 A_Overlay(-2,"LeftUp")
+		TFSI A 1 A_OverlayOffset(OverlayID(),44,32+69)
+		TFSI A 1 A_OverlayOffset(OverlayID(),32,32+47,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),22,32+26,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),11,32+13,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),0,32,WOF_INTERPOLATE)
+		Goto Ready
+	LeftUp:
+		TNT1 A 0 A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,1)
+		TFSI A 1 A_OverlayOffset(OverlayID(),44,69)
+		TFSI A 1 A_OverlayOffset(OverlayID(),32,47,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),22,26,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),11,13,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),0,0,WOF_INTERPOLATE)
+		Goto LeftFist
+	ThrustPunch:
+		TNT1 A 0 A_Overlay(-2,"LeftDown")
+		TFSI A 1 A_OverlayOffset(OverlayID(),11,32+13,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),22,32+26,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),32,32+47,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),44,32+69,WOF_INTERPOLATE)
+		TNT1 A 5
+	ThrustPunchMain:
+		TNT1 A 2
+		TNT1 A 0 {
+			if(GetCvar("RO_QuakeRecoil")) { A_ZoomFactor(0.7); }
+			A_GiveInventory("PowerThrustPunch");
+			A_PlaySound("Tank/Swing",1);
+			A_PlaySound("Tank/Jump",6,0.8);
+			A_ChangeVelocity (Cos(Pitch)*35,0,Sin(Pitch)*-35,CVF_RELATIVE);
+			A_TakeInventory("BerserkerAttackCounter",9);
+			A_AlertMonsters;
+			A_Playsound("Tank/Attack",5);
+		}
+		TNT1 A 0 {
+			if(!CountInv("BerserkerSide")) {
+				A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,1);
+				A_GiveInventory("BerserkerSide",1);
+			} else {
+				A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,0);
+				A_TakeInventory("BerserkerSide",1);
+			}
+		}
+		TFST D 1 A_OverlayOffset(OverlayID(),317,107)
+		TFST D 1 A_OverlayOffset(OverlayID(),271,87,WOF_INTERPOLATE)
+		TFST D 1 A_OverlayOffset(OverlayID(),184,75,WOF_INTERPOLATE)
+		TFST B 1 {
+			A_OverlayOffset(OverlayID(),146,77,WOF_INTERPOLATE);
+			If(CountInv("BerserkerSide")) {
+				A_FireCustomMissile("TankExplosiveThrustPunchLeft");
+			} else {
+				A_FireCustomMissile("TankExplosiveThrustPunch");
+			}
+		}
+		Goto Punch+6
+		TFST A 1 { A_OverlayOffset(OverlayID(),127,87,WOF_INTERPOLATE); Return A_JumpIf(CountInv("BerserkerConnected"),"PunchCracker"); }
+		TFST A 1 { A_OverlayOffset(OverlayID(),113,93,WOF_INTERPOLATE); Return A_JumpIf(CountInv("BerserkerConnected"),"PunchCracker"); }
+		TFST A 1 { A_OverlayOffset(OverlayID(),118,100,WOF_INTERPOLATE); Return A_JumpIf(CountInv("BerserkerConnected"),"PunchCracker"); }
+		TFST A 1 A_OverlayOffset(OverlayID(),125,104,WOF_INTERPOLATE)
+		TFST C 1
+		TFST C 1 A_OverlayOffset(OverlayID(),141,111,WOF_INTERPOLATE)
+		TFST D 1 A_OverlayOffset(OverlayID(),204,140,WOF_INTERPOLATE)
+		TFST D 1 A_OverlayOffset(OverlayID(),246,159,WOF_INTERPOLATE)
+		TNT1 A 4
+		TNT1 A 0 A_OverlayOffset(OverlayID(),0,0)
+		TNT1 A 0 A_ReFire("FireMain")
+		TNT1 A 0 A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,0)
+		Goto Backdown
+	Reload:
+		TFSI A 0 {
+			A_Overlay(-2,"LeftReload");
+			A_GiveInventory("TankChickeningOut",1);
+			A_AlertMonsters;
+			A_Playsound("Tank/Roar",5);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(4, 4, 4, 60, 0, 256, "none", QF_SCALEDOWN); }
+		}
+		TFSI AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_OverlayOffset(OverlayID(),random(8.0,-8.0),32+frandom(8.0,-8.0),WOF_INTERPOLATE)
+		TFSI A 15 A_WeaponReady(WRF_NOSECONDARY|WRF_NOSWITCH)
+		Goto Ready
+	LeftReload:
+		TFSI A 0 {
+			A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,1);
+		}
+		TFSI AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_OverlayOffset(OverlayID(),random(8.0,-8.0),frandom(8.0,-8.0),WOF_INTERPOLATE)
+		TFSI A 0 A_OverlayOffset(OverlayID(),0,0)
+		Goto LeftFist
+   AltFire:
+		TNT1 A 0 {
+			if(GetPlayerInput(INPUT_BUTTONS) & BT_CROUCH && A_CheckFloor("Null")) { Return State(""); }
+			Return State("DumbbellHellStart");
+		}
+		TNT1 A 0 A_Overlay(-2,"LeftDown")
+		TFSI A 1 A_OverlayOffset(OverlayID(),11,32+13)
+		TFSI A 1 A_OverlayOffset(OverlayID(),22,32+26,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),32,32+47,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),44,32+69,WOF_INTERPOLATE)
+		TNT1 A 5
+		TNT1 A 0 SetPlayerProperty(0,1,PROP_FROZEN)
+		TNT1 A 10
+		TNT1 A 0 {
+			A_AlertMonsters;
+			A_PlaySound("Tank/Rock/Lift",5);
+			A_FireCustomMissile("TankRockLift");
+		}
+		TNT1 A 25 { if(GetCvar("RO_QuakeRecoil")) { A_Quake(4, 40, 0, 256, "none"); } }
+		TNT1 A 0 SetPlayerProperty(0,0,PROP_FROZEN)
+		TNT1 A 15
+	AltHold:
+		TNT1 A 1
+		TNT1 A 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK,"AltHold")
+		TNT1 A 2 {
+			A_AlertMonsters;
+			A_PlaySound("Tank/Swing",1);
+			A_PlaySound("Tank/Attack",6);
+		}
+		TFST D 1 A_OverlayOffset(OverlayID(),317,107)
+		TFST D 1 A_OverlayOffset(OverlayID(),271,87,WOF_INTERPOLATE)
+		TFST D 1 A_OverlayOffset(OverlayID(),184,75,WOF_INTERPOLATE)
+		TFST B 1 { A_OverlayOffset(OverlayID(),146,77,WOF_INTERPOLATE); A_FireCustomMissile("TankRock",0,0,15); }
+		TFST A 1 A_OverlayOffset(OverlayID(),127,87,WOF_INTERPOLATE)
+		TFST A 1 A_OverlayOffset(OverlayID(),113,93,WOF_INTERPOLATE)
+		TFST A 1 A_OverlayOffset(OverlayID(),118,100,WOF_INTERPOLATE)
+		TFST A 1 A_OverlayOffset(OverlayID(),125,104,WOF_INTERPOLATE)
+		TFST C 1
+		TFST C 1 A_OverlayOffset(OverlayID(),141,111,WOF_INTERPOLATE)
+		TFST D 1 A_OverlayOffset(OverlayID(),204,140,WOF_INTERPOLATE)
+		TFST D 1 A_OverlayOffset(OverlayID(),246,159,WOF_INTERPOLATE)
+		TNT1 A 15
+		Goto Backdown
+	DumbbellHellRetry:
+		TNT1 A 8
+		Goto DumbbellHell
+	DumbbellHellStart:
+		TNT1 A 0 A_Overlay(-2,"LeftDown")
+		TFSI A 1 A_OverlayOffset(OverlayID(),11,32+13)
+		TFSI A 1 A_OverlayOffset(OverlayID(),22,32+26,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),32,32+47,WOF_INTERPOLATE)
+		TFSI A 1 A_OverlayOffset(OverlayID(),44,32+69,WOF_INTERPOLATE)
+		TNT1 A 5
+	DumbbellHell:
+		TFSI A 0 A_LowGravity
+		TFSI G 1 A_OverlayOffset(OverlayID(),297,139)
+		TFSI G 1 A_OverlayOffset(OverlayID(),284,109,WOF_INTERPOLATE)
+		TFSI G 1 A_OverlayOffset(OverlayID(),233,61,WOF_INTERPOLATE)
+		TFSI G 1 A_OverlayOffset(OverlayID(),202,16,WOF_INTERPOLATE)
+		TFSI G 1 A_OverlayOffset(OverlayID(),178,-27,WOF_INTERPOLATE)
+		TFSI E 1 A_OverlayOffset(OverlayID(),172,-53,WOF_INTERPOLATE)
+		TFSI E 1 A_OverlayOffset(OverlayID(),170,-63,WOF_INTERPOLATE)
+		TFSI E 1 A_OverlayOffset(OverlayID(),172,-67,WOF_INTERPOLATE)
+		TFSI E 1 A_OverlayOffset(OverlayID(),174,-69,WOF_INTERPOLATE)
+		TFSI E 1 A_OverlayOffset(OverlayID(),176,-71,WOF_INTERPOLATE)
+	DumbbellHold:
+		TFSI E 1 {
+			A_OverlayOffset(OverlayID(),176+frandom(1.0,-1.0),-71+frandom(1.0,-1.0),WOF_INTERPOLATE);
+			A_GiveInventory("DumbbellCharge",1);
+		}
+		TFSI E 0 A_JumpIf(CountInv("DumbbellCharge") >= 15, "DumbbellHold2")
+		TFSI E 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK,"DumbbellHold")
+		Goto DumbbellThrow
+	DumbbellHold2:
+		TFSI E 1 {
+			A_OverlayOffset(OverlayID(),176+frandom(1.0,-1.0),-71+frandom(3.0,-3.0),WOF_INTERPOLATE);
+			A_GiveInventory("DumbbellCharge",1);
+		}
+		TFSI E 0 A_JumpIf(CountInv("DumbbellCharge") >= 25, "DumbbellHold3")
+		TFSI E 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK,"DumbbellHold2")
+		Goto DumbbellThrow
+	DumbbellHold3:
+		TFSI E 1 {
+			A_OverlayOffset(OverlayID(),176+frandom(5.0,-5.0),-71+frandom(5.0,-5.0),WOF_INTERPOLATE);
+			A_GiveInventory("DumbbellCharge",1);
+		}
+		TFSI E 0 A_JumpIf(CountInv("DumbbellCharge") >= 35, "DumbbellHold4")
+		TFSI E 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK,"DumbbellHold3")
+		Goto DumbbellThrow
+	DumbbellHold4:
+		TFSI E 1 {
+			A_OverlayOffset(OverlayID(),176+frandom(7.0,-7.0),-71+frandom(7.0,-7.0),WOF_INTERPOLATE);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(1,1,1,6,0,32,"none",QF_SCALEDOWN); }
+			A_GiveInventory("DumbbellCharge",1);
+		}
+		TFSI E 0 A_JumpIf(CountInv("DumbbellCharge") >= 45, "DumbbellHold5")
+		TFSI E 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK,"DumbbellHold4")
+		Goto DumbbellThrow
+	DumbbellHold5:
+		TFSI E 1 {
+			A_OverlayOffset(OverlayID(),176+frandom(9.0,-9.0),-71+frandom(9.0,-9.0),WOF_INTERPOLATE);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(1,1,2,6,0,32,"none",QF_SCALEDOWN); }
+		}
+		TFSI E 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK,"DumbbellHold5")
+		Goto DumbbellThrow
+	DumbbellThrow:
+		TNT1 A 0 A_PlaySound("Tank/Swing",1)
+		TNT1 A 0 { if(CountInv("DumbbellCharge") >= 35) { A_PlaySound("Tank/Attack",6); } }
+		TFSI E 1 A_OverlayOffset(OverlayID(),174,-69,WOF_INTERPOLATE)
+		TFSI G 1 A_OverlayOffset(OverlayID(),157,-47,WOF_INTERPOLATE)
+		TFSI G 1 A_OverlayOffset(OverlayID(),96,1,WOF_INTERPOLATE)
+		TFSI G 1 {
+			A_OverlayOffset(OverlayID(),42,42,WOF_INTERPOLATE);
+			A_Gravity;
+			if(CountInv("DumbbellCharge") >= 45) { A_FireCustomMissile("TankDumbbellFullyCharged",0,0); A_TakeInventory("DumbbellCharge",0); if(!A_CheckFloor("Null")) { A_ChangeVelocity(Cos(Pitch)*-24,0,Sin(Pitch)*24,CVF_RELATIVE); } Return State(""); }
+			if(CountInv("DumbbellCharge") >= 35) { A_FireCustomMissile("TankDumbbell4",0,0); A_TakeInventory("DumbbellCharge",0); if(!A_CheckFloor("Null")) { A_ChangeVelocity(Cos(Pitch)*-22,0,Sin(Pitch)*22,CVF_RELATIVE); } Return State(""); }
+			if(CountInv("DumbbellCharge") >= 25) { A_FireCustomMissile("TankDumbbell3",0,0); A_TakeInventory("DumbbellCharge",0); if(!A_CheckFloor("Null")) { A_ChangeVelocity(Cos(Pitch)*-20,0,Sin(Pitch)*20,CVF_RELATIVE); } Return State(""); }
+			if(CountInv("DumbbellCharge") >= 15) { A_FireCustomMissile("TankDumbbell2",0,0); A_TakeInventory("DumbbellCharge",0); if(!A_CheckFloor("Null")) { A_ChangeVelocity(Cos(Pitch)*-15,0,Sin(Pitch)*15,CVF_RELATIVE); } Return State(""); }
+												   A_FireCustomMissile("TankDumbbell",0,0); A_TakeInventory("DumbbellCharge",0); if(!A_CheckFloor("Null")) { A_ChangeVelocity(Cos(Pitch)*-10,0,Sin(Pitch)*10,CVF_RELATIVE); } Return State("");
+		}
+		TFSI H 1 A_OverlayOffset(OverlayID(),6,121,WOF_INTERPOLATE)
+		TFSI H 1 A_OverlayOffset(OverlayID(),-24,157,WOF_INTERPOLATE)
+		TNT1 A 0 A_OverlayOffset(OverlayID(),0,0)
+		TNT1 A 4
+		TNT1 AAAA 1 {
+			If(!CountInv("PowerThrustPunchCooldown") && GetPlayerInput(INPUT_BUTTONS) & BT_CROUCH && GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK) { Return State("ThrustPunchMain"); }
+			If(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK) { Return State("FireMain"); }
+			If(GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK) { Return State("DumbbellHellRetry"); }
+			Return State("");
+		}
+		Goto Backdown
+   }
+}
+
+//Counters and triggers
+actor BerserkerSide : Inventory { Inventory.MaxAmount 1 }
+actor BerserkerConnected : Inventory { Inventory.MaxAmount 1 }
+actor DumbbellCharge : Inventory { Inventory.MaxAmount 70 }
+actor TankMusicTrigger : Inventory { Inventory.MaxAmount 1 }
+actor BerserkerRoarCounter : Inventory { Inventory.MaxAmount 999 }
+actor BerserkerAttackCounter : Inventory { Inventory.MaxAmount 9 }
+
+//Cooldowns
+actor LuchadorePower : PowerupGiver
+{
+	Inventory.Amount 0
+	Powerup.Type "LuchadoreCooldown"
+	Powerup.Duration 35
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+}
+
+actor PowerLuchadoreCooldown : Powerup {}
+
+actor PowerThrustPunch : PowerupGiver
+{
+	Inventory.Amount 0
+	Powerup.Type "ThrustPunchCooldown"
+	Powerup.Duration 105
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+}
+
+actor PowerThrustPunchCooldown : Powerup {}
+
+//Powerups
+actor TankProtector : PowerupGiver
+{
+	Inventory.PickupMessage "TAAAAAAAAANK!!!"
+	Powerup.Duration 0x7FFFFFFF
+	Powerup.Type "TankDamage"
+	+INVENTORY.ALWAYSPICKUP
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.PERSISTENTPOWER
+	states
+	{
+	Spawn:
+		TNT1 A -1
+		Stop
+	}
+}
+
+actor PowerTankDamage : PowerProtection
+{
+	DamageFactor "normal", 0.5
+	Inventory.Icon "TNT1A0"
+}
+
+actor TankChickeningOut : PowerupGiver
+{
+	Inventory.PickupMessage "TAAAAAAAAANK!!!"
+	Powerup.Duration -14
+	Powerup.Type "Frightener"
+	+INVENTORY.ALWAYSPICKUP
+	+INVENTORY.AUTOACTIVATE
+	states
+	{
+	Spawn:
+		TNT1 A -1
+		Stop
+	}
+}

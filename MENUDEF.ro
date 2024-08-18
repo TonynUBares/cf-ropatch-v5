@@ -1,0 +1,203 @@
+ListMenu "MainMenu"
+{
+	IfGame (DOOM)
+	{
+	  ifOption(OpenAL) { StaticPatch 80,-5, "MDOOMHD" }
+	  else { StaticPatch 80,-25, "MDOOMHD" }
+	  Position 93,70
+	}
+	Font "BIGFONT", "DarkGray" , "White"
+	TextItem "Get Drunk!",			"n",	"PlayerclassMenu"
+	TextItem "Mod Options",			"c",	"ModMenu"
+	TextItem "Means of drinking.",			"o",	"OptionsMenu"
+	TextItem "Did we drink yesterday?",		"l",	"LoadGameMenu"
+	TextItem "Lights out, Tovarisch.",		"s",	"SaveGameMenu"
+	TextItem "Not today, Vodka.",			"q",	"QuitMenu"
+	Position 1, 1
+}
+
+OptionMenu "ModMenu"
+{
+	Title "Mod Options"
+	SubMenu "CF Menu","Clusterfuck"
+	StaticText " "
+	SubMenu "CF-RO Compatibility","Compatibility"
+	StaticText " "
+	SubMenu "RO Menu","RussianOverkill"
+	StaticText " "
+}
+
+OptionMenu "Clusterfuck"
+{
+	Title "Clusterfuck menu (compressed)"
+	SubMenu "CF Options","OptionsCF"
+	StaticText " "
+	SubMenu "Main Credits","ReadThisMenu"
+	StaticText " "
+}
+
+OptionMenu "Compatibility"
+{
+	Title "CF-RO Compatibility Options"
+
+	StaticText "  "
+	SubMenu "RO Difficulty Setting","Difficulty"
+	StaticText " "
+	Option "$WeaponryExtensionOption1",	"weaponExt",	"WeapExtension"
+	StaticText " "
+	StaticText "$CompO11"
+	StaticText "$CompO12"
+	StaticText " "
+	StaticText "$CompO13"
+	StaticText "$CompO14"
+	StaticText " "
+}
+
+OptionValue "WeapExtension"
+{
+    0, "ModOnly"
+    1, "All"
+}
+
+OptionMenu "RussianOverkill"
+{
+	Title "Real Soviet Stuff!"
+
+	StaticText " "
+	SubMenu "Convienience Options","ROConvienienceMenu"
+	StaticText " "
+	SubMenu "Cheaty Options","ROCheatMenu"
+	StaticText " "
+	SubMenu "Driving under influence.","RoControlMenu"
+	StaticText " "
+}
+
+OptionMenu "Difficulty"
+{
+	Title "RO Difficulty Setting"
+
+	StaticText "                                             "
+	Option "$RussianOverkillOption1",	"RO_Difficulty",	"RODiff"
+	StaticText " "
+	StaticText "$ROO11"
+	StaticText " "
+	StaticText "$ROO12"
+	StaticText "$ROO13"
+	StaticText " "
+	StaticText "$ROO14"
+	StaticText " "
+	StaticText "$ROO15"
+	StaticText " "
+	StaticText "$ROO16"
+	StaticText " "
+	StaticText "$ROO17"
+	StaticText "$ROO18"
+	StaticText "$ROO19"
+	StaticText "$ROO20"
+	StaticText "$ROO21"
+	StaticText " "
+	StaticText "$ROO22"
+	StaticText " "
+	StaticText "$ROO23"
+	StaticText " "
+	StaticText "$ROO24"
+	StaticText " "
+	StaticText " "
+	StaticText "$ROO25"
+	StaticText " "
+}
+
+
+
+OptionValue "RODiff"
+{
+    0, "Off"
+    1, "Communism powerful force"
+    2, "Vodka Overdose"
+    3, "Drinking with Comrades"
+    4, "A Struggle for Freedom"
+    5, "Red Oktoberfest"
+    6, "Stalin is after you"
+    7, "Drunk Simulator"
+    8, "License to Kill"
+}
+
+
+OptionMenu "ROConvienienceMenu"
+{
+	Title "Convienience Options"
+	StaticText ""
+	Option "Class restriction", "RO_ClassRestriction", "OnOff"
+	StaticText ""
+	Slider "Recoil multiplier", "RO_WeaponRecoil", 0.0, 2.0, 0.1, 1
+	Option "Weapon screen shaking", "RO_QuakeRecoil", "OnOff"
+	Option "Screen recoil", "RO_ZoomRecoil", "OnOff"
+	Slider "Weapon Voices",		"RO_Voices",			0, 100, 1, 0
+	TextField "Weapon Voices", "RO_Voices"
+	Option "Disable Weapon Tooltips",	"RO_IGotIt", "OnOff"
+	Slider "Barrel Parts",		"RO_BarrelAmount",			0, 20, 1, 0
+	Option "Pickup Particle Choker",	"RO_PickupParticleChoker",	"OnOff"
+	Option "Smoke Choker",	"RO_SmokeChoker",	"OnOff"
+	Option "Key Share", "RO_KeyShare", "OnOff"
+}
+
+OptionMenu "ROCheatMenu"
+{
+	Title "Cheaty Options"
+	StaticText ""
+	Option "Deathnukes",	"RO_Deathnukes",	"OnOff"
+	Option "Infinite Doubler Backpack",	"RO_SuperBackpack",	"OnOff"
+	Option "Full Refill Backpack",	"RO_FullBackpack",	"OnOff"
+	Option "Infinite Amplifier",	"RO_InfiniteAmp",	"OnOff"
+	Option "Spawn SSG weapons on shotguns",	"RO_ShotgunSpawn",	"OnOff"
+	Option "Random comboes",	"RO_ComboMode",	"OnOff"
+	TextField "Cabernado size",	"RO_CaberLimit"
+	Option "Ramjet picks up", "RO_PickyRamjet", "OnOff"
+}
+
+OptionMenu "ROControlMenu"
+{
+	Title "Control Options"
+	ScrollTop 2
+	StaticTextSwitchable 	"ENTER to change, BACKSPACE to clear", "Press new key for control, ESC cancels.", "ControlMessage"
+	StaticText 	""
+	StaticText "Gun Controls", 1
+	StaticText 	"Yes, the guns here have that many functions. Bind that stuff!", "White"
+	StaticText 	""
+	Control 	"Primary Fire",				"+attack"
+	Control 	"Secondary fire (Altfire)",	"+altattack"
+	Control 	"Tertiary Fire (Reload)",	"+reload"
+	Control 	"Quaternary Fire (Zoom)",	"+zoom"
+	StaticText 	""
+	Control 	"Next weapon",			"weapnext"
+	Control 	"Previous weapon",		"weapprev"
+	StaticText 	""
+	StaticText 	"Main Controls", 1
+	StaticText 	"All the movement stuff you'd need.", "White"
+	StaticText 	""
+	Control 	"Use / Open",			"+use"
+	Control 	"Move forward",			"+forward"
+	Control 	"Move backward",		"+back"
+	Control 	"Strafe left",			"+moveleft"
+	Control 	"Strafe right",			"+moveright"
+	Control 	"Jump / Jumpjet",		"+jump"
+	Control 	"Crouch",				"+crouch"
+	StaticText 	""
+	StaticText 	"Inventory", 1
+	StaticText 	"Inventory comes handy in here.", "White"
+	StaticText 	""
+	Control 	"Activate item",		"invuse"
+	//Control 	"Activate all items",	"invuseall"
+	Control 	"Next item",			"invnext"
+	Control 	"Previous item",		"invprev"
+	StaticText 	""
+	Control 	"Drop item",			"invdrop"
+	Control 	"Drop weapon",			"weapdrop"
+	StaticText 	""
+	StaticText 	"Quick-use", 1
+	StaticText 	""
+	Control "Sticky Bomb Quick-Toss",	"BobsBrainBestExplosiveEver"
+	Control "Drink Vodka", 				"UbermenschUnlimited"
+	Control "Activate Jet Thruster",	"FlyingDumbass"
+	Control "Use Quick Nuke Launcher",	"Redneckmeer"
+}

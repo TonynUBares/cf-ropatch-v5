@@ -1,0 +1,787 @@
+/*
+CREDITS:
+Revolvers, Pump-action, Cannon - Croteam (Serious Sam SE)
+Lever-action - Ubisoft (Will Rock)
+Machinegun - ID (Quake 3 Team Arena)
+
+CRT Throw - Dasboschitt
+Rocket propelled chainsaw sprite rotations by UBXMaster, methinks
+Rocket Armchair - Captain Toenail
+Concret Donkey - Team17
+
+Sounds:
+CRT Impact, HAAAAAAX - Valve (Half-Life 2)
+CRT Fling - ID (Wolf:ET, Mortar round oncoming)
+Chainsaw - ID (Doom 3)
+Miztaegg\Generic Sounds from the 70s - Magnum
+Telefonmast - Call of Duty 2
+Telefonmast Bouncing - Monolith (FEAR 1)
+Telefonmast Theme - Valve (Day of Defeat)
+*/
+
+actor CannonTrigger : DatTrigger {}
+actor RevolverTrigger : DatTrigger { }
+actor RevolverCounter : DatTrigger { Inventory.MaxAmount 6 }
+actor MGTrigger : DatTrigger {}
+actor CRTTrigger : DatTrigger {}
+actor RPCTrigger : DatTrigger {}
+actor DonkeyTrigger : DatTrigger {}
+actor TelefonmastTrigger : DatTrigger {}
+
+actor Shooter : Weapon
+{
+	Tag "Commando Gunfists"
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You are the Shooter, and you are shooting!... with fists?! (1)"
+	Obituary "%o was humiliated by %k's handshot."
+	Weapon.UpSound "weapons/fistup2"
+	Weapon.SelectionOrder 8
+	Weapon.SlotNumber 1
+	Weapon.Kickback 150
+	AttackSound ""
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.8
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	+NOALERT
+	+WEAPON.CHEATNOTWEAPON
+	States
+	{
+	Spawn:
+		AMEL A -1
+		Loop
+	Ready:
+		AFPG B 0 A_Overlay(2,"LeftReady")
+		AFPG B 1 A_WeaponOffset(26,26+32)
+		AFPG B 1 A_WeaponOffset(20,20+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(12,12+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(5,5+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(2,2+32,WOF_INTERPOLATE)
+		AFPG B 0 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		Goto ReadyMain
+	LeftReady:
+		AFPG A 0 A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0)
+		AFPG A 1 A_OverlayOffset(OverlayID(),-26,26+32)
+		AFPG A 1 A_OverlayOffset(OverlayID(),-20,20+32,WOF_INTERPOLATE)
+		AFPG A 1 A_OverlayOffset(OverlayID(),-12,12+32,WOF_INTERPOLATE)
+		AFPG A 1 A_OverlayOffset(OverlayID(),-5,5+32,WOF_INTERPOLATE)
+		AFPG A 1 A_OverlayOffset(OverlayID(),-2,2+32,WOF_INTERPOLATE)
+		AFPG A 0 A_OverlayOffset(OverlayID(),0,32,WOF_INTERPOLATE)
+		Goto LeftReadyMain
+	ReadyMain:
+		AFPG B 1 A_WeaponReady
+		Loop
+	LeftReadyMain:
+		AFPG A 0 A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0)
+		AFPG A 1
+		Wait
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		AFPG A 0 {
+			A_TakeInventory("RoAloshaComboScript", 1);
+			//ACS_NamedTerminate("ComboControl");
+			A_Overlay(2,"LeftDeselect");
+			A_TakeInventory("RevolverCounter",6);
+			A_ZoomFactor(1.0);
+		}
+		AFPG B 1 A_WeaponOffset(2,2+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(5,5+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(12,12+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(20,20+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(26,26+32,WOF_INTERPOLATE)
+		TNT1 A 0 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		TNT1 A 1 A_Lower(100)
+		Wait
+	LeftDeselect:
+		AFPG A 0 A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0)
+		AFPG A 1 A_OverlayOffset(OverlayID(),-2,2+32,WOF_INTERPOLATE)
+		AFPG A 1 A_OverlayOffset(OverlayID(),-5,5+32,WOF_INTERPOLATE)
+		AFPG A 1 A_OverlayOffset(OverlayID(),-12,12+32,WOF_INTERPOLATE)
+		AFPG A 1 A_OverlayOffset(OverlayID(),-20,20+32,WOF_INTERPOLATE)
+		AFPG A 1 A_OverlayOffset(OverlayID(),-26,26+32,WOF_INTERPOLATE)
+		Stop
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		TNT1 A 0 {
+			A_GiveInventory("RoAloshaComboScript", 1);
+			// ACS_NamedExecuteAlways("ComboControl",0,1);
+			// ACS_NamedExecuteAlways("RO Combo Display",0,1);
+		}
+		TNT1 A 1 A_Raise(100)
+		Wait
+	Fire:
+		AFPG B 0 A_Overlay(2,"LeftDeselect")
+		AFPG B 1 A_WeaponOffset(2,2+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(5,5+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(12,12+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(20,20+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(26,26+32,WOF_INTERPOLATE)
+		TNT1 A 1
+		TNT1 A 0 A_ReFire
+		Goto PunchShotgun
+	
+	Hold:
+		TNT1 A 0 A_JumpIfInventory("RevolverTrigger",1,"Revolver") //Made specifically to unrustle Zhs2's jimmies!
+		TNT1 A 0 A_JumpIfInventory("MGTrigger",1,"Machinegun")
+		TNT1 A 0 A_JumpIfInventory("CannonTrigger",1,"Cannon")
+		TNT1 A 0 A_JumpIf(GetCVar("RO_ComboMode"),"Randomness1")
+		TNT1 A 0 A_ReFire("Pistols")
+		Goto Ready
+		
+	Randomness1:
+		TNT1 A 0 A_Jump(16,"Machinegun","Cannon","Revolver")
+		Goto Pistols
+	
+	//Pistol
+	Pistols:
+		TNT1 A 0 A_Jump(256,"Pistol1","Pistol2")
+		Goto Hold
+	Pistol1:
+		AFS1 A 1 A_WeaponOffset(-3,83+32)
+		AFS1 A 1 A_WeaponOffset(14,68+32,WOF_INTERPOLATE)
+		AFS1 A 1 A_WeaponOffset(23,62+32,WOF_INTERPOLATE)
+		//AFS1 A 1 A_WeaponOffset(28,59+32,WOF_INTERPOLATE)
+		AFS1 A 1 A_WeaponOffset(30,58+32,WOF_INTERPOLATE)
+		AFS1 B 1 Bright {
+			A_WeaponOffset(28,60+32,WOF_INTERPOLATE);
+			A_GunFlash;
+			A_AlertMonsters;
+			A_SetAngle(Angle + 0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_GiveInventory("BooletCasing");
+			A_PlaySound("Weapons/FistPistol",5);
+			If(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(0,0,1,50,"CaliberPuff",0,1536);
+			} Else {
+				A_FireBullets(0,0,1,25,"BulletPuff",0,1536);
+			}
+		}
+		AFS1 C 1 Bright A_WeaponOffset(18,68+32,WOF_INTERPOLATE)
+		AFS1 A 1 A_WeaponOffset(5,78+32,WOF_INTERPOLATE)
+		AFS1 A 1 A_WeaponOffset(-1,84+32,WOF_INTERPOLATE)
+		AFS1 A 1 A_WeaponOffset(-10,89+32,WOF_INTERPOLATE)
+		TNT1 A 0 A_ReFire("Hold")
+		Goto Ready
+   Pistol2:
+		AFS1 A 0 A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,1)
+		AFS1 A 1 A_WeaponOffset(-3,83+32)
+		AFS1 A 1 A_WeaponOffset(14,68+32,WOF_INTERPOLATE)
+		AFS1 A 1 A_WeaponOffset(23,62+32,WOF_INTERPOLATE)
+		//AFS1 A 1 A_WeaponOffset(28,59+32,WOF_INTERPOLATE)
+		AFS1 A 1 A_WeaponOffset(30,58+32,WOF_INTERPOLATE)
+		AFS1 B 1 Bright {
+			A_WeaponOffset(28,60+32,WOF_INTERPOLATE);
+			A_GunFlash;
+			A_AlertMonsters;
+			A_SetAngle(Angle - 0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_GiveInventory("BooletCasing");
+			A_PlaySound("Weapons/FistPistol",5);
+			If(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(0,0,1,50,"CaliberPuff",0,1536);
+			} Else {
+				A_FireBullets(0,0,1,25,"BulletPuff",0,1536);
+			}
+		}
+		AFS1 C 1 Bright A_WeaponOffset(18,68+32,WOF_INTERPOLATE)
+		AFS1 A 1 A_WeaponOffset(5,78+32,WOF_INTERPOLATE)
+		AFS1 A 1 A_WeaponOffset(-1,84+32,WOF_INTERPOLATE)
+		AFS1 A 1 A_WeaponOffset(-10,89+32,WOF_INTERPOLATE)
+		AFS1 A 0 A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,0)
+		TNT1 A 0 A_ReFire("Hold")
+		Goto Ready
+
+	//Revolver
+	Revolver:
+		TNT1 A 2 {
+			A_TakeInventory("RevolverTrigger",1);
+			A_Overlay(2,"RevolverLeft");
+		}
+		AFS1 D 1 A_WeaponOffset(154,83+32)
+		AFS1 D 1 A_WeaponOffset(148,77+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(142,71+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(138,68+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(133,63+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(130,60+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(126,57+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(124,54+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(122,51+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(123,52+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(124,55+32,WOF_INTERPOLATE)
+	RevolverLoop:
+		AFS1 A 0 A_Overlay(2,"RevolverLoopLeft")
+		AFS1 D 1 A_WeaponOffset(125,56+32,WOF_INTERPOLATE)
+		AFS1 E 1 Bright {
+			A_WeaponOffset(127,60+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+			A_GunFlash;
+			A_AlertMonsters;
+			A_GiveInventory("RevolverCounter",1);
+			A_GiveInventory("BooletCasing",1);
+			A_Recoil(3.0);
+			A_PlaySound("Weapons/FistMagnum",1,0.6);
+			If(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(0,0,1,40,"InvisPuff",0); //Lazy. Also no vars in guns for decorate.
+				A_FireBullets(0,0,1,40,"InvisPuff",0);
+				A_FireBullets(0,0,1,40,"InvisPuff",0);
+				A_FireBullets(0,0,1,40,"InvisPuff",0);
+				A_FireBullets(0,0,1,40,"InvisPuff",0);
+				A_FireBullets(0,0,1,40,"CaliberPuff",0);
+			} Else {
+				A_FireBullets(0,0,1,20,"InvisPuff",0);
+				A_FireBullets(0,0,1,20,"InvisPuff",0);
+				A_FireBullets(0,0,1,20,"InvisPuff",0);
+				A_FireBullets(0,0,1,20,"InvisPuff",0);
+				A_FireBullets(0,0,1,20,"BulletPuff",0);
+			}
+			A_SetAngle(Angle-1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		AFS1 F 1 Bright { A_WeaponOffset(130,63+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		AFS1 D 1 { A_WeaponOffset(124,65+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } }
+		AFS1 D 1 { A_WeaponOffset(144,73+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS1 D 1 { A_WeaponOffset(144,74+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		AFS1 D 1 { A_WeaponOffset(140,76+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		AFS1 D 0 A_JumpIfInventory("RevolverCounter",6,2) 
+		AFS1 D 0 A_ReFire("RevolverLoopContinue")
+		AFS1 D 1 A_WeaponOffset(150,83+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(160,90+32,WOF_INTERPOLATE)
+		TNT1 A 2 {
+			A_TakeInventory("RevolverCounter",6);
+			A_WeaponOffset(0,32);
+			A_ClearReFire;
+		}
+		Goto Ready
+	RevolverLoopContinue:
+		AFS1 A 0 A_Overlay(2,"RevolverLoopContinueLeft")
+		AFS1 D 1 A_WeaponOffset(136,73+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(134,70+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(131,64+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(130,62+32,WOF_INTERPOLATE)
+		AFS1 D 1 A_WeaponOffset(128,60+32,WOF_INTERPOLATE)
+		Goto RevolverLoop
+		
+	RevolverLeft:
+		AFS6 A 0 A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-232,165+32)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-225,149+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-205,133+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-180,116+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-161,102+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-136,91+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-113,78+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-88,69+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-67,66+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-56,70+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-42,77+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-35,89+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-27,100+32,WOF_INTERPOLATE)
+		Stop
+	RevolverLoopLeft:
+		AFPG A 0 A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-19,110+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-16,117+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-4,127+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),5,143+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),15,157+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),0,164+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-29,166+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-34,173+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-39,180+32,WOF_INTERPOLATE)
+		Stop
+	RevolverLoopContinueLeft:
+		AFPG A 0 A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-53,155+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-67,140+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-72,125+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-57,114+32,WOF_INTERPOLATE)
+		AFS6 A 1 A_OverlayOffset(OverlayID(),-38,106+32,WOF_INTERPOLATE)
+		Stop
+   
+   //Machinegun
+   Machinegun:
+		AFS4 A 0 A_TakeInventory("MGTrigger",1)
+		AFS4 A 1 A_WeaponOffset(-68,118+32)
+		AFS4 A 1 A_WeaponOffset(-61,109+32,WOF_INTERPOLATE)
+		AFS4 A 1 A_WeaponOffset(-53,101+32,WOF_INTERPOLATE)
+		AFS4 A 1 A_WeaponOffset(-45,94+32,WOF_INTERPOLATE)
+		AFS4 A 1 A_WeaponOffset(-38,89+32,WOF_INTERPOLATE)
+		AFS4 A 1 A_WeaponOffset(-28,83+32,WOF_INTERPOLATE)
+		
+		AFS4 B 1 Bright {
+			A_WeaponOffset(-17,81+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+			A_SetAngle(Angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.1*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_Recoil(0.5);
+			A_GiveInventory("BooletCasing");
+			A_PlaySound("Weapons/FistMachinegun",5);
+			if(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(8+random(1,-1),random(1,-1),1,50,"CaliberPuff",FBF_EXPLICITANGLE,1536);
+			} else {
+				A_FireBullets(8+random(1,-1),random(1,-1),1,25,"BulletPuff",FBF_EXPLICITANGLE,1536);
+			}
+		}
+		AFS4 C 1 Bright { A_WeaponOffset(-11,85+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS4 A 1 		{ A_WeaponOffset(-4,83+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+
+		AFS4 B 1 Bright {
+			A_WeaponOffset(-1,85+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+			A_SetAngle(Angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.1*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_Recoil(0.5);
+			A_GiveInventory("BooletCasing");
+			A_PlaySound("Weapons/FistMachinegun",5);
+			if(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(6+random(1,-1),random(1,-1),1,50,"CaliberPuff",FBF_EXPLICITANGLE,1536);
+			} else {
+				A_FireBullets(6+random(1,-1),random(1,-1),1,25,"BulletPuff",FBF_EXPLICITANGLE,1536);
+			}
+		}
+		AFS4 C 1 Bright { A_WeaponOffset(-3,93+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS4 A 1 		{ A_WeaponOffset(11,83+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+
+		AFS4 B 1 Bright {
+			A_WeaponOffset(14,89+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+			A_SetAngle(Angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.1*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_Recoil(0.5);
+			A_GiveInventory("BooletCasing");
+			A_PlaySound("Weapons/FistMachinegun",5);
+			if(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(4+random(1,-1),random(1,-1),1,50,"CaliberPuff",FBF_EXPLICITANGLE,1536);
+			} else {
+				A_FireBullets(4+random(1,-1),random(1,-1),1,25,"BulletPuff",FBF_EXPLICITANGLE,1536);
+			}
+		}
+		AFS4 C 1 Bright { A_WeaponOffset(15,95+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS4 A 1 		{ A_WeaponOffset(25,85+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+
+		AFS4 B 1 Bright {
+			A_WeaponOffset(29,88+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+			A_SetAngle(Angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.1*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_Recoil(0.5);
+			A_GiveInventory("BooletCasing");
+			A_PlaySound("Weapons/FistMachinegun",5);
+			if(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(2+random(1,-1),random(1,-1),1,50,"CaliberPuff",FBF_EXPLICITANGLE,1536);
+			} else {
+				A_FireBullets(2+random(1,-1),random(1,-1),1,25,"BulletPuff",FBF_EXPLICITANGLE,1536);
+			}
+		}
+		AFS4 C 1 Bright { A_WeaponOffset(29,96+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS4 A 1 		{ A_WeaponOffset(44,85+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+
+		AFS4 B 1 Bright {
+			A_WeaponOffset(48,88+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+			A_SetAngle(Angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.1*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_Recoil(0.5);
+			A_GiveInventory("BooletCasing");
+			A_PlaySound("Weapons/FistMachinegun",5);
+			if(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(random(1,-1),random(1,-1),1,50,"CaliberPuff",FBF_EXPLICITANGLE,1536);
+			} else {
+				A_FireBullets(random(1,-1),random(1,-1),1,25,"BulletPuff",FBF_EXPLICITANGLE,1536);
+			}
+		}
+		AFS4 C 1 Bright { A_WeaponOffset(48,96+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS4 A 1 		{ A_WeaponOffset(53,90+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+
+		AFS4 B 1 Bright {
+			A_WeaponOffset(58,93+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+			A_SetAngle(Angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.1*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_Recoil(0.5);
+			A_GiveInventory("BooletCasing");
+			A_PlaySound("Weapons/FistMachinegun",5);
+			if(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(-2+random(1,-1),random(1,-1),1,50,"CaliberPuff",FBF_EXPLICITANGLE,1536);
+			} else {
+				A_FireBullets(-2+random(1,-1),random(1,-1),1,25,"BulletPuff",FBF_EXPLICITANGLE,1536);
+			}
+		}
+		AFS4 C 1 Bright { A_WeaponOffset(58,101+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS4 A 1 		{ A_WeaponOffset(64,97+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+
+		AFS4 B 1 Bright {
+			A_WeaponOffset(68,100+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+			A_SetAngle(Angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.1*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_Recoil(0.5);
+			A_GiveInventory("BooletCasing");
+			A_PlaySound("Weapons/FistMachinegun",5);
+			if(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(-4+random(1,-1),random(1,-1),1,50,"CaliberPuff",FBF_EXPLICITANGLE,1536);
+			} else {
+				A_FireBullets(-4+random(1,-1),random(1,-1),1,25,"BulletPuff",FBF_EXPLICITANGLE,1536);
+			}
+		}
+		AFS4 C 1 Bright { A_WeaponOffset(68,108+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS4 A 1 		{ A_WeaponOffset(75,104+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+
+		AFS4 B 1 Bright {
+			A_WeaponOffset(79,108+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+			A_SetAngle(Angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.1*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_Recoil(0.5);
+			A_GiveInventory("BooletCasing");
+			A_PlaySound("Weapons/FistMachinegun",5);
+			if(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(-6+random(1,-1),random(1,-1),1,50,"CaliberPuff",FBF_EXPLICITANGLE,1536);
+			} else {
+				A_FireBullets(-6+random(1,-1),random(1,-1),1,25,"BulletPuff",FBF_EXPLICITANGLE,1536);
+			}
+		}
+		AFS4 C 1 Bright { A_WeaponOffset(79,116+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS4 A 1 		{ A_WeaponOffset(85,113+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+
+		AFS4 B 1 Bright {
+			A_WeaponOffset(89,116+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+			A_SetAngle(Angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.1*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_Recoil(0.5);
+			A_GiveInventory("BooletCasing");
+			A_PlaySound("Weapons/FistMachinegun",5);
+			if(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+				A_FireBullets(-8+random(1,-1),random(1,-1),1,50,"CaliberPuff",FBF_EXPLICITANGLE,1536);
+			} else {
+				A_FireBullets(-8+random(1,-1),random(1,-1),1,25,"BulletPuff",FBF_EXPLICITANGLE,1536);
+			}
+		}
+		AFS4 C 1 Bright { A_WeaponOffset(89,124+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		TNT1 A 0 A_ReFire
+		Goto Ready
+
+	//Shotgun
+	PunchShotgun:
+		AFS2 A 1 A_WeaponOffset(6,144+32)
+		AFS2 A 1 A_WeaponOffset(12,137+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(24,129+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(38,124+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(53,120+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(63,117+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(70,115+32,WOF_INTERPOLATE)
+		AFS2 A 2 A_WeaponOffset(76,112+32,WOF_INTERPOLATE)
+	Shotguning:
+		FISF A 0 A_Jump(128,"Winchester")
+		AFS2 B 1 Bright {
+			A_WeaponOffset(76,75+32);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); }
+			A_GunFlash;
+			A_AlertMonsters;
+			A_Recoil(8.0);
+			A_GiveInventory("ErasusCasing");
+			A_PlaySound("Weapons/FistShotgun",1);
+			If(CountInv("QuadUpgrade")) {
+				A_SetBlend("Blue",0.05,12);
+				A_PlaySound("Weapons/QuadShot",5);
+				A_FireBullets(14.5, 2.75, 30, 24, "BulletPuff",0,768);
+			} Else {
+				A_FireBullets(14.5, 2.75, 30, 12, "BulletPuff",0,768);
+			}
+			A_SetPitch(Pitch - 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		AFS2 A 1 { A_WeaponOffset(76,115+32); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } }
+		AFS2 A 1 { A_WeaponOffset(76,118+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS2 A 1 { A_WeaponOffset(76,122+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		AFS2 A 1 { A_WeaponOffset(76,118+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		
+	//Enter Pump
+		AFS2 A 1 A_WeaponOffset(76,122+32,WOF_INTERPOLATE)
+		AFS2 D 1 A_WeaponOffset(81,95+32)
+		AFS2 D 1 A_WeaponOffset(71,86+32,WOF_INTERPOLATE)
+		AFS2 D 1 A_WeaponOffset(59,73+32,WOF_INTERPOLATE)
+		AFS2 E 1 A_WeaponOffset(60,62+32)
+		AFS2 E 1 A_WeaponOffset(49,57+32,WOF_INTERPOLATE)
+		AFS2 E 1 A_WeaponOffset(32,51+32,WOF_INTERPOLATE)
+		AFS2 F 1 A_WeaponOffset(12,29+32)
+		AFS2 F 1 A_WeaponOffset(4,24+32,WOF_INTERPOLATE)
+		
+	//Pump
+		AFS2 F 1 A_WeaponOffset(15,37+32)
+		AFS2 F 1 A_WeaponOffset(24,51+32,WOF_INTERPOLATE)
+		AFS2 F 1 A_WeaponOffset(30,60+32,WOF_INTERPOLATE)
+		AFS2 F 1 A_WeaponOffset(31,61+32,WOF_INTERPOLATE)
+		AFS2 F 1 A_WeaponOffset(32,62+32,WOF_INTERPOLATE)
+		AFS2 F 1 A_WeaponOffset(33,63+32,WOF_INTERPOLATE)
+		AFS2 F 1 A_WeaponOffset(32,62+32,WOF_INTERPOLATE)
+		AFS2 F 1 A_WeaponOffset(31,61+32,WOF_INTERPOLATE)
+		AFS2 F 1 A_WeaponOffset(30,60+32,WOF_INTERPOLATE)
+		AFS2 F 1 A_WeaponOffset(24,51+32,WOF_INTERPOLATE)
+		AFS2 F 1 A_WeaponOffset(15,37+32,WOF_INTERPOLATE)
+
+	//Exit Pump
+	ExitPump:
+		AFS2 F 1 A_WeaponOffset(4,24+32)
+		AFS2 F 1 A_WeaponOffset(12,29+32,WOF_INTERPOLATE)
+		AFS2 E 1 A_WeaponOffset(32,51+32)
+		AFS2 E 1 A_WeaponOffset(49,57+32,WOF_INTERPOLATE)
+		AFS2 E 1 A_WeaponOffset(60,62+32,WOF_INTERPOLATE)
+		AFS2 D 1 A_WeaponOffset(59,73+32)
+		AFS2 D 1 A_WeaponOffset(71,86+32,WOF_INTERPOLATE)
+		AFS2 D 1 A_WeaponOffset(81,95+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(76,112+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_ReFire("Shotguning")
+		
+	//Exit Shotgun
+		AFS2 A 1 A_WeaponOffset(70,115+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(63,117+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(53,120+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(38,124+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(24,129+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(12,137+32,WOF_INTERPOLATE)
+		AFS2 A 1 A_WeaponOffset(6,144+32,WOF_INTERPOLATE)
+		Goto Ready
+		
+	Winchester:
+		AFS2 B 1 Bright {
+			A_WeaponOffset(76,75+32);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); }
+			A_GunFlash;
+			A_AlertMonsters;
+			A_Recoil(8.0);
+			A_GiveInventory("ErasusCasing");
+			A_PlaySound("Weapons/FistWinchester",1);
+			If(CountInv("QuadUpgrade")) {
+				A_SetBlend("Blue",0.05,12);
+				A_PlaySound("Weapons/QuadShot",5);
+				A_FireBullets(4.5, 1.75, 20, 24, "BulletPuff",0,768);
+			} Else {
+				A_FireBullets(4.5, 1.75, 20, 12, "BulletPuff",0,768);
+			}
+			A_SetPitch(Pitch - 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		AFS2 A 1 { A_WeaponOffset(76,115+32); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } }
+		AFS2 A 1 { A_WeaponOffset(76,118+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS2 A 1 { A_WeaponOffset(76,122+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		AFS2 A 1 { A_WeaponOffset(76,118+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+   
+	//Enter Pump
+		AFS2 A 1 A_WeaponOffset(76,122+32,WOF_INTERPOLATE)
+		AFS2 D 1 A_WeaponOffset(81,95+32)
+		AFS2 D 1 A_WeaponOffset(71,86+32,WOF_INTERPOLATE)
+		AFS2 D 1 A_WeaponOffset(59,73+32,WOF_INTERPOLATE)
+		AFS2 E 1 A_WeaponOffset(60,62+32)
+		AFS2 E 1 A_WeaponOffset(49,57+32,WOF_INTERPOLATE)
+		AFS2 E 1 A_WeaponOffset(32,51+32,WOF_INTERPOLATE)
+		AFS2 F 1 A_WeaponOffset(12,29+32)
+		AFS2 F 1 A_WeaponOffset(4,24+32,WOF_INTERPOLATE)
+		
+	//Pump
+		AFS2 G 1 A_WeaponOffset(2,20+32)
+		AFS2 H 1 A_WeaponOffset(1,19+32,WOF_INTERPOLATE)
+		AFS2 I 1 A_WeaponOffset(-1,17+32,WOF_INTERPOLATE)
+		AFS2 J 1 A_WeaponOffset(-3,15+32,WOF_INTERPOLATE)
+		AFS2 J 3 A_WeaponOffset(-4,14+32,WOF_INTERPOLATE)
+		AFS2 J 1 A_WeaponOffset(-3,15+32,WOF_INTERPOLATE)
+		AFS2 I 1 A_WeaponOffset(-1,17+32,WOF_INTERPOLATE)
+		AFS2 H 1 A_WeaponOffset(1,19+32,WOF_INTERPOLATE)
+		AFS2 G 1 A_WeaponOffset(2,20+32)
+		Goto ExitPump
+	
+	//Cannon
+	Cannon:
+		TNT1 A 0 {
+			A_TakeInventory("CannonTrigger",1);
+			A_PlaySound("Weapons/FistcannonCharge",5);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2,2,2,28,0,2,"none",QF_SCALEDOWN); }
+		}
+		AFS3 A 1 A_WeaponOffset(104,159+32)
+		AFS3 A 1 A_WeaponOffset(107,153+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(112,137+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(114,124+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(121,113+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(126,108+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(131,107+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(134,111+32,WOF_INTERPOLATE)
+		AFS3 A 20 A_WeaponOffset(138,116+32,WOF_INTERPOLATE)
+
+		AFS3 A 1 Bright {
+			A_WeaponOffset(147,130+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); }
+			A_FireCustomMissile("Canonball",0,0,8,0);
+			A_FireCustomMissile("CannonMuzzle",0,0,10,11);
+			A_PlaySound("Weapons/FistcannonFire",5);
+			A_SetPitch(Pitch - 5.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 5.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_GunFlash;
+			A_AlertMonsters;
+			A_Recoil(12.0);
+		}
+		AFS3 A 1 Bright { A_WeaponOffset(150,133+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		AFS3 A 1 Bright { A_WeaponOffset(151,134+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		AFS3 A 1 Bright { A_WeaponOffset(150,133+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		AFS3 A 1 { A_WeaponOffset(148,130+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		AFS3 A 1 { A_WeaponOffset(144,121+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		AFS3 A 1 { A_WeaponOffset(141,117+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		AFS3 A 1 { A_WeaponOffset(138,116+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		
+	//Cannon down
+		AFS3 A 1 A_WeaponOffset(134,111+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(131,107+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(126,108+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(121,113+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(114,124+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(112,137+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(107,153+32,WOF_INTERPOLATE)
+		AFS3 A 1 A_WeaponOffset(104,159+32,WOF_INTERPOLATE)
+		
+		TNT1 A 0 A_ReFire
+		Goto Ready
+
+	AltFire:
+		AFPG B 0 A_Overlay(2,"LeftDeselect")
+		AFPG B 1 A_WeaponOffset(2,2+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(5,5+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(12,12+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(20,20+32,WOF_INTERPOLATE)
+		AFPG B 1 A_WeaponOffset(26,26+32,WOF_INTERPOLATE)
+		TNT1 A 10
+		AFS5 A 1 A_WeaponOffset(-56,147+32)
+		AFS5 A 1 A_WeaponOffset(-36,135+32,WOF_INTERPOLATE)
+		AFS5 A 1 A_WeaponOffset(-18,119+32,WOF_INTERPOLATE)
+		AFS5 A 1 A_WeaponOffset(-12,108+32,WOF_INTERPOLATE)
+		AFS5 A 1 A_WeaponOffset(-16,91+32,WOF_INTERPOLATE)
+		AFS5 A 1 A_WeaponOffset(-29,94+32,WOF_INTERPOLATE)
+		AFS5 A 1 A_WeaponOffset(-34,103+32,WOF_INTERPOLATE)
+		TNT1 A 0 A_JumpIfInventory("CRTTrigger",1,"Hax")
+		TNT1 A 0 A_JumpIfInventory("RPCTrigger",1,"RocketSaw")
+		TNT1 A 0 A_JumpIfInventory("TelefonmastTrigger",1,"Telefonmast")
+		TNT1 A 0 A_JumpIfInventory("DonkeyTrigger",1,"ConcreteDrop")
+		TNT1 A 0 A_JumpIf(GetCVar("RO_ComboMode"),"Randomness2")
+		Goto RocketChair
+	Randomness2:
+		TNT1 A 0 A_Jump(128,"Hax","RocketSaw","Telefonmast") //I think it's safer if donkey is still triggered manually, eh?
+		Goto RocketChair
+	
+	//HAAAAAAAX!!!
+	Hax:
+		AFS5 A 0 {
+			A_TakeInventory("CRTTrigger",1);
+			A_PlaySound("Weapons/FistHAAAX",5);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(3,3,3,30,0,2,"none"); }
+		}
+		AFS5 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 {
+			A_WeaponOffset(-34+frandom(3.0,-3.0),103+32+frandom(3.0,-3.0),WOF_INTERPOLATE);
+		}
+		AFS5 A 10 {
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(3,3,3,10,0,2,"none",QF_SCALEDOWN); }
+			A_WeaponOffset(-34,103+32,WOF_INTERPOLATE);
+		}
+		AFS5 A 10 {
+			A_PlaySound("Weapons/FistHaxFly",1);
+			A_FireCustomMissile("CRT",0,0,-35,15,0);
+		}
+		Goto FingerDown
+	FingerDown:
+		AFS5 A 1 A_WeaponOffset(-34,103+32,WOF_INTERPOLATE)
+		AFS5 A 1 A_WeaponOffset(-29,94+32,WOF_INTERPOLATE)
+		AFS5 A 1 A_WeaponOffset(-16,91+32,WOF_INTERPOLATE)
+		AFS5 A 1 A_WeaponOffset(-12,108+32,WOF_INTERPOLATE)
+		AFS5 A 1 A_WeaponOffset(-18,119+32,WOF_INTERPOLATE)
+		AFS5 A 1 A_WeaponOffset(-36,135+32,WOF_INTERPOLATE)
+		AFS5 A 1 A_WeaponOffset(-56,147+32,WOF_INTERPOLATE)
+		Goto Ready
+	
+	//Rocket Propelled Chainsaw
+	RocketSaw:
+		AFS5 A 0 {
+			A_TakeInventory("RPCTrigger",1);
+			A_PlaySound("Weapons/SawRevUp",5);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(3,3,3,14,0,2,"none",QF_SCALEUP); }
+		}
+		AFS5 AAAAAAAAAAAAAA 1 {
+			A_WeaponOffset(-34+frandom(3.0,-3.0),103+32+frandom(3.0,-3.0),WOF_INTERPOLATE);
+			A_SetPitch(Pitch + frandom(1.0,-1.0)*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(Angle + frandom(1.0,-1.0)*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		AFS5 A 10 {
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(3,3,3,10,0,2,"none",QF_SCALEDOWN); }
+			A_WeaponOffset(-34,103+32,WOF_INTERPOLATE);
+			A_PlaySound("Weapons/FistHaxFly",1);
+			A_FireCustomMissile("RPC",0,0,-35,15,0);
+		}
+		Goto FingerDown
+		
+	//Rocket Chair
+	RocketChair:
+		AFS5 A 0 {
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2,2,2,25,0,2,"none"); }
+			A_PlaySound("Weapons/ChairLaunch",5);
+		}
+		AFS5 AAAAAAAAAAAAAAAAAAAAAAAAA 1 {
+			A_WeaponOffset(-34+frandom(1.0,-1.0),103+32+frandom(1.0,-1.0),WOF_INTERPOLATE);
+		}
+		AFS5 A 10 {
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2,2,2,10,0,2,"none",QF_SCALEDOWN); }
+			A_WeaponOffset(-34,103+32,WOF_INTERPOLATE);
+			A_PlaySound("weapons/FistHaxFly",1);
+			A_FireCustomMissile("TRPC",0,0,-35,15,0);
+		} 
+		Goto FingerDown
+		
+	//DON-KEE!
+	ConcreteDrop:
+		AFS5 A 30 {
+			A_TakeInventory("DonkeyTrigger",1);
+			if(random(0,1) == 0) {
+				A_PlaySound("Weapons/FistPrayer",5);
+				A_FireCustomMissile("DonkeySpawner",0,0,0,0,0);
+			} else {
+				A_PlaySound("Weapons/FistAnthem",5);
+				A_FireCustomMissile("ConcreteStalinSpawner",0,0,0,0,0);
+			}
+		}
+		AFS5 A 30
+		Goto FingerDown
+		
+	//EIN TELEFONMAST!
+	Telefonmast:
+		AFS5 A 0 {
+			A_TakeInventory("TelefonmastTrigger",1);
+			A_PlaySound("Weapons/Telefonmast",5);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(3,3,3,33,0,2,"none",QF_SCALEUP); }
+		}
+		AFS5 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_WeaponOffset(-34+frandom(3.0,-3.0),103+32+frandom(3.0,-3.0),WOF_INTERPOLATE)
+		AFS5 A 10 {
+			A_WeaponOffset(-34,103+32,WOF_INTERPOLATE);
+			if(random(0,9) == 0) { A_Print("AMERKA PHAIL",7,"BIGFONT"); }
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(3,3,3,10,0,2,"none",QF_SCALEDOWN); }
+			A_PlaySound("Weapons/FistHaxFly",1);
+			A_FireCustomMissile("Telefonmast",0,0,-35,15,0);
+		}
+		Goto FingerDown
+	
+	Flash:
+		TNT1 A 4 Bright A_Light2
+		TNT1 A 2 Bright A_Light1
+		TNT1 A 0 Bright A_Light0
+		Stop
+	}
+}

@@ -1,0 +1,176 @@
+//Chaingun replacements
+class NewChaingunSpawner : Actor
+{
+	Default
+	{
+		+NOINTERACTION
+	}
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(RO_ClassRestriction) { A_SpawnItemEx("ChaingunSpawnerRestricted",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+			else { A_SpawnItemEx("ChaingunSpawner",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+		}
+		Stop;
+	}
+}
+
+class ChaingunSpawnerRestricted : RORestrictPiece
+{
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(random(0,1) == 0) {
+				invoker.TypeTwo = 0;
+				A_SpawnItemEx("MatryoshkaYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("AntonovMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("UnionAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			} else {
+				invoker.TypeTwo = 1;
+				A_SpawnItemEx("PowerOverwhelmingYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("GorynchMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("ObliteratorAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			}
+			Return ResolveState(Null);
+		}
+		TNT1 A 1;
+		Wait;
+	Pickup:
+		TNT1 A 0 A_JumpIf(CountInv("YuriTrigger"),"YuriWeapon");
+		TNT1 A 0 A_JumpIf(CountInv("MartyTrigger"),"MartyWeapon");
+		TNT1 A 0 A_JumpIf(CountInv("AloszaTrigger"),"AloshaWeapon");
+	YuriWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"YuriWeapon2");
+		TNT1 A 0 { if(CountInv("Matryoshka") && A_JumpIfInventory("Boolet",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("MatryoshkaGiver"); thingtogive.touch(self); }
+		Stop;
+	YuriWeapon2:
+		TNT1 A 0 { if(CountInv("PowerOverwhelming") && A_JumpIfInventory("Boolet",0,"Null") && A_JumpIfInventory("TankShellAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("PowerOverwhelmingGiver"); thingtogive.touch(self); }
+		Stop;
+	MartyWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"MartyWeapon2");
+		TNT1 A 0 { if(CountInv("Antonov") && A_JumpIfInventory("Boolet",0,"Null") && A_JumpIfInventory("PlasmaAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("AntonovGiver"); thingtogive.touch(self); }
+		Stop;
+	MartyWeapon2:
+		TNT1 A 0 { if(CountInv("Gorynch") && A_JumpIfInventory("Boolet",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("GorynchGiver"); thingtogive.touch(self); }
+		Stop;
+	AloshaWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"AloshaWeapon2");
+		TNT1 A 0 { if(CountInv("Union") && A_JumpIfInventory("Boolet",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("UnionGiver"); thingtogive.touch(self); }
+		Stop;
+	AloshaWeapon2:
+		TNT1 A 0 { if(CountInv("Obliterator") && A_JumpIfInventory("Boolet",0,"Null") && A_JumpIfInventory("RawketAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("ObliteratorGiver"); thingtogive.touch(self); }
+		Stop;
+	Nope:
+		TNT1 A 0;
+		Fail;
+	}
+}
+
+class MatryoshkaYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+		Scale 0.8;
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		MTRG X -1;
+		Stop;
+	}
+}
+
+class PowerOverwhelmingYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+		Scale 0.55;
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		OVRG X -1;
+		Stop;
+	}
+}
+
+class AntonovMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		EVOG X -1;
+		Stop;
+	}
+}
+
+class GorynchMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		FCKG X -1;
+		Stop;
+	}
+}
+
+class UnionAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+		Scale 0.8;
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		UNRG X -1;
+		Stop;
+	}
+}
+
+
+class ObliteratorAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		MOBG X -1;
+		Stop;
+	}
+}

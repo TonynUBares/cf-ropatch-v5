@@ -1,0 +1,450 @@
+/*
+CREDITS:
+Sprites - Marty Kirra
+Pickup - WildWeasel
+Animation inspired by Xaser~
+
+Up - Mashup, part by Croteam (Serious Sam:SE)
+Fire - Croteam (Serious Sam 2)
+Add Fire - It's a mashup, sigh... but I think part is by Valve (Half-Life 2)
+Holster - Raven (Wolfenstein 3)
+*/
+
+actor LeviZoom : Inventory { Inventory.MaxAmount 1 }
+actor LeviActive : LeviZoom {}
+actor LeviSide : LeviZoom {}
+
+actor LeviathanGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	inventory.PickupMessage "You got the ''Leviathan'' handcannon! The name makes you expect some good shit...but its just two simple three barrel shotguns :C"
+	Obituary "%k did the laundr... I mean, killed %o. With a towel!...\noh come on, there is no freaking bathing reference in the freaking beast name! Come on... okay, I get it.\nIt emerges from the water. Nice one, all hail the master of witty puns."
+	States
+	{
+	Spawn:
+		LEVG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Leviathan",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Leviathan",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("ErasusAmmo",10)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+actor Leviathan : DoomWeapon 24516
+{
+	//$Category Weapons
+	//$Title Leviathan
+	//$Sprite LEVGX0
+	Inventory.MaxAmount 2
+	Inventory.PickupSound "misc/w_pkup"
+	inventory.PickupMessage "You got the ''Leviathan'' handcannon! The name makes you expect some good shit...but its just two simple three barrel shotguns :C"
+	Obituary "%k did the laundr... I mean, killed %o. With a towel!...\noh come on, there is no freaking bathing reference in the freaking beast name! Come on... okay, I get it.\nIt emerges from the water. Nice one, all hail the master of witty puns."
+	Weapon.UpSound "Leviathan/Up"
+	Weapon.SelectionOrder 5
+	Weapon.AmmoType "ErasusAmmo"
+	Weapon.AmmoGive 10
+	Weapon.AmmoUse 3
+	Weapon.Kickback 35
+	Weapon.SlotNumber 3
+	Weapon.SlotPriority 25.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.4
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.4
+	+NOALERT
+	Scale 0.8
+    states
+	{
+	Spawn:
+		LEVG X -1
+		Stop
+	Ready:
+		LEVG A 0 A_GiveInventory("LeviActive")
+		LEVG A 0 A_JumpIf(CountInv("LeviZoom"),"SightReady")
+		LEVG A 0 A_JumpIf(CountInv("Leviathan") >= 2,2)
+		LEVG A 1 A_WeaponReady //(WRF_ALLOWZOOM)
+		Goto Ready
+		LEVG A 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "Fire")
+		LEVG A 1 A_WeaponReady(WRF_NOPRIMARY) //WRF_ALLOWZOOM|
+		Goto Ready
+	SightReady:
+		LEVG A 0 A_JumpIf(CountInv("Leviathan") >= 2,2)
+		ZEVG A 1 A_WeaponReady //(WRF_ALLOWZOOM)
+		Goto Ready
+		LEVG A 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "SightFire")
+		ZEVG B 1 A_WeaponReady(WRF_NOPRIMARY) //WRF_ALLOWZOOM|
+		Goto Ready
+	LeftReady:
+		LEVG A 0 {
+			A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1);
+			A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0);
+			A_OverlayOffset(OverlayID(),0,32);
+		}
+		LEVG A 0 A_JumpIf(CountInv("LeviZoom"),"SightLeftReady")
+		LEVG A 1 A_JumpIf(CountInv("LeviSide") && GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "Fire")
+		Loop
+	SightLeftReady:
+		ZEVG B 1 A_JumpIf(CountInv("LeviSide") && GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "SightFire")
+		Goto LeftReady
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		LEVG A 0 A_Overlay(2,"LeftSelect")
+		LEVG A 1 A_Raise(12)
+		Wait
+	LeftSelect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	LeftSelectLoop:
+		TNT1 A 1 A_JumpIf(CountInv("Leviathan") >= 2,1)
+		Loop
+		TNT1 A 0 A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1)
+		LEVG A 1 A_JumpIf(CountInv("LeviActive"),"LeftReady")
+		Wait
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		LEVG A 0 {
+			A_TakeInventory("LeviActive");
+			A_ZoomFactor(1.0);
+			if(CountInv("Leviathan") >= 2) { A_Overlay(2,"LeftDeselect"); }
+			A_TakeInventory("LeviZoom");
+		}
+		LEVG A 1 A_Lower(12)
+		Wait
+	LeftDeselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	LeftDeselectLoop:
+		LEVG A 0 A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1)
+		LEVG A 1
+		Wait
+	AltFire:
+	//Zoom:
+		ZEVS A 0 A_JumpIf(CountInv("LeviZoom"),"UnZoom")
+		LEVG A 0 {
+			A_ZoomFactor(2.0);
+			A_GiveInventory("LeviZoom");
+			A_PlaySound("Leviathan/Holster",6);
+			if(CountInv("Leviathan") >= 2) {
+				A_Overlay(2,"LeftZoom");
+				Return State("ZoomZwei");
+			}
+			Return State("");
+		}
+		ZEVS A 1 A_OverlayOffset(OverlayID(),175,32+94)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),165,32+97,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),151,32+101,WOF_INTERPOLATE)
+		ZEVS B 1 A_OverlayOffset(OverlayID(),140,32+90,WOF_INTERPOLATE)
+		ZEVS B 1 A_OverlayOffset(OverlayID(),130,32+91,WOF_INTERPOLATE)
+		ZEVG A 4 A_OverlayOffset(OverlayID(),0,32)
+		Goto Ready
+	LeftZoom:
+		LEVG A 0 {
+			A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1);
+			A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0);
+		}
+		ZEVS A 1 A_OverlayOffset(OverlayID(),176,32+96)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),173,32+99,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),168,32+103,WOF_INTERPOLATE)
+		ZEVS B 1 A_OverlayOffset(OverlayID(),161,32+100,WOF_INTERPOLATE)
+		ZEVS B 1 A_OverlayOffset(OverlayID(),157,32+98,WOF_INTERPOLATE)
+		ZEVG B 4 A_OverlayOffset(OverlayID(),0,32)
+		Goto LeftReady
+	ZoomZwei:
+		ZEVS A 1 A_OverlayOffset(OverlayID(),176,32+96)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),173,32+99,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),168,32+103,WOF_INTERPOLATE)
+		ZEVS B 1 A_OverlayOffset(OverlayID(),161,32+100,WOF_INTERPOLATE)
+		ZEVS B 1 A_OverlayOffset(OverlayID(),157,32+98,WOF_INTERPOLATE)
+		ZEVG B 4 A_OverlayOffset(OverlayID(),0,32)
+		Goto Ready
+	UnZoom:
+		LEVG A 0 {
+			A_ZoomFactor(1.0);
+			A_PlaySound("Leviathan/Holster",6);
+			A_TakeInventory("LeviZoom");
+			if(CountInv("Leviathan") >= 2) {
+				A_Overlay(2,"LeftUnZoom");
+				Return State("UnZoomZwei");
+			}
+			Return State("");
+		}
+		ZEVS B 1 A_OverlayOffset(OverlayID(),130,32+91)
+		ZEVS B 1 A_OverlayOffset(OverlayID(),140,32+90,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),151,32+101,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),165,32+97,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),175,32+94,WOF_INTERPOLATE)
+		LEVG A 4 A_OverlayOffset(OverlayID(),0,32)
+		Goto Ready
+	LeftUnZoom:
+		LEVG A 0 {
+			A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1);
+			A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0);
+		}
+		ZEVS B 1 A_OverlayOffset(OverlayID(),157,32+98)
+		ZEVS B 1 A_OverlayOffset(OverlayID(),161,32+100,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),168,32+103,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),173,32+99,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),176,32+96,WOF_INTERPOLATE)
+		LEVG A 4 A_OverlayOffset(OverlayID(),0,32)
+		Goto LeftReady
+	UnZoomZwei:
+		ZEVS B 1 A_OverlayOffset(OverlayID(),157,32+98)
+		ZEVS B 1 A_OverlayOffset(OverlayID(),161,32+100,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),168,32+103,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),173,32+99,WOF_INTERPOLATE)
+		ZEVS A 1 A_OverlayOffset(OverlayID(),176,32+96,WOF_INTERPOLATE)
+		LEVG A 4 A_OverlayOffset(OverlayID(),0,32)
+		Goto Ready
+	Fire:
+		LEVG A 0 A_JumpIf(CountInv("LeviZoom"),"SightFire")
+		LEVF A 0 Bright {
+			A_CheckReload;
+			A_AlertMonsters;
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+			A_ChangeVelocity (Cos(Pitch) * -7, 0, Sin(Pitch) * 7,CVF_RELATIVE);
+			A_GiveInventory("ErasusCasing",3);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2,2,2,3,0,32,"none",QF_SCALEDOWN); }
+			A_PlaySound("Leviathan/Fire",1,1.0);
+			A_PlaySound("Leviathan/AddFire",5,0.5);
+			A_CheckReload;
+				A_TakeInventory("ErasusAmmo",3,TIF_NOTAKEINFINITE);
+			if(CountInv("QuadUpgrade")) {
+				A_SetBlend("Blue",0.075,16);
+				A_PlaySound("Quad/Shot",4,0.7);
+				A_FireBullets(17.5, 3.75, 45, 40, "QuadPuff",0);
+			} else {
+				A_FireBullets(17.5, 3.75, 45, 20, "ErasusPuff",0);
+			}
+		}
+		LEVF A 1 Bright A_OverlayOffset(OverlayID(),175,32+83)
+		LEVF A 0 Bright A_JumpIf(OverlayID() == 2, "LeftFire")
+		LEVF B 1 Bright {
+			A_OverlayOffset(OverlayID(),170,32+65);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		LEVR A 1 {
+			A_OverlayOffset(OverlayID(),151,32+44);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); }
+			A_SetAngle(Angle-2.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		LEVR C 1 {
+			A_OverlayOffset(OverlayID(),225,32+37);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		Goto FireRest
+	LeftFire:
+		LEVF B 1 Bright {
+			A_OverlayOffset(OverlayID(),170,32+65);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+			A_SetAngle(Angle+0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		LEVR A 1 {
+			A_OverlayOffset(OverlayID(),151,32+44);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); }
+			A_SetAngle(Angle+2.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		LEVR C 1 {
+			A_OverlayOffset(OverlayID(),225,32+37);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+			A_SetAngle(Angle+0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		Goto FireRest
+	FireRest:
+		LEVR B 1 {
+			A_OverlayOffset(OverlayID(),234,32+37);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+		}
+		LEVR B 1 {
+			A_OverlayOffset(OverlayID(),236,32+35,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); }
+		}
+		LEVR B 1 {
+			A_OverlayOffset(OverlayID(),237,32+34,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); }
+		}
+		LEVR B 1 A_OverlayOffset(OverlayID(),238,32+33,WOF_INTERPOLATE)
+		LEVR B 1 A_OverlayOffset(OverlayID(),237,32+34,WOF_INTERPOLATE)
+		LEVR C 1 A_OverlayOffset(OverlayID(),223,32+40,WOF_INTERPOLATE)
+		LEVR C 1 A_OverlayOffset(OverlayID(),204,32+57,WOF_INTERPOLATE)
+		LEVR D 1 { A_OverlayOffset(OverlayID(),131,32+57); A_PlaySound("Leviathan/Open",6,0.8); }
+		LEVR D 0 {
+			if(OverlayID() == 1) { A_GiveInventory("LeviSide",1); }
+			else				 { A_TakeInventory("LeviSide",1); }
+		}
+		LEVR E 1 A_OverlayOffset(OverlayID(),127,32+138)
+		LEVR F 1 A_OverlayOffset(OverlayID(),126,32+151)
+		LEVR F 1 A_OverlayOffset(OverlayID(),121,32+159,WOF_INTERPOLATE)
+		//LEVR F 1 A_OverlayOffset(OverlayID(),119,32+161,WOF_INTERPOLATE)
+		//LEVR F 1 A_OverlayOffset(OverlayID(),117,32+163,WOF_INTERPOLATE)
+		//LEVR F 4 A_OverlayOffset(OverlayID(),116,32+164,WOF_INTERPOLATE)
+		LEVR F 1 A_OverlayOffset(OverlayID(),117,32+163,WOF_INTERPOLATE)
+		//LEVR F 1 A_OverlayOffset(OverlayID(),119,32+161,WOF_INTERPOLATE)
+		//LEVR F 1 A_OverlayOffset(OverlayID(),121,32+159,WOF_INTERPOLATE)
+		LEVR F 1 A_OverlayOffset(OverlayID(),126,32+151,WOF_INTERPOLATE)
+		LEVR E 1 A_OverlayOffset(OverlayID(),127,32+138)
+		LEVR D 1 { A_OverlayOffset(OverlayID(),131,32+57); A_PlaySound("Leviathan/Close",6,0.8); }
+		LEVR C 1 A_OverlayOffset(OverlayID(),204,32+57)
+		LEVR C 1 A_OverlayOffset(OverlayID(),223,32+40,WOF_INTERPOLATE)
+		LEVR B 1 A_OverlayOffset(OverlayID(),237,32+34)
+		//LEVR B 1 A_OverlayOffset(OverlayID(),238,32+33,WOF_INTERPOLATE)
+		//LEVR B 1 A_OverlayOffset(OverlayID(),237,32+34,WOF_INTERPOLATE)
+		LEVR B 1 A_OverlayOffset(OverlayID(),234,32+37,WOF_INTERPOLATE)
+		LEVR C 1 A_OverlayOffset(OverlayID(),223,32+40)
+		LEVR C 1 A_OverlayOffset(OverlayID(),204,32+57,WOF_INTERPOLATE)
+		LEVR B 1 A_OverlayOffset(OverlayID(),200,32+75)
+		LEVR B 1 A_OverlayOffset(OverlayID(),197,32+81,WOF_INTERPOLATE)
+		LEVG A 1 A_OverlayOffset(OverlayID(),2,32+2)
+		LEVG A 1 A_OverlayOffset(OverlayID(),1,32+1,WOF_INTERPOLATE)
+		LEVG A 1 A_OverlayOffset(OverlayID(),0,32,WOF_INTERPOLATE)
+		LEVG A 0 { if(OverlayID() == 1) { A_TakeInventory("LeviSide",1); } }
+		LEVG A 0 A_JumpIf(OverlayID() == 2, "LeftReady")
+		Goto Ready
+	SightFire:
+		ZEVF A 0 Bright {
+			A_CheckReload;
+			A_AlertMonsters;
+			A_ZoomFactor(1.99);
+			A_GiveInventory("ErasusCasing",3);
+			A_PlaySound("Leviathan/Fire",1,1.0);
+			A_PlaySound("Leviathan/AddFire",5,0.5);
+			A_CheckReload;
+			A_TakeInventory("ErasusAmmo",3,TIF_NOTAKEINFINITE);
+			if(CountInv("QuadUpgrade")) {
+				A_SetBlend("Blue",0.075,16);
+				A_PlaySound("Quad/Shot",4,0.7);
+
+				A_FireBullets(3.5, 0.75, 45, 40, "QuadPuff", 0);
+			} else {
+				A_FireBullets(3.5, 0.75, 45, 20, "ErasusPuff", 0);
+			}
+		}
+		ZEVF A 0 Bright A_JumpIf(CountInv("Leviathan") >= 2, "SightFire2")
+		ZEVF A 1 Bright A_OverlayOffset(OverlayID(),110,32+74)
+		ZEVF B 1 Bright {
+			A_OverlayOffset(OverlayID(),126,32+58);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.98); }
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		ZEVF C 1 {
+			A_OverlayOffset(OverlayID(),129,32+74);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.96); }
+			A_SetPitch(Pitch-1.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		ZEVF C 1 {
+			A_OverlayOffset(OverlayID(),129,32+63,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.97); }
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		ZEVF D 1 {
+			A_OverlayOffset(OverlayID(),129,32+64);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.98); }
+			A_SetPitch(Pitch-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		ZEVF D 1 {
+			A_OverlayOffset(OverlayID(),129,32+63,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.99); }
+		}
+		ZEVF D 1 {
+			A_OverlayOffset(OverlayID(),128,32+64,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.0); }
+		}
+		ZEVF F 1 { A_OverlayOffset(OverlayID(),48,32+57); A_PlaySound("Leviathan/Open",6,0.8); }
+		LEVR E 1 A_OverlayOffset(OverlayID(),33,32+133)
+		LEVR E 1 A_OverlayOffset(OverlayID(),22,32+147,WOF_INTERPOLATE)
+		LEVR F 1 A_OverlayOffset(OverlayID(),20,32+160,WOF_INTERPOLATE)
+		LEVR F 1 A_OverlayOffset(OverlayID(),18,32+162,WOF_INTERPOLATE)
+		//LEVR F 1 A_OverlayOffset(OverlayID(),16,32+164,WOF_INTERPOLATE)
+		//LEVR F 1 A_OverlayOffset(OverlayID(),15,32+165,WOF_INTERPOLATE)
+		LEVR F 1 { A_OverlayOffset(OverlayID(),16,32+164,WOF_INTERPOLATE); /*A_PlaySound("Leviathan/Load",6,0.8);*/ }
+		LEVR F 1 A_OverlayOffset(OverlayID(),18,32+162,WOF_INTERPOLATE)
+		LEVR F 1 A_OverlayOffset(OverlayID(),20,32+160,WOF_INTERPOLATE)
+		LEVR E 1 A_OverlayOffset(OverlayID(),22,32+147,WOF_INTERPOLATE)
+		LEVR E 1 A_OverlayOffset(OverlayID(),33,32+133,WOF_INTERPOLATE)
+		ZEVF F 1 { A_OverlayOffset(OverlayID(),48,32+57); A_PlaySound("Leviathan/Close",6,0.8); }
+		ZEVF D 1 A_OverlayOffset(OverlayID(),128,32+64)
+		ZEVF D 1 A_OverlayOffset(OverlayID(),129,32+63,WOF_INTERPOLATE)
+		ZEVF C 1 A_OverlayOffset(OverlayID(),129,32+63)
+		ZEVF C 1 A_OverlayOffset(OverlayID(),129,32+74,WOF_INTERPOLATE)
+		ZEVF C 1 A_OverlayOffset(OverlayID(),129,32+80,WOF_INTERPOLATE)
+		ZEVF E 1 A_OverlayOffset(OverlayID(),129,32+96)
+		ZEVF E 1 A_OverlayOffset(OverlayID(),129,32+102,WOF_INTERPOLATE)
+		ZEVG A 1 A_OverlayOffset(OverlayID(),0,32+1)
+		ZEVG A 1 A_OverlayOffset(OverlayID(),0,32,WOF_INTERPOLATE)
+		LEVG A 0 A_JumpIf(OverlayID() == 2, "LeftReady")
+		Goto Ready
+	SightFire2:
+		ZEVF A 1 Bright A_OverlayOffset(OverlayID(),142,32+68)
+		ZEVF B 1 Bright {
+			A_OverlayOffset(OverlayID(),158,32+68);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.98); }
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		ZEVF C 1 {
+			A_OverlayOffset(OverlayID(),161,32+74);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.96); }
+			A_SetPitch(Pitch-1.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		ZEVF C 1 {
+			A_OverlayOffset(OverlayID(),161,32+63,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.97); }
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		ZEVF D 1 {
+			A_OverlayOffset(OverlayID(),161,32+64);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.98); }
+			A_SetPitch(Pitch-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		ZEVF D 1 {
+			A_OverlayOffset(OverlayID(),161,32+63,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.99); }
+		}
+		ZEVF D 1 {
+			A_OverlayOffset(OverlayID(),160,32+64,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.0); }
+		}
+		ZEVF F 1 { A_OverlayOffset(OverlayID(),80,32+57); A_PlaySound("Leviathan/Open",6,0.8); }
+		LEVR E 1 A_OverlayOffset(OverlayID(),65,32+133)
+		LEVR E 1 A_OverlayOffset(OverlayID(),54,32+147,WOF_INTERPOLATE)
+		LEVR F 1 A_OverlayOffset(OverlayID(),52,32+160,WOF_INTERPOLATE)
+		LEVR F 1 A_OverlayOffset(OverlayID(),50,32+162,WOF_INTERPOLATE)
+		LEVR D 0 {
+			if(OverlayID() == 1) { A_GiveInventory("LeviSide",1); }
+			else				 { A_TakeInventory("LeviSide",1); }
+		}
+		//LEVR F 1 A_OverlayOffset(OverlayID(),48,32+164,WOF_INTERPOLATE)
+		//LEVR F 1 A_OverlayOffset(OverlayID(),47,32+165,WOF_INTERPOLATE)
+		LEVR F 1 { A_OverlayOffset(OverlayID(),48,32+164,WOF_INTERPOLATE); /*A_PlaySound("Leviathan/Load",6,0.8);*/ }
+		LEVR F 1 A_OverlayOffset(OverlayID(),50,32+162,WOF_INTERPOLATE)
+		LEVR F 1 A_OverlayOffset(OverlayID(),52,32+160,WOF_INTERPOLATE)
+		LEVR E 1 A_OverlayOffset(OverlayID(),54,32+147,WOF_INTERPOLATE)
+		LEVR E 1 A_OverlayOffset(OverlayID(),65,32+133,WOF_INTERPOLATE)
+		ZEVF F 1 { A_OverlayOffset(OverlayID(),80,32+57); A_PlaySound("Leviathan/Close",6,0.8); }
+		ZEVF D 1 A_OverlayOffset(OverlayID(),160,32+64)
+		ZEVF D 1 A_OverlayOffset(OverlayID(),161,32+63,WOF_INTERPOLATE)
+		ZEVF C 1 A_OverlayOffset(OverlayID(),161,32+63)
+		ZEVF C 1 A_OverlayOffset(OverlayID(),161,32+74,WOF_INTERPOLATE)
+		ZEVF C 1 A_OverlayOffset(OverlayID(),161,32+80,WOF_INTERPOLATE)
+		ZEVF E 1 A_OverlayOffset(OverlayID(),161,32+96,WOF_INTERPOLATE)
+		ZEVF E 1 A_OverlayOffset(OverlayID(),161,32+102,WOF_INTERPOLATE)
+		ZEVG B 1 A_OverlayOffset(OverlayID(),0,32+1)
+		ZEVG B 1 A_OverlayOffset(OverlayID(),0,32,WOF_INTERPOLATE)
+		LEVG A 0 { if(OverlayID() == 1) { A_TakeInventory("LeviSide",1); } }
+		LEVG A 0 A_JumpIf(OverlayID() == 2, "LeftReady")
+		Goto Ready
+	}
+}

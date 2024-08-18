@@ -1,0 +1,259 @@
+/*
+actor ROHealthBonusSpawner : RandomSpawner { DropItem "MinorHp" 256 1 }
+
+actor RORadsuitSpawner : RandomSpawner 
+{
+    DropItem "EnvirospherePickup" 256 2
+    DropItem "BattlespherePickup" 256 1
+}
+UNUSED*/
+
+actor ROArmorBonusSpawner : RandomSpawner { DropItem "ShieldCharge" 256 1 }
+
+//Powerups
+actor ROBerserkSpawner : RandomSpawner //Zscript
+{
+    DropItem "CFBerserkSpawner" 256 1
+    DropItem "BasicUpgrade" 256 1
+    DropItem "CaliberUpgrade" 256 1
+    DropItem "NukerUpgrade" 256 1
+    DropItem "QuadUpgrade" 256 1
+}
+
+actor ROInvuSphereSpawner : RandomSpawner //Zscript
+{
+    DropItem "CFInvulnerabilitySphereSpawner" 256 1
+    DropItem "ShieldSphere" 256 1
+    DropItem "ExtremeSphere" 256 1
+    DropItem "ForkSphere" 256 1
+}
+
+actor ROMegasphereSpawner : RandomSpawner //Zscript
+{
+    DropItem "Fancysphere" 256 27
+    DropItem "ModdedMegaSphere", 256, 27
+    DropItem "UltraSphere", 256, 2
+    DropItem "CFMegaSphereSpawner", 256, 1
+    DropItem "VodkaItem" 256 1
+}
+
+actor ROBlursphereSpawner : RandomSpawner //Zscript
+{
+    DropItem "CFBlurSphereSpawner" 256 1
+    DropItem "Screamersphere" 256 1
+    DropItem "REDsphere" 256 1
+    DropItem "BLUsphere" 256 1
+}
+
+actor ROSoulsphereSpawner : RandomSpawner //Zscript
+{
+    DropItem "SupremeHp" 256 2
+    DropItem "CFSoulSphereSpawner" 256 1
+    DropItem "SalvationPickup" 256 1
+}
+
+//Weapons
+actor ROChainsawSpawner : NewChainsawSpawner {} 
+
+actor ChainsawSpawner : RandomSpawner //replaces Chainsaw
+{
+    DropItem "PorzygunGiver" 256 1
+    DropItem "CaberGiver" 256 1
+    DropItem "RazorjackGiver" 256 1 
+    DropItem "ExcalibatGiver" 256 1
+    DropItem "PowercubeGiver" 256 1
+    DropItem "BerserkerFistGiver" 256 1
+}
+
+////////
+actor ROShotgunSpawner : NewShotgunSpawner {} 
+
+actor ShotgunSpawner //replaces Shotgun
+{
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay A_CheckFlag("DROPPED", "DropSpawn", AAPTR_DEFAULT)
+		TNT1 A 0 A_JumpIf(GetCVar("RO_ShotgunSpawn"),"AltSpawn")
+		TNT1 A 0 A_SpawnItemEx("ShotgunSpawnerMain",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL)
+		Stop
+	AltSpawn:
+		TNT1 A 0 A_SpawnItemEx("ShotgunSpawnerAlt",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL)
+		Stop
+	DropSpawn:
+		TNT1 A 0 A_JumpIf(GetCVar("RO_ShotgunSpawn"),"AltDropSpawn")
+		TNT1 A 0 A_SpawnItemEx("ShotgunSpawnerDroppedMain",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL)
+		Stop
+	AltDropSpawn:
+		TNT1 A 0 A_SpawnItemEx("ShotgunSpawnerDroppedAlt",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL)
+		Stop
+	}
+}
+
+actor ShotgunSpawnerMain : RandomSpawner
+{
+    DropItem "ErasusGiver" 256 1
+    DropItem "LeviathanGiver" 256 1
+    DropItem "QuadvolgueGiver" 256 1
+    DropItem "PushkaGiver" 256 1
+    DropItem "HotrodGiver" 256 1
+    DropItem "RasputinGiver" 256 1
+}
+
+actor ShotgunSpawnerAlt : RandomSpawner
+{
+    DropItem "ErasusGiver" 256 1
+    DropItem "LeviathanGiver" 256 1
+    DropItem "QuadvolgueGiver" 256 1
+    DropItem "PushkaGiver" 256 1
+    DropItem "HotrodGiver" 256 1
+    DropItem "RasputinGiver" 256 1
+
+    DropItem "SchwarzerZwergGiver" 256 1
+    DropItem "PantokratorGiver" 256 1
+    DropItem "ViolatorGiver" 256 1
+    DropItem "TorchglowGiver" 256 1
+    DropItem "BeefSupremeGiver" 256 1
+    DropItem "SteamrollerGiver" 256 1
+}
+
+actor ShotgunSpawnerDroppedMain : ShotgunSpawnerMain
+{
+	+DROPPED
+}
+
+actor ShotgunSpawnerDroppedAlt : ShotgunSpawnerAlt
+{
+	+DROPPED
+}
+
+////////
+actor ROChaingunSpawner : NewChaingunSpawner {} 
+
+actor ChaingunSpawner : RandomSpawner 
+{
+    DropItem "MatryoshkaGiver" 256 2
+    DropItem "AntonovGiver" 256 2
+    DropItem "UnionGiver" 256 2
+    DropItem "PowerOverwhelmingGiver" 256 1
+    DropItem "GorynchGiver" 256 1
+    DropItem "ObliteratorGiver" 256 1
+}
+
+////////
+actor ROSuperShotgunSpawner : NewSuperShotgunSpawner {} 
+
+actor SuperShotgunSpawner : RandomSpawner 
+{
+    DropItem "SchwarzerZwergGiver" 256 1
+    DropItem "PantokratorGiver" 256 1
+    DropItem "ViolatorGiver" 256 1
+    DropItem "TorchglowGiver" 256 1
+    DropItem "BeefSupremeGiver" 256 1
+    DropItem "SteamrollerGiver" 256 1
+}
+
+////////
+actor RORocketLauncherSpawner : NewRocketLauncherSpawner {} 
+
+actor RocketLauncherSpawner : RandomSpawner 
+{
+    DropItem "ComradeGiver" 256 1
+    DropItem "GopnikGiver" 256 1
+    DropItem "ShurricaneGiver" 256 1
+    DropItem "ColonelGiver" 256 1
+    DropItem "MutilatorGiver" 256 1
+    DropItem "ChtonGiver" 256 1
+}
+
+////////
+actor ROPlasmaRifleSpawner : NewPlasmaRifleSpawner {} 
+
+actor PlasmaRifleSpawner : RandomSpawner 
+{
+    DropItem "TepeschGiver" 256 1
+    DropItem "InstafunGiver" 256 1
+    DropItem "PetrovecGiver" 256 1
+    DropItem "StachanovGiver" 256 1
+    DropItem "ChannelerGiver" 256 1
+    DropItem "RamjetGiver" 256 1
+}
+
+////////
+actor ROBFG9000Spawner : NewBFG9000Spawner {} 
+
+actor BFG9000Spawner : RandomSpawner 
+{
+    DropItem "DeathheadGiver" 256 1
+    DropItem "PlanetCrackerGiver" 256 1
+    DropItem "GurumasterGiver" 256 1
+    DropItem "YamatoGiver" 256 1
+    DropItem "VindicatorGiver" 256 1
+    DropItem "BorschGiver" 256 1
+}
+
+////////
+//Ammo
+
+actor ROClipSpawner : RandomSpawner //Zscript
+{
+    DropItem "Boolet" 256 1
+}
+
+actor ROClipBoxSpawner : RandomSpawner //Zscript
+{
+    DropItem "BooletBox" 256 1
+}
+
+actor ROShellSpawner : RandomSpawner //Zscript
+{
+    DropItem "TankShellAmmo" 256 2
+    DropItem "ErasusAmmo" 256 3
+}
+
+actor ROShellBoxSpawner : RandomSpawner //Zscript
+{
+    DropItem "TankShellRack" 256 1
+    DropItem "ErasusBox" 256 1
+}
+
+actor RORocketAmmoSpawner : RandomSpawner //Zscript
+{
+    DropItem "RawketAmmo" 256 5
+    DropItem "StickyAmmo" 256 2
+}
+
+actor RORocketBoxSpawner : RandomSpawner //Zscript
+{
+    DropItem "RawketBox" 256 4
+    DropItem "StickyBox" 256 1
+}
+
+actor ROCellSpawner : NewCellSpawner {} //Zscript
+
+actor CellSpawner : RandomSpawner 
+{
+    DropItem "HeadAmmo" 256 1
+    DropItem "IonAmmo" 256 1
+    DropItem "NukeCellAmmo" 256 1
+    DropItem "PlasmaAmmo" 256 1
+    DropItem "VearAmmo" 256 1
+    DropItem "VoidAmmo" 256 1
+}
+
+actor ROCellPackSpawner : NewCellPackSpawner {} //Zscript
+
+actor CellPackSpawner : RandomSpawner 
+{
+    DropItem "HeadBox" 256 1
+    DropItem "IonPack" 256 1
+    DropItem "NukeCellPack" 256 1
+    DropItem "PlasmaPack" 256 1
+    DropItem "VearPack" 256 1
+    DropItem "VoidPack" 256 1
+}
+
+actor ROBackpackSpawner : RandomSpawner //ACS
+{
+    DropItem "Backpack2"
+}

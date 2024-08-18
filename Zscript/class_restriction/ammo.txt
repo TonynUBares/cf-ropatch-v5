@@ -1,0 +1,344 @@
+//Cells
+class NewCellSpawner : Actor
+{
+	Default
+	{
+		+NOINTERACTION
+	}
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(RO_ClassRestriction) { A_SpawnItemEx("CellAmmoUniversal",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+			else { A_SpawnItemEx("CellSpawner",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+		}
+		Stop;
+	}
+}
+
+class CellAmmoUniversal : RORestrictPiece
+{
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(random(0,1) == 0) {
+				invoker.TypeTwo = 0;
+				A_SpawnItemEx("HeadAmmoYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("PlasmaAmmoMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("VearAmmoAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			} else {
+				invoker.TypeTwo = 1;
+				A_SpawnItemEx("NukeCellAmmoYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("IonAmmoMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("VoidAmmoAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			}
+		}
+		TNT1 A 1;
+		Wait;
+	Pickup:
+		TNT1 A 0 A_JumpIf(CountInv("YuriTrigger"),"YuriAmmo");
+		TNT1 A 0 A_JumpIf(CountInv("MartyTrigger"),"MartyAmmo");
+		TNT1 A 0 A_JumpIf(CountInv("AloszaTrigger"),"AloshaAmmo");
+	YuriAmmo:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"YuriAmmo2");
+		TNT1 A 0 A_JumpIfInventory("HeadAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("HeadAmmo"); thingtogive.touch(self); }
+		Stop;
+	YuriAmmo2:
+		TNT1 A 0 A_JumpIfInventory("NukeCellAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("NukeCellAmmo"); thingtogive.touch(self); }
+		Stop;
+	MartyAmmo:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"MartyAmmo2");
+		TNT1 A 0 A_JumpIfInventory("PlasmaAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("PlasmaAmmo"); thingtogive.touch(self); }
+		Stop;
+	MartyAmmo2:
+		TNT1 A 0 A_JumpIfInventory("IonAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("IonAmmo"); thingtogive.touch(self); }
+		Stop;
+	AloshaAmmo:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"AloshaAmmo2");
+		TNT1 A 0 A_JumpIfInventory("VearAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("VearAmmo"); thingtogive.touch(self); }
+		Stop;
+	AloshaAmmo2:
+		TNT1 A 0 A_JumpIfInventory("VoidAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("VoidAmmo"); thingtogive.touch(self); }
+		Stop;
+	Nope:
+		TNT1 A 0;
+		Fail;
+	}
+}
+
+class HeadAmmoYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		HEDA A -1;
+		Stop;
+	}
+}
+
+class PlasmaAmmoMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		PCEL ABCDCB 2;
+		Loop;
+	}
+}
+
+class VearAmmoAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		YELL A -1;
+		Stop;
+	}
+}
+
+class NukeCellAmmoYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		CELL ABCDEDCB 3;
+		Loop;
+	}
+}
+
+class IonAmmoMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		ASMC ABCDEFGH 2;
+		Loop;
+	}
+}
+
+class VoidAmmoAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		CVOD ABCDEFGHIJKLM 1;
+		Loop;
+	}
+}
+
+//Cell packs
+class NewCellPackSpawner : Actor
+{
+	Default
+	{
+		+NOINTERACTION
+	}
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(RO_ClassRestriction) { A_SpawnItemEx("CellPackUniversal",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+			else { A_SpawnItemEx("CellPackSpawner",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+		}
+		Stop;
+	}
+}
+
+class CellPackUniversal : RORestrictPiece
+{
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(random(0,1) == 0) {
+				invoker.TypeTwo = 0;
+				A_SpawnItemEx("HeadBoxYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("PlasmaPackMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("VearPackAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			} else {
+				invoker.TypeTwo = 1;
+				A_SpawnItemEx("NukeCellPackYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("IonPackMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("VoidPackAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			}
+		}
+		TNT1 A 1;
+		Wait;
+	Pickup:
+		TNT1 A 0 A_JumpIf(CountInv("YuriTrigger"),"YuriAmmo");
+		TNT1 A 0 A_JumpIf(CountInv("MartyTrigger"),"MartyAmmo");
+		TNT1 A 0 A_JumpIf(CountInv("AloszaTrigger"),"AloshaAmmo");
+	YuriAmmo:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"YuriAmmo2");
+		TNT1 A 0 A_JumpIfInventory("HeadAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("HeadBox"); thingtogive.touch(self); }
+		Stop;
+	YuriAmmo2:
+		TNT1 A 0 A_JumpIfInventory("NukeCellAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("NukeCellPack"); thingtogive.touch(self); }
+		Stop;
+	MartyAmmo:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"MartyAmmo2");
+		TNT1 A 0 A_JumpIfInventory("PlasmaAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("PlasmaPack"); thingtogive.touch(self); }
+		Stop;
+	MartyAmmo2:
+		TNT1 A 0 A_JumpIfInventory("IonAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("IonPack"); thingtogive.touch(self); }
+		Stop;
+	AloshaAmmo:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"AloshaAmmo2");
+		TNT1 A 0 A_JumpIfInventory("VearAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("VearPack"); thingtogive.touch(self); }
+		Stop;
+	AloshaAmmo2:
+		TNT1 A 0 A_JumpIfInventory("VoidAmmo",0,"Nope");
+		TNT1 A 0 { let thingtogive = Spawn("VoidPack"); thingtogive.touch(self); }
+		Stop;
+	Nope:
+		TNT1 A 0;
+		Fail;
+	}
+}
+
+class HeadBoxYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		HEDA B -1;
+		Stop;
+	}
+}
+
+class PlasmaPackMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		PPAK ABCD 4;
+		Loop;
+	}
+}
+
+class VearPackAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		YELP ABCD 3;
+		Loop;
+	}
+}
+
+class NukeCellPackYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		CELP ABCD 3;
+		Loop;
+	}
+}
+
+class IonPackMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		ASMP ABCDEF 2;
+		Loop;
+	}
+}
+
+class VoidPackAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		PVOD A 17;
+		PVOD BCDEFGHIJ 1;
+		Loop;
+	}
+}

@@ -1,0 +1,164 @@
+/*
+CREDITS:
+Sprites - Xatrix (Redneck Rampage)
+Pickup - WildWeasel
+
+Sounds:
+Up - Epic Games (UT2004)
+Idle, Fire, flinged saw impact - Croteam (Serious Sam 2)
+Saw flesh - Croteam (Serious Sam: SE)
+Saw wall - ID (Doom 3)
+Alt-Fire - Epic Games (Unreal)
+2nd part of impact - ?
+*/
+
+Actor RazorType : Inventory { Inventory.MaxAmount 1 }
+
+
+Actor RazorjackGiver : CustomInventory
+{
+  Scale 0.8
+  Inventory.Amount 1
+  Inventory.MaxAmount 0
+  Inventory.InterHubAmount 0
+	Inventory.PickupSound "misc/w_pkup" 
+	Inventory.PickupMessage "Picked up yer good old pal' ''Perestroika'' razorjack! You hope that this is better than a chainsaw"
+	Obituary "%o was ''hello, I'm a lumberjack!'' 'd by %k's rotating blade."
+  Tag "Razorjack"
+  States
+  {
+  Spawn:
+	RAZG X 1
+	Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Razorjack",1,"Remove")
+  All:
+	TNT1 A 0 A_GiveInventory("Razorjack",1)
+	Stop
+  Remove:
+    TNT1 A 0
+    Stop
+  }
+}
+
+
+
+ACTOR Razorjack : Weapon 24514
+{ 
+	//$Category Weapons
+	//$Title Razorjack
+	//$Sprite RAZGX0
+	Inventory.PickupSound "misc/w_pkup" 
+	Inventory.PickupMessage "Picked up yer good old pal' ''Perestroika'' razorjack! You hope that this is better than a chainsaw"
+	Obituary "%o was ''hello, I'm a lumberjack!'' 'd by %k's rotating blade."
+	Weapon.UpSound "Razorjack/Gun"
+	Weapon.SelectionOrder 7
+	Weapon.Kickback 10
+	Weapon.SlotNumber 1
+	Weapon.SlotPriority 25.0
+	Weapon.BobStyle InverseSmooth
+	Weapon.BobSpeed 1.6
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	States 
+	{ 
+	Spawn: 
+		RAZG X -1 
+		Stop
+	Ready:
+		RAZG A 0 {
+			A_PlaySound("Razorjack/Idle",6,1.0,1);
+			A_StopSound(5);
+		}
+		RAZG A 1 A_WeaponReady 
+		Loop
+   Deselect:
+   	TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+       RAZG A 0 A_PlaySound("Razorjack/IEnd",6)
+       RAZG A 1 A_Lower(12)
+       Wait 
+   Select:
+   	TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+       RAZG A 1 A_Raise(12)
+       Loop
+   Fire:
+		RAZG A 0 {
+			A_PlaySound("Razorjack/IEnd",6);
+			A_PlaySound("Razorjack/Up",1);
+		}
+		RAZE ABABAB 2
+	Holding:
+		RAZG A 0 {
+			A_StopSound(1);
+			A_PlaySound("Razorjack/Loop",5,1.0,1);
+		}
+		RAZE ABAB 1 {
+			A_WeaponOffset(frandom(2.0,-2.0),32+frandom(2.0,-2.0),WOF_INTERPOLATE);
+			if(!CountInv("RazorType")) {
+				A_GiveInventory("RazorType",1);
+				A_CustomPunch(35, 0, 0, "RazorPuff", 135+frandom(5.0,-5.0));
+			} else {
+				A_TakeInventory("RazorType",1);
+				A_CustomPunch(35, 0, 0, "SilentRazPuff", 135+frandom(5.0,-5.0));
+			}
+			Return A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK, "EmpowerAltFire");
+		}
+		RAZE A 0 A_ReFire("Holding")
+		RAZG A 0 {
+			A_WeaponOffset(0,32,WOF_INTERPOLATE);
+			A_StopSound(5);
+			A_PlaySound("Razorjack/Down",1);
+		}
+		RAZE AB 2 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK, "EmpowerAltFire")
+		RAZE ABAB 3 A_WeaponReady(WRF_NOSWITCH)
+		RAZG A 0 A_PlaySound("Razorjack/Idle",6,1.0,1)
+		RAZE AB 4
+		Goto Ready
+	AltFire:
+		RAZE A 0 {
+			A_StopSound(5);
+			A_PlaySoundEx("Razorjack/IEnd",6);
+		}
+	AltHolder:
+		RAZG A 0 A_PlaySound("Razorjack/Fire",1,0.8)
+		RAZF A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		RAZF A 1 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		RAZF B 1 A_WeaponOffset(6,38,WOF_INTERPOLATE)
+		RAZF B 1 A_WeaponOffset(9,41,WOF_INTERPOLATE)
+		RAZF C 0 A_FireCustomMissile("Razorblade",frandom(1.0,-1.0),0,7,-2,0,frandom(1.0,-1.0))
+		RAZF C 1 A_WeaponOffset(10,42,WOF_INTERPOLATE)
+		RAZF C 1 A_WeaponOffset(9,41,WOF_INTERPOLATE)
+		RAZF C 1 A_WeaponOffset(7,39,WOF_INTERPOLATE)
+		RAZF C 1 A_WeaponOffset(5,37,WOF_INTERPOLATE)
+		RAZR A 1 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		RAZR A 1 A_WeaponOffset(2,34,WOF_INTERPOLATE)
+		RAZR B 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		RAZR B 1 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		RAZG A 2 A_ReFire("AltHolder")
+		Goto Ready
+    EmpowerAltFire:
+		RAZG A 0 {
+			A_WeaponOffset(0,32,WOF_INTERPOLATE);
+			A_StopSound(5);
+			A_PlaySoundEx("Razorjack/IEnd",6);
+			A_PlaySound("Razorjack/Fire",1,0.8);
+		}
+		RAZF A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		RAZF A 1 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		RAZF B 1 A_WeaponOffset(6,38,WOF_INTERPOLATE)
+		RAZF B 1 A_WeaponOffset(9,41,WOF_INTERPOLATE)
+		RAZF C 0 A_FireCustomMissile("EmpoweredRazorblade",frandom(1.0,-1.0),0,7,-2,0,frandom(1.0,-1.0))
+		RAZF C 1 A_WeaponOffset(10,42,WOF_INTERPOLATE)
+		RAZF C 1 A_WeaponOffset(9,41,WOF_INTERPOLATE)
+		RAZF C 1 A_WeaponOffset(7,39,WOF_INTERPOLATE)
+		RAZF C 1 A_WeaponOffset(5,37,WOF_INTERPOLATE)
+		RAZR A 1 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		RAZR A 1 A_WeaponOffset(2,34,WOF_INTERPOLATE)
+		RAZR B 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		RAZR B 1 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		RAZG A 2 A_ReFire("AltHolder")
+		Goto Ready
+   } 
+}

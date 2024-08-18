@@ -1,0 +1,177 @@
+//Shotgun replacements
+class NewShotgunSpawner : Actor
+{
+	Default
+	{
+		+NOINTERACTION
+	}
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(RO_ClassRestriction && RO_ShotgunSpawn && Random(0,1) == 0) { A_SpawnItemEx("SuperShotgunSpawnerRestricted",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+			else if(RO_ClassRestriction) { A_SpawnItemEx("ShotgunSpawnerRestricted",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+			else { A_SpawnItemEx("ShotgunSpawner",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+		}
+		Stop;
+	}
+}
+
+class ShotgunSpawnerRestricted : RORestrictPiece
+{
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(random(0,1) == 0) {
+				invoker.TypeTwo = 0;
+				A_SpawnItemEx("ErasusYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("LeviathanMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("QuadvolgueAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			} else {
+				invoker.TypeTwo = 1;
+				A_SpawnItemEx("PushkaYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("HotrodMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("RasputinAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			}
+			Return ResolveState(Null);
+		}
+		TNT1 A 1;
+		Wait;
+	Use:
+		TNT1 A 0 A_JumpIf(CountInv("YuriTrigger"),"YuriWeapon");
+		TNT1 A 0 A_JumpIf(CountInv("MartyTrigger"),"MartyWeapon");
+		TNT1 A 0 A_JumpIf(CountInv("AloszaTrigger"),"AloshaWeapon");
+	YuriWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"YuriWeapon2");
+		TNT1 A 0 { if(CountInv("Erasus") && A_JumpIfInventory("ErasusAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("ErasusGiver"); thingtogive.touch(self); }
+		Stop;
+	YuriWeapon2:
+		TNT1 A 0 { if(CountInv("Pushka") && A_JumpIfInventory("TankShellAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("PushkaGiver"); thingtogive.touch(self); }
+		Stop;
+	MartyWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"MartyWeapon2");
+		TNT1 A 0 { if(CountInv("Leviathan") >= 2 && A_JumpIfInventory("ErasusAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("LeviathanGiver"); thingtogive.touch(self); }
+		Stop;
+	MartyWeapon2:
+		TNT1 A 0 { if(CountInv("Hotrod") && A_JumpIfInventory("TankShellAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("HotrodGiver"); thingtogive.touch(self); }
+		Stop;
+	AloshaWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"AloshaWeapon2");
+		TNT1 A 0 { if(CountInv("Quadvolgue") && A_JumpIfInventory("ErasusAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("QuadvolgueGiver"); thingtogive.touch(self); }
+		Stop;
+	AloshaWeapon2:
+		TNT1 A 0 { if(CountInv("Rasputin") && A_JumpIfInventory("TankShellAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("RasputinGiver"); thingtogive.touch(self); }
+		Stop;
+	Nope:
+		TNT1 A 0;
+		Fail;
+	}
+}
+
+class ErasusYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+		Scale 0.9;
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		ERGG X -1;
+		Stop;
+	}
+}
+
+class PushkaYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+		Scale 0.78;
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		ERMG X -1;
+		Stop;
+	}
+}
+
+class LeviathanMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+		Scale 0.8;
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		LEVG X -1;
+		Stop;
+	}
+}
+
+class HotrodMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		HRDG X -1;
+		Stop;
+	}
+}
+
+class QuadvolgueAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		SSHG X -1;
+		Stop;
+	}
+}
+
+class RasputinAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+		Scale 0.8;
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		GENG X -1;
+		Stop;
+	}
+}

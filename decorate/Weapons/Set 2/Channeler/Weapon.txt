@@ -1,0 +1,326 @@
+/*
+CREDITS:
+
+Sprites:
+Weapon - Neccronixus, from bits by Marty Kirra
+Pickup by me, bits by Eriance!
+
+Sounds:
+Up - ? (Wildweasel could probably enlighten me, but I keep forgetting to ask.
+Start, loop, end - Blizzard (Starcraft 2)
+Zoom in, zoom out - Valve (Half-Life 2)
+Ear-raping soundwave... sounds, all of them - EA (C&C3)
+*/
+
+ACTOR ChannelerCycle : Inventory { Inventory.MaxAmount 4 }
+ACTOR ChannelerCounter : Inventory { Inventory.MaxAmount 99 }
+
+actor ChannelerGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "Picked up the ''Channeler'' mark II plasma projection weapon! I don't need to see something to kill it. See?! (7)"
+	Obituary "%k didn't need no steenkin' aim to kill %o."
+	States
+	{
+	Spawn:
+		CHLG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Channeler",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Channeler",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("PlasmaAmmo",75)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+ACTOR Channeler : Weapon 24525
+{
+	//$Category Weapons
+	//$Title Channeler
+	//$Sprite CHLGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "Picked up the ''Channeler'' mark II plasma projection weapon! I don't need to see something to kill it. See?! (7)"
+	Obituary "%k didn't need no steenkin' aim to kill %o."
+	Weapon.UpSound "Channeler/Up" 
+	Weapon.SelectionOrder 2
+	Weapon.AmmoGive 75
+	Weapon.AmmoType "PlasmaAmmo"
+	Weapon.AmmoUse 1
+	Weapon.AmmoGive2 75
+	Weapon.AmmoType2 "PlasmaAmmo"
+	Weapon.AmmoUse2 20
+	Weapon.Kickback 25
+	Weapon.SlotNumber 7
+	Weapon.SlotPriority 26.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.4
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	+NOALERT
+	States
+	{
+	Spawn:
+		CHLG X -1
+		Stop
+	Ready:
+		CHLG A 0 A_JumpIfInventory("Zoomed",1,"ZoomedReady")
+		CHLG A 1 A_WeaponReady(WRF_ALLOWZOOM)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		CHLG A 0 A_JumpIf(CountInv("Zoomed"),"UnZoom")
+		CHLG A 0 {
+			A_ZoomFactor(1.0);
+			A_SetTranslucent(1,0);
+			A_StopSound(5);
+		}
+		CHLG A 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		CHLG A 0 A_TakeInventory("ChannelerCounter",99)
+		CHLG A 1 A_Raise(12)
+		Wait
+	Fire:
+		CHLF A 0 A_JumpIfInventory("Zoomed",1,"ZoomedFire")
+		CHLF A 0 {
+			A_PlaySound("Channeler/Start",1);
+			A_PlaySound("Channeler/Loop",5,1.0,1);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); }
+		}
+	Hold:
+		CHLF A 0 A_JumpIfInventory("Zoomed",1,"ZoomedHold")
+		CHLF A 0 A_GiveInventory("ChannelerCycle",4)
+	Cycler:
+		CHLF A 1 Bright {
+			A_WeaponOffset(5+frandom(2.0,-2.0),37+frandom(2.0,-2.0),WOF_INTERPOLATE);
+			A_FireCustomMissile("ChannelerBeam",frandom(1.0,-1.0),1,5,2,0,frandom(1.0,-1.0));
+			A_SetBlend("Blue",0.1,6);
+			A_Recoil(0.5);
+			A_AlertMonsters;
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(1,1,2,3,0,3,"none"); }
+			A_SetAngle(Angle - 0.2*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.2*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			Return A_JumpIfNoAmmo("Endo");
+		}
+		CHLF B 1 Bright A_WeaponOffset(4+frandom(2.0,-2.0),36+frandom(2.0,-2.0),WOF_INTERPOLATE)
+		CHLF B 0 Bright {
+			A_TakeInventory("ChannelerCycle",1);
+			Return A_JumpIf(CountInv("ChannelerCycle"),"Cycler");
+		}
+		CHLG A 0 A_ReFire
+	Endo:
+		CHLF C 1 Bright {
+			A_WeaponOffset(3,35,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); }
+			A_StopSound(5);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(1,1,2,7,0,3, "none",QF_SCALEDOWN); }
+			A_PlaySound("Channeler/Stop",1);
+		}
+		CHLF D 1 Bright { A_WeaponOffset(2,34,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		CHLG A 1 { A_WeaponOffset(1,33,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		CHLG A 1 { A_WeaponOffset(0,32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		Goto Ready
+	AltFire:
+		CHLZ A 0 A_JumpIfInventory("Zoomed",1,"ZoomedAltFire")
+		CHLF A 1 Bright {
+			A_WeaponOffset(7,39,WOF_INTERPOLATE);
+			A_FireCustomMissile("DisruptionProjectile",0,1,5,2);
+			A_PlaySound("Disruptor/Layer",6);
+			A_PlaySound("Disruptor/Wave",1,0.6);
+			A_PlaySound("Disruptor/Blast",5);
+			A_SetBlend("Blue",0.3,20);  
+			if(GetCvar("RO_QuakeRecoil")) { A_ZoomFactor(0.9); }
+			A_Recoil(15.0);
+			A_AlertMonsters;
+			A_SetAngle(Angle - 1.75*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 1.75*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		CHLF B 1 Bright {
+			A_WeaponOffset(14,46,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.91); }
+			A_SetAngle(Angle - 0.75*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.75*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		CHLF A 1 Bright { A_WeaponOffset(15,47,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } }
+		CHLF B 1 Bright { A_WeaponOffset(16,48,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		CHLF C 1 Bright { /*A_WeaponOffset(17,38,WOF_INTERPOLATE);*/ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); } }
+		CHLF D 1 Bright { /*A_WeaponOffset(2,34,WOF_INTERPOLATE);*/ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		CHLG A 1 { A_WeaponOffset(15,47,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		CHLG A 1 { A_WeaponOffset(13,45,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		CHLG A 1 { A_WeaponOffset(10,42,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		CHLG A 1 A_WeaponOffset(8,40,WOF_INTERPOLATE)
+		CHLG A 1 A_WeaponOffset(5,37,WOF_INTERPOLATE)
+		CHLG A 1 A_WeaponOffset(4,36,WOF_INTERPOLATE)
+		CHLG A 1 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		CHLG A 1 A_WeaponOffset(2,34,WOF_INTERPOLATE)
+		CHLG A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		CHLG A 30 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		Goto Ready
+   Zoom: //ZoomIn
+		CHLG A 0 A_JumpIfInventory("Zoomed",1,"UnZoom")
+		CHLG A 0 {
+			A_GiveInventory("Zoomed",1);
+			A_PlaySound("Channeler/ZoomIn",5);
+		}
+		CHLG A 1 A_SetBlend("Black",0.15,3)
+		CHLG A 1 A_SetBlend("Black",0.3,3)
+		CHLG A 1 A_SetBlend("Black",0.45,3)
+		CHLG A 1 A_SetBlend("Black",0.6,3)
+		CHLG A 1 A_SetBlend("Black",0.75,3)
+		CHLG A 1 A_SetBlend("Black",0.9,3)
+		CHLG A 1 A_SetBlend("Black",1.0,10)
+		CHLZ A 1 {
+			A_ZoomFactor(3.0);
+			A_SetTranslucent(0.98,0);
+			A_SetBlend("Black",0.9,3);
+		}
+		CHLZ A 1 {
+			A_SetBlend("Black",0.85,3);
+			A_SetTranslucent(0.96,0);
+		}
+		CHLZ A 1 {
+			A_SetBlend("Black",0.75,3);
+			A_SetTranslucent(0.84,0);
+		}
+		CHLZ A 1 {
+			A_SetBlend("Black",0.65,3);
+			A_SetTranslucent(0.82,0);
+		}
+		CHLZ A 1 {
+			A_SetBlend("Black",0.55,3);
+			A_SetTranslucent(0.81,0);
+		}
+		CHLZ A 1 {
+			A_SetBlend("Black",0.45,3);
+			A_SetTranslucent(0.8,0);
+		}
+		CHLZ A 1 A_SetBlend("Black",0.4,3)
+		CHLZ A 1 A_SetBlend("Black",0.36,3)
+		CHLZ A 1 A_SetBlend("Black",0.34,3)
+		CHLZ A 1 A_SetBlend("Black",0.33,3)
+		CHLZ A 1 A_SetBlend("Black",0.32,3)
+		CHLZ A 1 A_SetBlend("Black",0.31,3)
+		CHLZ AAAAA 1 A_SetBlend("Blue",0.1,3)
+		Goto ZoomedReady
+	ZoomedReady:
+		CHLZ A 0 A_SetBlend("Blue",0.1,3)
+		CHLZ A 1 A_WeaponReady(WRF_NOBOB|WRF_ALLOWZOOM)
+		Goto Ready
+	UnZoom:
+		CHLZ A 1 {
+			A_PlaySound("Channeler/ZoomOut",5);
+			A_TakeInventory("Zoomed",1);
+			A_SetBlend("Black",0.35,3);
+			A_SetTranslucent(0.9,0);
+		}
+		CHLZ A 1 {
+			A_SetBlend("Black",0.4,3);
+			A_SetTranslucent(0.92,0);
+		}
+		CHLZ A 1 {
+			A_SetBlend("Black",0.45,3);
+			A_SetTranslucent(0.94,0);
+			A_ZoomFactor(1.0);
+		}
+		CHLZ A 1 {
+			A_SetBlend("Black",0.6,3);
+			A_SetTranslucent(0.96,0);
+		}
+		CHLZ A 1 {
+			A_SetBlend("Black",0.75,3);
+			A_SetTranslucent(0.98,0);
+		}
+		CHLZ A 1 {
+			A_SetBlend("Black",0.9,3);
+			A_SetTranslucent(1.0,0);
+		}
+		CHLG A 16 A_SetBlend("Black",1.0,16)
+		Goto Ready
+	ZoomedFire:
+		CHLZ A 0 {
+			A_PlaySound("Channeler/Start",1);
+			A_ZoomFactor(2.96);
+			A_SetBlend("Blue",0.3,3);
+		}
+	ZoomedHold:
+		CHLZ A 0 {
+			A_PlaySound("Channeler/Loop",5,1.0,1);
+			A_GiveInventory("ChannelerCycle",4);
+		}
+	ZoomedCycler:
+		CHLZ B 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.94); }
+			A_SetBlend("Blue",0.25,6);
+			A_FireCustomMissile("ChannelerBeam",0,1,0,-5);
+			//A_Recoil(0.25);
+			A_QuakeEx(1,1,1,3,0,3,"none");
+			A_SetPitch(Pitch + 0.05*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			Return A_JumpIfNoAmmo("Endo");
+		}
+		CHLZ B 1 Bright
+		CHLZ B 0 {
+			A_TakeInventory("ChannelerCycle",1);
+			Return A_JumpIf(CountInv("ChannelerCycle"),"ZoomedCycler");
+		}
+		CHLG Z 0 A_Refire
+	ZoomedEndo:
+		CHLZ B 1 {
+			A_StopSound(5);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(1,1,1,3,0,3,"none",QF_SCALEDOWN); }
+			A_PlaySound("Channeler/Stop",1);
+			A_SetBlend("Blue",0.1,3);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.97); }
+		}
+		CHLZ B 1 {
+			A_SetBlend("Blue",0.1,3);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.98); }
+		}
+		CHLZ B 1 {
+			A_SetBlend("Blue",0.1,3);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.99); }
+		}
+		CHLZ B 1 {
+			A_SetBlend("Blue",0.1,3);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(3.0); }
+		}
+		Goto Ready
+	ZoomedAltFire:
+		CHLZ A 0 {
+			A_FireCustomMissile("DisruptionProjectile",0,1,0,-5,1,0);
+			A_SetBlend("Blue",0.4,16);
+			A_PlaySound("Disruptor/Layer",6);
+			A_PlaySound("Disruptor/Wave",1,0.65);
+			A_PlaySound("Disruptor/Blast",5);
+			A_Recoil(10);
+			A_AlertMonsters;
+			A_SetPitch(Pitch - 3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		CHLZ B 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.7); }
+			A_SetPitch(Pitch - 2.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		CHLZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.75); } }
+		CHLZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.8); } }
+		CHLZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.85); } }
+		CHLZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.875); } }
+		CHLZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.9); } }
+		CHLZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.925); } }
+		CHLZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.94); } }
+		CHLZ B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.95); } }
+		CHLZ B 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.96); } }
+		CHLZ B 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.97); } }
+		CHLZ B 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.98); } }
+		CHLZ B 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.99); } }
+		CHLZ B 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(3.0); } }
+		CHLZ BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB 1 A_SetBlend("Blue",0.1,3)
+		Goto Ready
+	}
+}

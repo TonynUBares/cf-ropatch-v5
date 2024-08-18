@@ -1,0 +1,35 @@
+/*
+Special thanks to Yholl, Zhs2 and my uncooperative brain to butt heads with
+to make this flaming garbage work~ - Pillow.
+*/
+
+class RORestrictPiece : CustomInventory
+{
+	Default
+	{
+		Inventory.MaxAmount 0;
+		Inventory.PickupMessage "";
+		Inventory.PickupSound "";
+		+INVENTORY.AUTOACTIVATE
+	}
+	
+	int TypeTwo;
+}
+
+class ROVisualPiece : Actor
+{
+	Default
+	{
+		+NOBLOCKMAP
+	}
+	
+	override void Tick()
+	{
+		if(!master && !InStateSequence(curstate, FindState("Null")))
+		{
+			SetState(FindState("Null"));
+		}
+		if(master) { SetOrigin(master.pos,true); }
+		Super.Tick();
+	}
+}

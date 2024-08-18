@@ -1,0 +1,303 @@
+/*
+CREDITS:
+Sprites:
+Original by Midway, rip by Murden
+Explosions - 3DRealms, recolor by Cacodemon
+Spiffy shockwave - AEoD Team... or Murden, not sure.
+
+Sounds:
+Up, Idle - Epic Games (UT2004)
+Fire & Charge - Blizzard
+Down, up in fire change mode - ID (Doom 3)
+Inner part of fire change mode - ?
+*/
+
+Actor YamatoSequence : Inventory { Inventory.MaxAmount 1 } //To differentiate between using/not using ammo in primary.
+ACTOR YamatoTrigger : Inventory { Inventory.MaxAmount 1 } //To switch alt-fires.
+
+
+actor YamatoGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Yamato'' cannon! If the fps are killing you just go to another level "
+	Obituary "%o was battlecruiser operationed by %k's ''Yamato'' cannon."
+	States
+	{
+	Spawn:
+		YAMA X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Yamato",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Yamato",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("NukeCellAmmo",50)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+Actor Yamato : ROWeapon 24513
+{
+	//$Category Weapons
+	//$Title Yamato Cannon
+	//$Sprite YAMAX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Yamato'' cannon! If the fps are killing you just go to another level "
+	Obituary "%o was battlecruiser operationed by %k's ''Yamato'' cannon."
+	Weapon.UpSound "Weapons/YamatoGun"
+	Weapon.SelectionOrder 1
+	Weapon.AmmoType "NukeCellAmmo"
+	Weapon.AmmoGive 50
+	Weapon.AmmoUse 1
+	Weapon.AmmoType2 "NukeCellAmmo"
+	Weapon.AmmoUse2 25
+	Weapon.Kickback 100
+	Weapon.SlotNumber 8
+	Weapon.SlotPriority 29.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.2
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	+NOAUTOFIRE
+	+NOALERT
+	Scale 0.8
+	States
+	{
+	Spawn:
+		YAMA X -1
+		Stop
+	Ready:
+		YAMS A 1 A_WeaponOffset(190,142+32)
+		YAMS B 1 A_WeaponOffset(171,138+32)
+		YAMS B 1 A_WeaponOffset(169,128+32,WOF_INTERPOLATE)
+		YAMS C 1 A_WeaponOffset(167,120+32,WOF_INTERPOLATE)
+		YAMS C 1 A_WeaponOffset(164,111+32,WOF_INTERPOLATE)
+		YAMS D 1 A_WeaponOffset(163,94+32,WOF_INTERPOLATE)
+		YAMS D 1 A_WeaponOffset(159,90+32,WOF_INTERPOLATE)
+		YAMS E 2 A_WeaponOffset(0,32)
+	ReadyMain:
+		YAMG A 0 A_PlaySound("Weapons/YamatoLoop",5,0.9,1)
+		YAMG ABC 2 A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		YAMA Y 0 {
+			A_StopSound(5);
+			A_StopSound(1);
+			A_ZoomFactor(1.0);
+		}
+		YAMS E 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		TNT1 A 0 SetPlayerProperty(0,0,PROP_TOTALLYFROZEN)
+		TNT1 A 1 A_Raise(18)
+		Wait
+	Fire:
+		YAMC A 0 {
+			A_AlertMonsters;
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(3,3,3,24,0,128,"none",QF_SCALEUP); }
+			A_PlaySound("Weapons/YamatoCharge",1);
+		}
+		YAMC ABCDEFABCDEFABCD 1 Bright A_WeaponOffset(0.0 + frandom(1.5, -1.5), 32.0 + frandom(1.5, -1.5), WOF_INTERPOLATE)
+		YAMC EFABCDEF 1 Bright A_WeaponOffset(0.0 + frandom(1.5, -1.5), 32.0 + frandom(1.5, -1.5), WOF_INTERPOLATE)
+	Hold:
+		//For unknown to me reasons, it's not loud enough, so I had to double it up, if I wanted to keep the quality .-.
+		YAMG A 0 {
+			A_PlaySound("Yamato/BarrageLoop",1,1.0,1);
+			A_PlaySound("Yamato/BarrageLoop",5,0.5,1);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(3,3,3,24,0,128,"none",QF_SCALEDOWN); }
+			A_GunFlash;
+		}
+	  
+		YAMF A 2 Bright {
+			A_WeaponOffset(2+frandom(2.5, -2.5),34+frandom(2.5, 0),WOF_INTERPOLATE);
+			A_Recoil(0.75);
+			A_AlertMonsters;
+			A_SetBlend("Red",0.2,15);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+			A_FireCustomMissile("YamatoBarrageMissile",frandom(-10.0,10.0),0,6,-3,0,frandom(-3.0,3.0));
+			A_FireCustomMissile("YamatoBarrageMissile",frandom(-10.0,10.0),0,6,-3,0,frandom(-3.0,3.0));
+		}
+
+		YAMF B 2 Bright {
+			A_WeaponOffset(4+frandom(2.5, -2.5),36+frandom(2.5, 0),WOF_INTERPOLATE);
+			A_Recoil(0.75);
+			A_AlertMonsters;
+			A_SetBlend("Red",0.2,15);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+			A_FireCustomMissile("YamatoBarrageMissile",frandom(-10.0,10.0),0,6,-3,0,frandom(-3.0,3.0));
+			A_FireCustomMissile("YamatoBarrageMissile",frandom(-10.0,10.0),0,6,-3,0,frandom(-3.0,3.0));
+		}
+		YAMF C 2 Bright {
+			A_WeaponOffset(6+frandom(2.5, -2.5),38+frandom(2.5, 0),WOF_INTERPOLATE);
+			A_Recoil(0.75);
+			A_AlertMonsters;
+			A_SetBlend("Red",0.2,15);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+			If(A_JumpIf(CountInv("YamatoSequence") > 1, "Null"))
+			{
+				A_FireCustomMissile("YamatoBarrageMissile",frandom(-10.0,10.0),0,6,-3,0,frandom(-3.0,3.0));
+				A_FireCustomMissile("YamatoBarrageMissile",frandom(-10.0,10.0),0,6,-3,0,frandom(-3.0,3.0));
+				A_TakeInventory("YamatoSequence",1);
+			}
+			Else
+			{
+				A_FireCustomMissile("YamatoBarrageMissile",frandom(-10.0,10.0),0,6,-3,0,frandom(-3.0,3.0));
+				A_FireCustomMissile("YamatoBarrageMissile",frandom(-10.0,10.0),1,6,-3,0,frandom(-3.0,3.0)); //This one uses ammo.
+				A_GiveInventory("YamatoSequence",1);
+			}
+		}
+	  
+		YAMG A 0 A_ReFire
+	  
+		YAMG A 0 {
+			A_WeaponOffset(0,32,WOF_INTERPOLATE);
+			A_PlaySound("Yamato/BarrageEnd",1,1.0);
+			A_PlaySound("Yamato/BarrageEnd",5,0.5);
+			A_ZoomFactor(1.0);
+		}
+		/*YAMG A 0 A_SetPitch(Pitch-1.5)
+		YAMG A 0 A_SetAngle(Angle-1.5)
+		YAMG S 2 Bright
+		YAMG A 0 A_SetPitch(Pitch-1.5)
+		YAMG A 0 A_SetAngle(Angle-1.5)
+		YAMG T 2 Bright*/
+		YAMG ABCABC 2
+		Goto ReadyMain
+	AltFire:
+		YAMG A 0 A_AlertMonsters
+		YAMG A 0 A_JumpIfInventory("YamatoTrigger",1,"QuantumJump")
+		YAMG A 0 {
+			A_PlaySound("Weapons/YamatoCharge",1);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(5,5,5,24,0,128,"none",QF_SCALEUP); }
+		}
+		YAMC ABCDEFABCDEFABCD 1 Bright A_WeaponOffset(0.0 + frandom(1.5, -1.5), 32.0 + frandom(1.5, -1.5), WOF_INTERPOLATE)
+		YAMC EFABCDEF 1 Bright A_WeaponOffset(0.0 + frandom(1.5, -1.5), 32.0 + frandom(1.5, -1.5), WOF_INTERPOLATE)
+		YAMF A 2 Bright { A_WeaponOffset(2,34,WOF_INTERPOLATE); A_Recoil(5.0); }
+		YAMF B 2 Bright A_WeaponOffset(4,36,WOF_INTERPOLATE)
+		YAMF C 2 Bright {
+			A_WeaponOffset(6,38,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.7); }
+			A_Recoil(20.0);
+			A_SetBlend("Red",0.8,60);
+			A_GunFlash;
+			A_AlertMonsters;
+			A_PlaySound("Weapons/YamatoFire",6);
+			A_FireCustomMissile("YamatoBomb",0,1,6,0);
+			A_SetPitch(Pitch-4.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle-4.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		YAMF D 2 Bright {
+			A_SetPitch(Pitch-2.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle-2.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		YAMF E 2 Bright {
+			A_WeaponOffset(5,37,WOF_INTERPOLATE);
+			A_SetPitch(Pitch-1.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle-1.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		YAMF F 2 A_WeaponOffset(4,36,WOF_INTERPOLATE)
+		YAMF G 2 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		YAMF H 2 A_WeaponOffset(2,34,WOF_INTERPOLATE)
+		YAMF I 2 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		YAMF J 2 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		YAMG A 0 A_ZoomFactor(1.0)
+		YAMG ABCABC 2
+		Goto ReadyMain
+	QuantumJump:
+		YAMG A 0 {
+			A_TakeInventory("YamatoTrigger");
+			A_PlaySound("Weapons/YamatoCharge",1);
+		}
+		YAMC ABCDEFABCDEFABCD 1 Bright A_WeaponOffset(0.0 + frandom(1.5, -1.5), 32.0 + frandom(1.5, -1.5), WOF_INTERPOLATE)
+		YAMG A 0 SetPlayerProperty(0,1,PROP_TOTALLYFROZEN)
+		YAMC EFABCDEF 1 Bright {
+			A_WeaponOffset(0.0 + frandom(1.5, -1.5), 32.0 + frandom(1.5, -1.5), WOF_INTERPOLATE);
+			A_SetPitch(Pitch + 5.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		YAMF A 2 Bright { A_WeaponOffset(2,34,WOF_INTERPOLATE); A_Recoil(5.0); }
+		YAMF B 2 Bright A_WeaponOffset(4,36,WOF_INTERPOLATE)
+		YAMD A 245 {
+			A_AlertMonsters;
+			A_StopSound(5);
+			A_FireCustomMissile("YamatoSounder",0,1,0,0);
+			A_SetBlend("Red",1,175);
+			A_GunFlash;
+			A_SpawnItemEx("YamatoInstantDSparilToast");
+			A_GiveInventory("YamatoInvicibility");
+			A_GiveInventory("YamatoFrightener");
+			A_GiveInventory("YamatoFreeze");
+		}
+		YAMG A 0 A_BrainDie
+		Goto ReadyMain
+	Reload:
+		YAMS E 2 {
+			A_StopSound(5);
+			A_PlayWeaponSound("Weapons/YamatoDown");
+			A_PlaySound("Weapons/YamatoLoad",6);
+		}
+		YAMS D 1 A_WeaponOffset(159,90+32)
+		YAMS D 1 A_WeaponOffset(163,94+32,WOF_INTERPOLATE)
+		YAMS C 1 A_WeaponOffset(163,105+32,WOF_INTERPOLATE)
+		YAMS C 1 A_WeaponOffset(164,111+32,WOF_INTERPOLATE)
+		YAMS C 1 A_WeaponOffset(167,120+32,WOF_INTERPOLATE)
+		YAMS B 1 A_WeaponOffset(169,128+32,WOF_INTERPOLATE)
+		YAMS B 1 A_WeaponOffset(171,138+32,WOF_INTERPOLATE)
+		YAMS A 1 A_WeaponOffset(190,142+32)
+		YAMS A 1 A_WeaponOffset(210,162+32,WOF_INTERPOLATE)
+		TNT1 A 13
+		TNT1 A 10 A_PlaySound("Weapons/YamatoPut",6)
+		TNT1 A 0 A_JumpIfInventory("YamatoTrigger",1,"UnLoad")
+	Load:
+		TNT1 A 0 {
+			A_GiveInventory("YamatoTrigger");
+			A_SetBlend("Green",0.1,15);
+			A_PlaySound("Weapons/YamatoJumpOn",5);
+			A_Print("\c[white]Quantum jump \c[green]activated.",2);
+		}
+		Goto KromkamCieBardzoMaczno
+	Unload:
+		TNT1 A 0 {
+			A_TakeInventory("YamatoTrigger");
+			A_SetBlend("Red",0.1,15);
+			A_PlaySound("Weapons/YamatoJumpOff",5);
+			A_Print("\c[white]Quantum jump \c[red]deactivated.",2);
+		}
+	KromkamCieBardzoMaczno:
+		TNT1 A 40
+		TNT1 A 0 {
+			A_PlaySound("Weapons/YamatoUp",1);
+			A_PlaySound("Weapons/YamatoLoad",6);
+		}
+		YAMS A 1 A_WeaponOffset(210,162+32)
+		YAMS A 1 A_WeaponOffset(190,142+32,WOF_INTERPOLATE)
+		YAMS B 1 A_WeaponOffset(171,138+32)
+		YAMS B 1 A_WeaponOffset(169,128+32,WOF_INTERPOLATE)
+		YAMS C 1 A_WeaponOffset(167,120+32,WOF_INTERPOLATE)
+		YAMS C 1 A_WeaponOffset(164,111+32,WOF_INTERPOLATE)
+		YAMS C 1 A_WeaponOffset(163,105+32,WOF_INTERPOLATE)
+		YAMS D 1 A_WeaponOffset(163,94+32,WOF_INTERPOLATE)
+		YAMS D 1 A_WeaponOffset(159,90+32,WOF_INTERPOLATE)
+		YAMS E 2 A_WeaponOffset(0,32)
+		YAMG A 0 A_PlaySound("Weapons/YamatoLoop",5,1.0,1)
+		YAMG ABCABC 2
+		Goto ReadyMain
+	Flash:
+		TNT1 A 10 A_Light2
+		TNT1 A 5 A_Light1
+		TNT1 A 0 A_Light0
+		Stop
+	}
+}

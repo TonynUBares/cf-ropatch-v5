@@ -1,0 +1,382 @@
+/*
+CREDITS:
+Sprites - Marty Kirra
+Pickup and tweaks by me, Pillol~
+
+Sounds:
+Swing, Impact, KA-BOOOOM! - Valve (Team Fortress)
+Screaming, evil chanting - ID (Doom 3)
+Kick - ?
+Throw - ID (Quake 2)
+Bouncing - Raven (Wolfenstein 3)
+*/
+/*
+CREDITS:
+Sprites:
+Weapon by Marty Kirra
+Hand by Eriance with tweaks by me
+Projectile by me
+
+Sounds:
+Swing, Impact, KA-BOOOOM! - Valve (Team Fortress)
+Screaming, evil chanting - ID (Doom 3)
+Kick - ?
+Throw - ID (Quake 2)
+Bouncing - Raven (Wolfenstein 3)
+*/
+
+ACTOR CaberPower : Inventory //Caber Power - When full, alt-fire is enabled.
+{
+	Inventory.MaxAmount 100
+}
+
+ACTOR CaberCounter : Inventory //Charge Time. How long will the charge last.
+{
+	Inventory.MaxAmount 999
+}
+
+ACTOR CaberSide : Inventory //Twin caber side checker.
+{
+	Inventory.MaxAmount 1
+}
+
+ACTOR CaberFlyTrigger : PowerupGiver
+{
+	Inventory.Amount 1
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+	powerup.duration 40
+	Powerup.Type "CaberBoosted"
+}
+
+ACTOR PowerCaberBoosted : PowerDamage
+{
+	DamageFactor "Normal", 1.0
+}
+
+//Even if you don't hit the target, you get short speed boost.
+ACTOR CaberBoost : PowerupGiver
+{
+	Inventory.Amount 1
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+	powerup.duration 85
+	Powerup.Type "Speed"
+}
+
+
+Actor CaberGiver : CustomInventory
+{
+  Scale 0.8
+  Inventory.Amount 1
+  Inventory.MaxAmount 0
+  Inventory.InterHubAmount 0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You've got the ''Porzygun'' morning star! Wait.....why tf theres a medieval weapon here?"
+	Obituary "%k applied mace-on directly on %o's forehead."
+  Tag "Ullapool Caber"
+  States
+  {
+  Spawn:
+	CBRG X 1
+	Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Caber",1,"Remove")
+  All:
+	TNT1 A 0 A_GiveInventory("Caber",1)
+	Stop
+  Remove:
+    TNT1 A 0
+    Stop
+  }
+}
+
+
+ACTOR Caber : RODoomWeapon 24501
+{
+	//$Category Weapons
+	//$Title Ullapool Caber
+	//$Sprite CBRGX0
+	Tag "Ullapool Caber"
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Ullapool Caber'' grenade! Don't worry,this weapon doesnt have self-damage...i think"
+	Obituary "%o was slammed in the face with %k's high-yield face remover."
+	Weapon.UpSound "Weapons/KhaBoom"
+	Weapon.SelectionOrder 7
+	Weapon.Kickback 250
+	Weapon.SlotNumber 1
+	Weapon.SlotPriority 30.0
+	Weapon.BobStyle InverseSmooth
+	Weapon.BobSpeed 1.6
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	AttackSound ""
+	+NOALERT
+	States
+	{
+	Spawn:
+		CBRG X -1
+		Stop
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+		TNT1 A 0 SetPlayerProperty(0, 1, PROP_INSTANTWEAPONSWITCH)
+	SelectLoop:
+		TNT1 A 0 A_Raise
+		TNT1 A 1 A_Raise
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+		TNT1 A 0 {
+			SetPlayerProperty(0, 0, PROP_INSTANTWEAPONSWITCH);
+			SetPlayerProperty(0, 0, PROP_FROZEN);
+			A_TakeInventory("CaberCounter",99);
+			A_Overlay(2,"DeselectRight");
+			A_Overlay(-3,"DeselectLeft");
+		}
+		TNT1 A 6
+	DeselectLoop:
+		TNT1 A 0 A_Lower
+		Loop
+	Ready:
+		TNT1 A 0 {
+			A_Overlay(2,"SelectRight");
+			A_Overlay(-3,"SelectLeft");
+		}
+		TNT1 A 6
+	ReadyMain:
+		TNT1 A 1 A_WeaponReady
+		Loop	
+	Fire:
+		TNT1 A 0
+		Goto ReadyMain
+	
+	//Right side.
+	SelectRight:
+		CBRS F 1   A_OverlayOffset(2, 29.0, 104.0, WOF_INTERPOLATE)
+		CBRS E 1   A_OverlayOffset(2, 30.0, 88.0, WOF_INTERPOLATE)
+		CBRS D 1   A_OverlayOffset(2, 24.0, 73.0, WOF_INTERPOLATE)
+		CBRS C 1   A_OverlayOffset(2, 22.0, 65.0, WOF_INTERPOLATE)
+		CBRS B 1   A_OverlayOffset(2, 17.0, 50.0, WOF_INTERPOLATE)
+		CBRS A 1   A_OverlayOffset(2, 4.0, 52.0, WOF_INTERPOLATE)
+	IdleRight:
+		CBRG A 1   A_OverlayOffset(2, -17.0, 10.0, WOF_INTERPOLATE)
+		CBRG A 0   A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & (BT_ALTATTACK), "SwingRight")
+		CBRG A 0   A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & (BT_RELOAD), "ChargeStart")
+		Loop
+	SwingRight:
+		CBRS A 1   A_OverlayOffset(2, -13.0, 48.0, WOF_INTERPOLATE)
+		CBRS B 1   A_OverlayOffset(2, -3.0, 28.0, WOF_INTERPOLATE)
+		CBRS C 1   A_OverlayOffset(2, 12.0, 11.0, WOF_INTERPOLATE)
+		CBRS D 1   A_OverlayOffset(2, 22.0, -6.0, WOF_INTERPOLATE)
+		CBRS E 1   A_OverlayOffset(2, 33.0, -24.0, WOF_INTERPOLATE)
+		CBRS F 1   A_OverlayOffset(2, 31.0, -30.0, WOF_INTERPOLATE)
+		CBRS G 3   A_OverlayOffset(2, 33.0, -32.0, WOF_INTERPOLATE)
+	SwingRightLoop:
+		CBRS E 1 { A_OverlayOffset(2, 33.0, -20.0, WOF_INTERPOLATE); A_PlaySound("Caber/Swing",1); }
+		CBRS B 1   A_OverlayOffset(2, 15.0, -5.0, WOF_INTERPOLATE)
+		CBRG A 1   A_OverlayOffset(2, -9.0, -25.0, WOF_INTERPOLATE)
+		CBRS H 1   A_OverlayOffset(2, -20.0, -19.0, WOF_INTERPOLATE)
+		CBRS I 1 { A_OverlayOffset(2, -28.0, 1.0, WOF_INTERPOLATE); A_FireCustomMissile("BoomJack"); }
+		CBRS J 1   A_OverlayOffset(2, -39.0, 9.0, WOF_INTERPOLATE)
+		CBRS K 1   A_OverlayOffset(2, -28.0, 35.0, WOF_INTERPOLATE)
+		CBRS L 1   A_OverlayOffset(2, -13.0, 44.0, WOF_INTERPOLATE)
+		CBRS M 1   A_OverlayOffset(2, 4.0, 59.0, WOF_INTERPOLATE)
+		TNT1 A 8
+		CBLS M 0   A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & (BT_ALTATTACK), "SwingRightLoop")
+		Goto SelectRight
+	DeselectRight:
+		CBRS A 1   A_OverlayOffset(2, 4.0, 52.0, WOF_INTERPOLATE)
+		CBRS B 1   A_OverlayOffset(2, 17.0, 50.0, WOF_INTERPOLATE)
+		CBRS C 1   A_OverlayOffset(2, 22.0, 65.0, WOF_INTERPOLATE)
+		CBRS D 1   A_OverlayOffset(2, 24.0, 73.0, WOF_INTERPOLATE)
+		CBRS E 1   A_OverlayOffset(2, 30.0, 88.0, WOF_INTERPOLATE)
+		CBRS F 1   A_OverlayOffset(2, 29.0, 104.0, WOF_INTERPOLATE)
+		Stop
+		
+	ChargeStart:
+		CBRS A 0 {
+				   SetPlayerProperty(0, 1, PROP_FROZEN);
+				   A_GiveInventory("CaberBoost");
+				   A_GiveInventory("CaberCounter",85);
+				   A_PlaySound("Caber/Scream",5);
+		}
+		CBRS A 1 { A_OverlayOffset(2, -13.0, 48.0, WOF_INTERPOLATE); A_ChangeVelocity(Cos(Pitch) * 2.0, 0, Sin(Pitch) * -2.0, CVF_RELATIVE); A_Quake(9,3,0,192,"none"); }
+		CBRS B 1 { A_OverlayOffset(2, -3.0, 28.0, WOF_INTERPOLATE); A_ChangeVelocity(Cos(Pitch) * 2.0, 0, Sin(Pitch) * -2.0, CVF_RELATIVE); A_Quake(9,3,0,192,"none"); }
+		CBRS C 1 { A_OverlayOffset(2, 12.0, 11.0, WOF_INTERPOLATE); A_ChangeVelocity(Cos(Pitch) * 2.0, 0, Sin(Pitch) * -2.0, CVF_RELATIVE); A_Quake(9,3,0,192,"none"); }
+		CBRS D 1 { A_OverlayOffset(2, 22.0, -6.0, WOF_INTERPOLATE); A_ChangeVelocity(Cos(Pitch) * 2.0, 0, Sin(Pitch) * -2.0, CVF_RELATIVE); A_Quake(9,3,0,192,"none"); }
+		CBRS E 1 { A_OverlayOffset(2, 33.0, -24.0, WOF_INTERPOLATE); A_ChangeVelocity(Cos(Pitch) * 2.0, 0, Sin(Pitch) * -2.0, CVF_RELATIVE); A_Quake(9,3,0,192,"none"); }
+		CBRS F 1 { A_OverlayOffset(2, 31.0, -30.0, WOF_INTERPOLATE); A_ChangeVelocity(Cos(Pitch) * 2.0, 0, Sin(Pitch) * -2.0, CVF_RELATIVE); A_Quake(9,3,0,192,"none"); }
+	ChargeLoop:
+		CBRS G 1 {
+				   A_OverlayOffset(2, 33.0 + frandom(5.0, -5.0), -32.0 + frandom(5.0, -5.0), WOF_INTERPOLATE);
+				   A_ChangeVelocity(Cos(Pitch) * 5.0, 0, Sin(Pitch) * -5.0, CVF_RELATIVE);
+				   A_Quake(9,3,0,32,"none");
+				   A_TakeInventory("CaberCounter",1);
+				   return A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & (BT_ALTATTACK|BT_RELOAD)  && !(getplayerinput(INPUT_OLDBUTTONS) & (BT_ALTATTACK|BT_RELOAD)), "ChargeSwing");
+		}
+		CBRS G 0   A_JumpIf(CountInv("CaberCounter") > 0, "ChargeLoop")
+		Goto ChargeEnd
+	ChargeEnd:
+		CBRS F 1 {
+				   A_OverlayOffset(2, 31.0, -30.0, WOF_INTERPOLATE);
+				   A_ChangeVelocity(Cos(Pitch) * 3.0, 0, Sin(Pitch) * 3.0, CVF_RELATIVE);
+				   A_QuakeEx(7,7,7,7,0,192,"none",QF_SCALEDOWN);
+				   SetPlayerProperty(0, 0, PROP_FROZEN);
+		}
+		CBRS E 1 { A_OverlayOffset(2, 33.0, -24.0, WOF_INTERPOLATE); A_ChangeVelocity(Cos(Pitch) * 3.0, 0, Sin(Pitch) * -3.0, CVF_RELATIVE); }
+		CBRS D 1 { A_OverlayOffset(2, 22.0, -6.0, WOF_INTERPOLATE); A_ChangeVelocity(Cos(Pitch) * 2.0, 0, Sin(Pitch) * -2.0, CVF_RELATIVE); }
+		CBRS C 1 { A_OverlayOffset(2, 12.0, 11.0, WOF_INTERPOLATE); A_ChangeVelocity(Cos(Pitch) * 1.0, 0, Sin(Pitch) * -1.0, CVF_RELATIVE); }
+		CBRS B 1 { A_OverlayOffset(2, -3.0, 28.0, WOF_INTERPOLATE); A_ChangeVelocity(Cos(Pitch) * 0.5, 0, Sin(Pitch) * -0.5, CVF_RELATIVE); }
+		CBRS A 1 { A_OverlayOffset(2, -13.0, 48.0, WOF_INTERPOLATE); A_ChangeVelocity(Cos(Pitch) * 0.25, 0, Sin(Pitch) * -0.25, CVF_RELATIVE); }
+		Goto IdleRight
+	ChargeSwing:
+		TNT1 A 0 
+		CBRS E 1 { 
+				   A_OverlayOffset(2, 33.0, -20.0, WOF_INTERPOLATE);
+				   A_PlaySound("Caber/Swing",1);
+				   SetPlayerProperty(0, 0, PROP_FROZEN);
+		}
+		CBRS B 1   A_OverlayOffset(2, 15.0, -5.0, WOF_INTERPOLATE)
+		CBRG A 1   A_OverlayOffset(2, -9.0, -25.0, WOF_INTERPOLATE)
+		CBRS H 1   A_OverlayOffset(2, -20.0, -19.0, WOF_INTERPOLATE)
+		CBRS I 1   A_OverlayOffset(2, -28.0, 1.0, WOF_INTERPOLATE)
+
+		CBRS J 0   A_JumpIfInventory("CaberCounter",75,"Whoop5") //Weakest
+		CBRS J 0   A_JumpIfInventory("CaberCounter",65,"Whoop4")
+		CBRS J 0   A_JumpIfInventory("CaberCounter",55,"Whoop3")
+		CBRS J 0   A_JumpIfInventory("CaberCounter",45,"Whoop2") //Full Power
+		CBRS J 0   A_JumpIfInventory("CaberCounter",10,"Whoop1")  //To reward someone who will wait till the end of the charge - it gets superpowered.
+	Whoop5:
+		CBRS J 0   A_FireCustomMissile("BoomJackOnCharge5",0,1,0,0)
+		Goto Aye
+	Whoop4:
+		CBRS J 0   A_FireCustomMissile("BoomJackOnCharge4",0,1,0,0)
+		Goto Aye
+	Whoop3:
+		CBRS J 0   A_FireCustomMissile("BoomJackOnCharge3",0,1,0,0)
+		Goto Aye
+	Whoop2:
+		CBRS J 0   A_FireCustomMissile("BoomJackOnCharge2",0,1,0,0)
+		Goto Aye
+	Whoop1:
+		CBRS J 0   A_FireCustomMissile("BoomJackOnCharge1",0,1,0,0)
+	Aye:
+		CBRS J 1 {
+				   A_OverlayOffset(2, -39.0, 9.0, WOF_INTERPOLATE);
+				   A_TakeInventory("PowerFlight");
+				   A_TakeInventory("CaberCounter",99);
+				   A_PlaySound("Caber/Darn",5);
+				   Return A_JumpIf(CountInv("PowerCaberBoosted"), "Waaah");
+		}
+	ChargeStop:
+		CBRS K 1 { A_OverlayOffset(2, -28.0, 35.0, WOF_INTERPOLATE); Return A_JumpIf(CountInv("PowerCaberBoosted"), "Waaah"); }
+	Kwah:
+		CBRS L 1   A_OverlayOffset(2, -13.0, 44.0, WOF_INTERPOLATE)
+		CBRS M 1   A_OverlayOffset(2, 4.0, 59.0, WOF_INTERPOLATE)
+		TNT1 A 20  A_JumpIf(CountInv("PowerCaberBoosted") <= 0, 1)
+		TNT1 A 8
+		CBLS M 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & (BT_ALTATTACK), "SwingRightLoop")
+		Goto SelectRight
+	Waaah:
+		TNT1 A 0   A_PlaySound("Caber/Yeah",5)
+		Goto Kwah
+		
+	//Left side.
+	SelectLeft:
+		CBLS F 1   A_OverlayOffset(-3, -194.0, 90.0, WOF_INTERPOLATE)
+		CBLS E 1   A_OverlayOffset(-3, -164.0, 86.0, WOF_INTERPOLATE)
+		CBLS D 1   A_OverlayOffset(-3, -155.0, 66.0, WOF_INTERPOLATE)
+		CBLS C 1   A_OverlayOffset(-3, -129.0, 65.0, WOF_INTERPOLATE)
+		CBLS B 1   A_OverlayOffset(-3, -115.0, 51.0, WOF_INTERPOLATE)
+		CBLS A 1   A_OverlayOffset(-3, -96.0, 52.0, WOF_INTERPOLATE)
+	IdleLeft:
+		CBLG A 1   A_OverlayOffset(-3, -87.0, 10.0, WOF_INTERPOLATE)
+		CBLG A 0   A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & (BT_ATTACK), "SwingLeft")
+		CBLG A 0   A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & (BT_ZOOM), "KickLeft")
+		Loop
+	SwingLeft:
+		CBLS A 1   A_OverlayOffset(-3, -91.0, 48.0, WOF_INTERPOLATE)
+		CBLS B 1   A_OverlayOffset(-3, -120.0, 28.0, WOF_INTERPOLATE)
+		CBLS C 1   A_OverlayOffset(-3, -144.0, 13.0, WOF_INTERPOLATE)
+		CBLS D 1   A_OverlayOffset(-3, -173.0, -7.0, WOF_INTERPOLATE)
+		CBLS E 1   A_OverlayOffset(-3, -185.0, -13.0, WOF_INTERPOLATE)
+		CBLS F 1   A_OverlayOffset(-3, -210.0, -27.0, WOF_INTERPOLATE)
+		CBLS G 3   A_OverlayOffset(-3, -225.0, -34.0, WOF_INTERPOLATE)
+	SwingLeftLoop:
+		CBLS E 1 { A_OverlayOffset(-3, -176.0, -15.0, WOF_INTERPOLATE); A_PlaySound("Caber/Swing",1); }
+		CBLS B 1   A_OverlayOffset(-3, -125.0, -5.0, WOF_INTERPOLATE)
+		CBLG A 1   A_OverlayOffset(-3, -77.0, -19.0, WOF_INTERPOLATE)
+		CBLS H 1   A_OverlayOffset(-3, -61.0, -5.0, WOF_INTERPOLATE)
+		CBLS I 1 { A_OverlayOffset(-3, -50.0, 22.0, WOF_INTERPOLATE); A_FireCustomMissile("BoomJack"); }
+		CBLS K 1   A_OverlayOffset(-3, -50.0, 24.0, WOF_INTERPOLATE)
+		CBLS K 1   A_OverlayOffset(-3, -53.0, 44.0, WOF_INTERPOLATE)
+		CBLS L 1   A_OverlayOffset(-3, -54.0, 63.0, WOF_INTERPOLATE)
+		CBLS M 1   A_OverlayOffset(-3, -73.0, 75.0, WOF_INTERPOLATE)
+		TNT1 A 8
+		TNT1 A 0   A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & (BT_ATTACK), "SwingLeftLoop")
+		Goto SelectLeft
+	DeselectLeft:
+		CBLS A 1   A_OverlayOffset(-3, -96.0, 52.0, WOF_INTERPOLATE)
+		CBLS B 1   A_OverlayOffset(-3, -115.0, 51.0, WOF_INTERPOLATE)
+		CBLS C 1   A_OverlayOffset(-3, -129.0, 65.0, WOF_INTERPOLATE)
+		CBLS D 1   A_OverlayOffset(-3, -155.0, 66.0, WOF_INTERPOLATE)
+		CBLS E 1   A_OverlayOffset(-3, -164.0, 86.0, WOF_INTERPOLATE)
+		CBLS F 1   A_OverlayOffset(-3, -194.0, 90.0, WOF_INTERPOLATE)
+		Goto Ready
+		
+	KickLeft:
+		//Cause making sense just doesn't make sense.
+		/*CBLS A 0 A_JumpIf(CountInv("CaberCounter"), 1)
+		Goto IdleLeft
+		}*/
+		CBLS A 0 {
+			If(CountInv("CabernadoOut"))
+			{
+				A_TakeInventory("CabernadoOut");
+			}
+			Else
+			{
+				A_GiveInventory("CabernadoOut");
+			}
+		}
+		CBLS A 1   A_OverlayOffset(-3, -91.0, 48.0, WOF_INTERPOLATE)
+		CBLS B 1   A_OverlayOffset(-3, -120.0, 28.0, WOF_INTERPOLATE)
+		CBLS C 1   A_OverlayOffset(-3, -144.0, 13.0, WOF_INTERPOLATE)
+		CBLS D 1   A_OverlayOffset(-3, -173.0, -7.0, WOF_INTERPOLATE)
+		CBLS E 1   A_OverlayOffset(-3, -185.0, -13.0, WOF_INTERPOLATE)
+		CBLS F 1   A_OverlayOffset(-3, -210.0, -27.0, WOF_INTERPOLATE)
+		CBLS G 3   A_OverlayOffset(-3, -225.0, -34.0, WOF_INTERPOLATE)
+	//KickLeftLoop:
+		CBLS E 1 { A_OverlayOffset(-3, -176.0, -15.0, WOF_INTERPOLATE); A_PlaySound("Caber/ThrowKick",1); }
+		CBLS B 1   A_OverlayOffset(-3, -125.0, -5.0, WOF_INTERPOLATE)
+		CBLG A 1   A_OverlayOffset(-3, -77.0, -19.0, WOF_INTERPOLATE)
+		CBLS H 1   A_OverlayOffset(-3, -61.0, -5.0, WOF_INTERPOLATE)
+		CBLS I 1 { A_OverlayOffset(-3, -50.0, 22.0, WOF_INTERPOLATE); A_Overlay(-4, "CaberKick"); A_GiveInventory("CabernadoOut"); A_FireCustomMissile("CabernadoProjectile"); }
+		CBLS K 1   A_OverlayOffset(-3, -50.0, 24.0, WOF_INTERPOLATE)
+		CBLS K 1   A_OverlayOffset(-3, -53.0, 44.0, WOF_INTERPOLATE)
+		CBLS L 1   A_OverlayOffset(-3, -54.0, 63.0, WOF_INTERPOLATE)
+		CBLS M 1   A_OverlayOffset(-3, -73.0, 75.0, WOF_INTERPOLATE)
+		TNT1 A 8
+		TNT1 A 0   A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & (BT_ZOOM), "KickLeft") //KickLeftLoop
+		Goto SelectLeft
+		
+	CaberKick:
+		MKBC A 0 A_JumpIf(CountInv("MartyTrigger") || CountInv("YuriTrigger"), 2)
+		CKBC A 0
+		/*"####" A 0 { If(CountInv("CaberCounter")) { Return; }
+					 Else { SetPlayerProperty(0, 1, PROP_FROZEN); Return; }
+		}*/
+		"####" A 1 A_OverlayOffset(-4, 299.0, 131.0, WOF_INTERPOLATE)
+		"####" A 1 A_OverlayOffset(-4, 235.0, 107.0, WOF_INTERPOLATE)
+		"####" A 1 A_OverlayOffset(-4, 174.0, 90.0, WOF_INTERPOLATE)
+		"####" A 1 A_OverlayOffset(-4, 111.0, 84.0, WOF_INTERPOLATE)
+		"####" A 1 A_OverlayOffset(-4, 60.0, 92.0, WOF_INTERPOLATE)
+		"####" A 1 A_OverlayOffset(-4, 13.0, 113.0, WOF_INTERPOLATE)
+		"####" A 1 A_OverlayOffset(-4, -30.0, 144.0, WOF_INTERPOLATE)
+		"####" A 1 A_OverlayOffset(-4, -79.0, 175.0, WOF_INTERPOLATE)
+		/*"####" A 0 { If(CountInv("CaberCounter")) { Return; }
+					 Else { SetPlayerProperty(0, 0, PROP_FROZEN); Return; }
+		}*/
+		Stop
+	}
+}

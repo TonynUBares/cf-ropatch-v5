@@ -1,0 +1,385 @@
+/*
+CREDITS:
+
+SOUNDS:
+Up - Black Legion Development (Tremulous)
+Swing - ?
+Hit - Running with Scissors (Postal)
+
+C'mere, Get over here, Falcon Punch... do I really need to credit those? Come on.
+Ice Punch - Mashup. One part by ID (Quake 2).
+Charge - Blizzard (Starcraft 2)
+Fart blast, Moo - ?
+Be one with Yuri - Westwood(Red Alert 2:YR)
+
+GRAPHICS:
+Uppercut - Scuba Steve\Blox (Slightly edited by me as well)
+*/
+
+actor PunchConnect : Inventory { Inventory.MaxAmount 1 }
+actor PunchSide : PunchConnect {}
+actor FalconTrigger : PunchConnect {}
+actor UppercutTrigger : PunchConnect {}
+actor CowTrigger : PunchConnect {}
+actor DominationTrigger : PunchConnect {}
+actor UppercutCounter : PunchConnect { Inventory.MaxAmount 70 }
+
+ACTOR YuriChargeProtection : PowerupGiver
+{
+	Inventory.Amount 1
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ALWAYSPICKUP
+	powerup.duration 75
+	Powerup.Type "YuriProtection"
+}
+
+ACTOR YuriChargeProtection2 : YuriChargeProtection
+{
+	powerup.duration 140
+}
+
+ACTOR PowerYuriProtection : PowerProtection
+{
+	DamageFactor "Normal", 0.4
+}
+
+actor Punchokrator : Weapon
+{
+	Tag "REAL SOVIET IRON FIST"
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You are the Punchokrator, and you have fists of steel! (1)"
+	Obituary "%o was punched to dead. Special thanks to %k for doing the treatment."
+	Weapon.UpSound "weapons/fistup1"
+	Weapon.SelectionOrder 8
+	Weapon.SlotNumber 1
+	Weapon.Kickback 200
+	AttackSound ""
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.8
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	+NOALERT
+	+WEAPON.CHEATNOTWEAPON
+	+NOAUTOAIM
+	States
+	{
+	Spawn:
+		YMEL A -1
+		Loop
+	Ready:
+		PNCI A 1 A_WeaponReady
+		Wait
+	DeadLowered:
+		TNT1 A -1
+		Stop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		PNCI A 0 {
+			A_ZoomFactor(1.0);
+			A_Overlay(2,"FistIdle");
+			A_TakeInventory("RoYuriComboScript", 1);
+		}
+		PNCI A 1 A_Lower(18)
+		Wait
+	FistIdle:
+		PNCI A 0 A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,1)
+		PNCI A 1
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		PNCI A 0 {
+			A_GiveInventory("RoYuriComboScript", 1);
+			// ACS_NamedExecuteAlways("ComboControl",0,0);
+			// ACS_NamedExecuteAlways("RO Combo Display",0,0);
+			A_Overlay(2,"FistIdle");
+		}
+		PNCI A 1 A_Raise(18)
+		Wait
+	
+	FistDown:
+		PNCI A 0 {
+			A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,1);
+			A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0);
+		}
+		PNCI A 1 A_OverlayOffset(OverlayID(),12,9+32,WOF_INTERPOLATE)
+		PNCI A 1 A_OverlayOffset(OverlayID(),19,15+32,WOF_INTERPOLATE)
+		PNCI A 1 A_OverlayOffset(OverlayID(),33,24+32,WOF_INTERPOLATE)
+		Stop
+	Fire:
+		TNT1 A 0 A_Overlay(2,"FistDown")
+		PNCI A 1 A_WeaponOffset(12,9+32,WOF_INTERPOLATE)
+		PNCI A 1 A_WeaponOffset(19,15+32,WOF_INTERPOLATE)
+		PNCI A 1 A_WeaponOffset(33,24+32,WOF_INTERPOLATE)
+		TNT1 A 3 A_WeaponOffset(0,32)
+		TNT1 A 0 A_JumpIf(CountInv("FalconTrigger"),"FPunch")
+		TNT1 A 0 A_JumpIf(CountInv("UppercutTrigger"),"Uppercut")
+		Goto Punchinating
+		
+	FistUp:
+		PNCI A 0 {
+			A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,1);
+			A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0);
+		}
+		PNCI A 1 A_OverlayOffset(OverlayID(),33,24+32)
+		PNCI A 1 A_OverlayOffset(OverlayID(),19,15+32,WOF_INTERPOLATE)
+		PNCI A 1 A_OverlayOffset(OverlayID(),12,9+32,WOF_INTERPOLATE)
+		PNCI A 1 A_OverlayOffset(OverlayID(),0,32,WOF_INTERPOLATE)
+		TNT1 A 0 A_Overlay(2,"FistIdle")
+		Stop
+	Retirement:
+		TNT1 A 0 A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,0)
+		TNT1 AAA 1 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "Punchinating")
+		TNT1 A 0 A_Overlay(2,"FistUp")
+		PNCI A 1 { A_WeaponOffset(33,24+32); Return A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "Fire"); }
+		PNCI A 1 { A_WeaponOffset(19,15+32,WOF_INTERPOLATE); Return A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "Fire"); }
+		PNCI A 1 { A_WeaponOffset(12,9+32,WOF_INTERPOLATE); Return A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "Fire"); }
+		PNCI A 1 { A_WeaponOffset(0,32,WOF_INTERPOLATE); Return A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "Fire"); }
+		Goto Ready
+		
+	Punchinating:
+		TNT1 A 0 A_JumpIf(CountInv("FalconTrigger"),"FPunch")
+		TNT1 A 0 A_JumpIf(CountInv("UppercutTrigger"),"Uppercut")
+		TNT1 A 0 A_JumpIf(GetCVar("RO_ComboMode"),"Randomness1")
+	NoRandoming:
+		TNT1 A 0 {
+			//A_Recoil(-3);
+			A_PlaySound("weapons/fistattack",1);
+			if(CountInv("PunchSide")) { A_TakeInventory("PunchSide",1); A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,0); }
+			else					  { A_GiveInventory("PunchSide",1); A_OverlayFlags(OverlayID(),PSPF_FLIP|PSPF_MIRROR,1); }
+		}
+		TNT1 A 0 A_Jump(256,"Punch1","Punch2")
+		Goto Retirement
+	Randomness1:
+		TNT1 A 0 A_Jump(10,"FPunch","Uppercut")
+		Goto NoRandoming
+	
+	//Punching
+	Punch1:
+		PNC1 A 1 A_WeaponOffset(226,153+32)
+		//PNC1 A 1 A_WeaponOffset(206,130+32,WOF_INTERPOLATE)
+		PNC1 B 1 A_WeaponOffset(183,110+32,WOF_INTERPOLATE)
+		//PNC1 B 1 A_WeaponOffset(162,92+32,WOF_INTERPOLATE)
+		PNC1 A 0 {
+			if(CountInv("PunchSide")) { A_CustomPunch(40,0,0,"FistPuffLeft",100); }
+			else 					  { A_CustomPunch(40,0,0,"FistPuff",100); }
+		}
+		PNC1 C 1 { A_WeaponOffset(139,69+32,WOF_INTERPOLATE); Return A_JumpIf(CountInv("PunchConnect"),"Punch1Connect"); }
+		PNC1 C 1 { A_WeaponOffset(125,60+32,WOF_INTERPOLATE); Return A_JumpIf(CountInv("PunchConnect"),"Punch1Connect"); }
+	Punch1Return:
+		PNC1 C 1 A_WeaponOffset(139,69+32,WOF_INTERPOLATE)
+		PNC1 B 1 A_WeaponOffset(162,92+32,WOF_INTERPOLATE)
+		PNC1 B 1 A_WeaponOffset(183,110+32,WOF_INTERPOLATE)
+		//PNC1 A 1 A_WeaponOffset(206,130+32,WOF_INTERPOLATE)
+		PNC1 A 1 A_WeaponOffset(226,153+32,WOF_INTERPOLATE)
+		TNT1 A 0 A_WeaponOffset(0,32)
+		TNT1 A 0 A_ReFire("Punchinating")
+		Goto Retirement
+	Punch1Connect:
+		PNC1 C 0 {
+			A_TakeInventory("PunchConnect",1);
+			if(GetCvar("RO_WeaponRecoil")) { A_QuakeEx(1,1,1,5,0,32,"none",QF_SCALEDOWN); }
+		}
+		PNC1 CCC 1 A_WeaponOffset(125+frandom(3.0,-3.0),60+32+frandom(3.0,-3.0),WOF_INTERPOLATE)
+		PNC1 C 0 A_WeaponOffset(125,60+32,WOF_INTERPOLATE)
+		Goto Punch1Return
+		
+   Punch2:
+		PNC1 A 1 A_WeaponOffset(233,144+32)
+		//PNC1 A 1 A_WeaponOffset(209,123+32,WOF_INTERPOLATE)
+		PNC1 B 1 A_WeaponOffset(188,101+32,WOF_INTERPOLATE)
+		//PNC1 B 1 A_WeaponOffset(168,86+32,WOF_INTERPOLATE)
+		PNC1 A 0 {
+			if(CountInv("PunchSide")) { A_CustomPunch(40,0,0,"FistPuffLeft",100); }
+			else 					  { A_CustomPunch(40,0,0,"FistPuff",100); }
+		}
+		PNC1 C 1 { A_WeaponOffset(137,63+32,WOF_INTERPOLATE); Return A_JumpIf(CountInv("PunchConnect"),"Punch2Connect"); }
+		PNC1 C 1 { A_WeaponOffset(111,68+32,WOF_INTERPOLATE); Return A_JumpIf(CountInv("PunchConnect"),"Punch2Connect"); }
+	Punch2Return:
+		PNC1 C 1 A_WeaponOffset(72,88+32,WOF_INTERPOLATE)
+		//PNC1 C 1 A_WeaponOffset(37,105+32,WOF_INTERPOLATE)
+		PNC1 C 1 A_WeaponOffset(-9,128+32,WOF_INTERPOLATE)
+		PNC1 C 1 A_WeaponOffset(-18,153+32,WOF_INTERPOLATE)
+		TNT1 A 0 A_WeaponOffset(0,32)
+		TNT1 A 0 A_ReFire("Punchinating")
+		Goto Retirement
+	Punch2Connect:
+		PNC1 C 0 {
+			A_TakeInventory("PunchConnect",1);
+			if(GetCvar("RO_WeaponRecoil")) { A_QuakeEx(1,1,1,5,0,32,"none",QF_SCALEDOWN); }
+		}
+		PNC1 CCC 1 A_WeaponOffset(137+frandom(3.0,-3.0),63+32+frandom(3.0,-3.0),WOF_INTERPOLATE)
+		PNC1 C 0 A_WeaponOffset(137,63,WOF_INTERPOLATE)
+		Goto Punch2Return
+
+	//Uppercut
+	UpperPull:
+		TNT1 AAAAAAAAAA 1 A_FireCustomMissile("PorzygunPull",frandom(-1,1),0,0,0,0,frandom(-1,1))
+		Stop
+	Uppercut:
+		TNT1 A 0 {
+			A_PlaySound("Weapons/ScorpionTaunt",5,1);
+			A_AlertMonsters;
+			A_TakeInventory("UppercutTrigger",1);
+			A_Overlay(2,"UpperPull");
+		}
+		PNC5 A 1 A_WeaponOffset(200,152+32)
+		PNC5 A 1 A_WeaponOffset(179,115+32,WOF_INTERPOLATE)
+		PNC5 A 1 A_WeaponOffset(157,87+32,WOF_INTERPOLATE)
+		PNC5 A 1 A_WeaponOffset(124,68+32,WOF_INTERPOLATE)
+		PNC5 A 1 A_WeaponOffset(91,66+32,WOF_INTERPOLATE)
+		PNC5 A 1 A_WeaponOffset(61,76+32,WOF_INTERPOLATE)
+		PNC5 A 1 A_WeaponOffset(29,94+32,WOF_INTERPOLATE)
+		PNC5 A 1 A_WeaponOffset(7,122+32,WOF_INTERPOLATE)
+		PNC5 A 1 A_WeaponOffset(-9,148+32,WOF_INTERPOLATE)
+		PNC5 A 1 A_WeaponOffset(21,165+32,WOF_INTERPOLATE)
+	UpperLoop:
+		TNT1 A 1 A_JumpIfInventory("UppercutCounter",0,"UpperRelease")
+		TNT1 A 0 A_GiveInventory("UppercutCounter",1)
+		TNT1 A 0 A_ReFire("UpperLoop")
+   UpperRelease:
+		PNC3 A 0 A_PlaySound("weapons/fistattack",1)
+		PNC3 A 1 A_WeaponOffset(164,146+32)
+		PNC3 A 1 A_WeaponOffset(140,85+32,WOF_INTERPOLATE)
+		PNC3 A 1 A_WeaponOffset(122,36+32,WOF_INTERPOLATE)
+		PNC3 A 1 A_WeaponOffset(108,-11+32,WOF_INTERPOLATE)
+		PNC3 A 1 {
+			A_WeaponOffset(100,-30+32,WOF_INTERPOLATE);
+			A_FireCustomMissile("IcePunch",0,0,0,0);
+			A_TakeInventory("UppercutCounter",0);
+			A_ChangeVelocity(0,0,25);
+			A_AlertMonsters;
+			A_Recoil(-3);
+			A_PlaySound("Weapons/IcePunch",6,1.0);
+		}
+		PNC3 A 4 A_WeaponOffset(99,-31+32,WOF_INTERPOLATE)
+		PNC3 A 1 A_WeaponOffset(100,-30+32,WOF_INTERPOLATE)
+		PNC3 A 1 A_WeaponOffset(103,-24+32,WOF_INTERPOLATE)
+		PNC3 A 1 A_WeaponOffset(108,-11+32,WOF_INTERPOLATE)
+		PNC3 A 1 A_WeaponOffset(122,36+32,WOF_INTERPOLATE)
+		PNC3 A 1 A_WeaponOffset(140,85+32,WOF_INTERPOLATE)
+		PNC3 A 1 A_WeaponOffset(164,146+32,WOF_INTERPOLATE)
+		TNT1 A 0 A_WeaponOffset(0,32)
+		TNT1 A 0 A_ReFire("Punchinating")
+		Goto Retirement
+
+	//Falcon Punch
+	FPunch:
+		TNT1 A 4 {
+			A_PlaySound("Weapons/FALCON",5,1); //FALCON!...
+			A_AlertMonsters;
+		}
+		PNC1 C 1 A_WeaponOffset(-18,153+32)
+		PNC1 C 1 A_WeaponOffset(-9,128+32,WOF_INTERPOLATE)
+		PNC1 C 1 A_WeaponOffset(37,105+32,WOF_INTERPOLATE)
+		PNC1 C 1 A_WeaponOffset(72,88+32,WOF_INTERPOLATE)
+		PNC1 C 1 A_WeaponOffset(111,68+32,WOF_INTERPOLATE)
+		PNC1 C 1 A_WeaponOffset(137,63+32,WOF_INTERPOLATE)
+		PNC1 B 1 A_WeaponOffset(168,86+32,WOF_INTERPOLATE)
+		PNC1 B 1 A_WeaponOffset(188,101+32,WOF_INTERPOLATE)
+		PNC1 A 1 A_WeaponOffset(209,123+32,WOF_INTERPOLATE)
+		PNC1 A 1 A_WeaponOffset(233,144+32,WOF_INTERPOLATE)
+		TNT1 A 11	
+		TNT1 A 2 {
+			A_PlaySound("Weapons/PAWNCH",5,1);
+			A_AlertMonsters;
+			A_TakeInventory("FalconTrigger",1); //PUNCH!!
+		}
+		PNC4 A 1 { A_WeaponOffset(295,51+32); 				  if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		PNC4 A 1 { A_WeaponOffset(244,46+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		PNC4 B 1 { A_WeaponOffset(217,50+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		PNC4 B 1 { A_WeaponOffset(195,50+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		PNC4 C 1 { 
+			A_WeaponOffset(157,52+32,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.6); }
+			if(GetCvar("RO_WeaponRecoil")) { A_QuakeEx(4,4,4,14,0,128,"none",QF_SCALEDOWN); }
+			A_FireCustomMissile("KDRO_FalconFlames",8,0,36,0);
+			A_FireCustomMissile("FalconPawnch",0,0,10,0);
+			A_PlaySound("Weapons/KAPOOW",6);
+		}
+		PNC4 C 1   A_WeaponOffset(127,56+32,WOF_INTERPOLATE)
+		PNC4 C 1 { A_WeaponOffset(115,64+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.625); } }
+		PNC4 C 1 { A_WeaponOffset(110,69+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.675); } }
+		PNC4 C 1 { A_WeaponOffset(112,75+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.725); } }
+		PNC4 C 1 { A_WeaponOffset(117,74+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.825); } }
+		PNC4 C 1 { A_WeaponOffset(127,69+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } }
+		PNC4 C 1 { A_WeaponOffset(142,66+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); } }
+		PNC4 C 1 { A_WeaponOffset(163,64+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		PNC4 B 1 { A_WeaponOffset(195,50+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.965); } }
+		PNC4 B 1 { A_WeaponOffset(231,48+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); } }
+		PNC4 A 1 { A_WeaponOffset(253,40+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } }
+		PNC4 A 1 { A_WeaponOffset(291,39+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		TNT1 A 2 { A_WeaponOffset(0,32); 					  if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		TNT1 A 0 A_ReFire("Punchinating")
+		Goto Retirement
+		
+   AltFire:
+		TNT1 A 0 A_Overlay(2,"FistDown")
+		PNCI A 1 A_WeaponOffset(12,9+32,WOF_INTERPOLATE)
+		PNCI A 1 A_WeaponOffset(19,15+32,WOF_INTERPOLATE)
+		PNCI A 1 A_WeaponOffset(33,24+32,WOF_INTERPOLATE)
+		TNT1 A 3 A_WeaponOffset(0,32)
+		TNT1 A 0 A_JumpIf(CountInv("DominationTrigger"),"Domination")
+		TNT1 A 0 A_JumpIf(GetCVar("RO_ComboMode"),"Randomness2") 
+	NoRandomingAlt:
+		TNT1 A 75 {
+			A_AlertMonsters;
+			A_PlaySound("weapons/fistcharge",5);
+			A_Giveinventory("YuriChargeProtection",1);
+		}
+		TNT1 A 0 A_JumpIf(CountInv("CowTrigger"),"Cowplosion")
+		Goto FartBomb
+	Randomness2:
+		TNT1 A 0 A_Jump(24,"Domination","CowplosionIntergo")
+		Goto NoRandomingAlt
+	CowplosionIntergo:
+		TNT1 A 75 {
+			A_AlertMonsters;
+			A_PlaySound("weapons/fistcharge",5);
+			A_Giveinventory("YuriChargeProtection2",1);
+		}
+		Goto Cowplosion
+	FartBomb:
+		TNT1 A 40 {
+			A_AlertMonsters;
+			A_Gunflash;
+			A_PlaySound("weapons/fistcombustion",6);
+			A_ChangeVelocity(0,0,25+frandom(0.0,5.0));
+			A_FireCustomMissile("GasExplode",0,0,0,0,FPF_NOAUTOAIM);
+		}
+		Goto Retirement
+   Cowplosion:
+		TNT1 A 65 {
+			A_TakeInventory("CowTrigger",1);
+			A_PlaySound("weapons/fistmoo",5);
+			A_AlertMonsters;
+		}
+		TNT1 A 10 {
+			A_GunFlash;
+			A_AlertMonsters;
+			A_FireCustomMissile("MiniNuker",180,0,0,0);
+			A_SpawnItemEx("MiniNukeClear",0,0,0,0,0,0,0,SXF_SETTARGET);
+			A_ChangeVelocity(0,0,50+frandom(0.0,5.0));
+			A_PlaySound("Weapons/MiniNukeBoom",5);
+			A_PlaySound("Deathhead/Explode",6);
+		} 
+		Goto Retirement
+	Domination:
+		TNT1 A 15 {
+			A_TakeInventory("DominationTrigger",1);
+			A_PlaySound("weapons/fistcontrol",6);
+			A_AlertMonsters;
+		}
+		TNT1 A 30 {
+			A_SpawnItemEx("DominationEffect",0,0,0,0,0,0,0,SXF_CLIENTSIDE,0);
+			A_RadiusGive("BeWithYuri",1024,RGF_MONSTERS|RGF_CORPSES|RGF_NOMASTER,1);
+		}
+		Goto Retirement
+	Flash:
+		TNT1 A 6 A_Light2
+		TNT1 A 5 A_Light1
+		TNT1 A 0 A_Light0
+		Stop
+   }
+}

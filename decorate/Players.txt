@@ -1,0 +1,421 @@
+/*
+CREDITS:
+Yuri voices, landing thump - Black Legion development (Tremulous)
+Metal boot step sounds - LucasArts, Raven (SW JKIII:JA)
+
+Alosha voices - Westwood (C&C1)
+not sure from where I got the Alosha's beret and face... dusted off some old skulltag mods, and made them from what I've got from there aeons ago...
+Marty voices and sprites - Marty Kirra, of course!
+*/
+
+actor Yuri : ROPlayer
+{
+	Health 100
+   	player.maxhealth 50000
+	Radius 16
+	Height 56
+	Mass 5500
+	PainChance 255
+    Player.SoundClass "Cyborg"
+    player.forwardmove 1.4
+	player.sidemove 1.0
+	Player.JumpZ 12.0
+	Player.ColorRange 112, 127
+	Player.GruntSpeed 24.0
+    damagefactor Normal, 0.75
+	Player.DisplayName "Cyborg"
+	Player.StartItem "YuriTrigger"
+	Player.ColorSet 0, "Communism Red", 176, 191, 176
+
+	Player.StartItem "Matchstick"
+	Player.StartItem "Punchokrator"
+	Player.StartItem "StickyBombWeapon"
+	Player.StartItem "StickyBombItem"
+	Player.StartItem "StickyQuickTossItem"
+	Player.StartItem "StickyTossWeapon"
+	Player.StartItem "BaseAmmoRefill"
+	
+	Player.StartItem "Boolet" 80
+	Player.StartItem "JetThruster" 10
+	
+	//Weapon Mags
+	Player.StartItem "ExcaliAmmo" 100
+	Player.StartItem "CubeAmmo" 100
+	Player.StartItem "SatchelAmmo" 100
+	
+	Player.StartItem "BeefClip" 9
+	Player.StartItem "PetrovecClip" 30
+	Player.StartItem "SteamClip" 8
+	
+/*	Player.WeaponSlot 1, "Razorjack","Excalibat","Powercube","BerserkerFist","Porzygun","Caber","Punchokrator"
+	Player.WeaponSlot 2, "Matchstick","MP40"
+	Player.WeaponSlot 3, "Leviathan","Pantokrator","Quadvolgue","Violator","Erasus","SchwarzerZwerg"
+	Player.WeaponSlot 4, "Gorynch","Antonov","Obliterator","Union","PowerOverwhelming","Matryoshka"
+	Player.WeaponSlot 5, "BeefSupreme","Hotrod","Steamroller","Rasputin","Torchglow","Pushka"
+	Player.WeaponSlot 6, "Gopnik","Mutilator","Chton","Shurricane","Comrade","Colonel"
+	Player.WeaponSlot 7, "Instafun","Channeler","Ramjet","Petrovec","Tepesch","Stachanov"
+	Player.WeaponSlot 8, "PlanetCracker","Vindicator","Borsch","Gurumaster","Yamato","Deathhead"*/
+
+	Player.StartItem "IsROPlayer"
+
+    damagefactor "Nope", 0
+	
+	Species "Vodka"
+	
+    +DONTBLAST
+	+THRUSPECIES
+	States
+	{
+	Spawn:
+		YURI A -1
+		Stop
+ 	 See:
+	    TNT1 A 0 A_JumpIfInventory("BerserkerTrigger",1,"TankMode")
+		YURI D 0 A_SpawnItemEx("YuriStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0) 
+		YURI AAAAABBBBB 1
+		YURI D 0 A_SpawnItemEx("YuriStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0) 
+		YURI CCCCCDDDDD 1
+		Goto Spawn
+    TankMode:
+		YURI D 0 A_SpawnItemEx("TankStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0) 
+		YURI AAAAABBBBB 1
+		YURI D 0 A_SpawnItemEx("TankStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0) 
+		YURI CCCCCDDDDD 1
+		Goto Spawn
+	Melee:
+		YURI F 6 Bright
+		Goto Missile
+	Missile:
+		YURI E 12
+		Goto Spawn
+	Pain:
+		YURI G 3
+		YURI G 3 A_Pain
+		Goto Spawn
+	Death:
+	AltSkinDeath:
+		YURI H 5 A_PlaySound("Weapons/LarpaExp",5)
+		YURI I 5 A_PlayerScream
+		YURI J 5 A_NoBlocking
+		YURI KL 5
+		YURI M -1
+		Stop
+	XDeath:
+	AltSkinXDeath:
+		YURI H 0 A_PlaySound("Cyborg/GoesNuke",5)
+		YURI GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG 2 A_SpawnItemEx("MissileExpSmoke",
+			 frandom(1.0,-1.0), frandom(1.0,-1.0), 20+frandom(1.0,-1.0),
+			 frandom(1.0,-1.0),frandom(1.0,-1.0), frandom(1.5,-1.0), frandom(0.0,360.0), SXF_CLIENTSIDE, 96)
+		YURI G 15
+		YURI H 0 A_PlaySound("weapons/larpaexp",6)
+		YURI HIJKL 4 Bright
+		YURI M 4
+		YURI A 0 {
+			if(GetCvar("RO_DeathNukes")) {
+				A_SpawnItemEx("Nuke",0,0,0,0,0,0,0,SXF_SETTARGET);
+			}
+		}
+		YURI N 84 A_NoBlocking
+		YURI NNNN 5 A_SpawnItemEx("YuriSpark",frandom(10.0,-10.0),0,frandom(5.0,-2.0),
+			frandom(0.1,1.0),0,frandom(0.1,1.0),frandom(0.0,360.0),SXF_CLIENTSIDE)
+		YURI N -1
+		Stop
+	}
+}
+
+actor YuriSpark
+{
+	Scale 0.75
+	Renderstyle "Add"
+	+NOINTERACTION
+	States
+	{
+	Spawn:
+		YSPK A 0 NoDelay A_SetScale(ScaleX * randompick(1,-1), ScaleY * randompick(1,-1))
+		YSPK ABCDEFG 4 Bright
+		Stop
+	}
+}
+
+actor YuriDummy : Yuri 24544
+{
+	Translation "112:127=176:191"
+}
+
+actor YuriTrigger : Inventory
+{
+	Inventory.MaxAmount 1
+}
+
+actor YuriStep
+{
+	Projectile
+	damage 0
+	radius 10
+	Speed 20
+	deathsound "Cyborg/Stomp"
+	+NOBLOOD
+	+DONTBLAST
+	States
+	{
+	Spawn:
+		TNT1 A 1
+		Stop
+	Death:
+		TNT1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAA 1 A_Warp(AAPTR_TARGET,0,0,0,0,WARPF_NOCHECKPOSITION)
+		Stop
+	}
+}
+
+ACTOR Alosha : ROPlayer
+{
+	Game Doom
+	Health 100
+    player.maxhealth 50000
+	Radius 16
+	Height 56
+	Mass 85
+	PainChance 255
+    Player.SoundClass "Alosza"
+    Player.ForwardMove 1.1
+	Player.SideMove 1
+	Player.ColorRange 112, 127
+	Player.GruntSpeed 20.0
+    damagefactor Normal, 0.9
+	Player.DisplayName "Commando"
+	Player.StartItem "AloszaTrigger"
+	Player.ColorSet 0, "GDI Standard", 128, 143, 135
+
+	Player.StartItem "BernieScreamer"
+	Player.StartItem "Shooter"
+	Player.StartItem "Satcheler"
+	Player.StartItem "StickyBombWeapon"
+	Player.StartItem "StickyBombItem"
+	Player.StartItem "StickyQuickTossItem"
+	Player.StartItem "StickyTossWeapon"
+	Player.StartItem "BaseAmmoRefill"
+
+	Player.StartItem "SatchelAmmo" 100
+	Player.StartItem "Boolet" 80
+	Player.StartItem "JetThruster" 10
+	
+	//Weapon Mags
+	Player.StartItem "ExcaliAmmo" 100
+	Player.StartItem "CubeAmmo" 100
+	Player.StartItem "BeefClip" 9
+	Player.StartItem "PetrovecClip" 30
+	Player.StartItem "SteamClip" 8
+	
+/*	Player.WeaponSlot 1, "Porzygun","Caber","Razorjack","Excalibat","Punchokrator","Powercube","BerserkerFist","Shooter"
+	Player.WeaponSlot 2, "Satcheler","BernieScreamer","MP40"
+	Player.WeaponSlot 3, "Erasus","SchwarzerZwerg","Leviathan","Pantokrator","Quadvolgue","Violator"
+	Player.WeaponSlot 4, "PowerOverwhelming","Matryoshka","Gorynch","Antonov","Obliterator","Union"
+	Player.WeaponSlot 5, "Torchglow","Pushka","BeefSupreme","Hotrod","Steamroller","Rasputin"
+	Player.WeaponSlot 6, "Comrade","Colonel","Gopnik","Mutilator","Chton","Shurricane"
+	Player.WeaponSlot 7, "Tepesch","Stachanov","Instafun","Channeler","Ramjet","Petrovec"
+	Player.WeaponSlot 8, "Yamato","Deathhead","PlanetCracker","Vindicator","Borsch","Gurumaster"*/
+
+	Player.StartItem "IsROPlayer"
+
+    damagefactor "Nope", 0
+	
+	Species "Vodka"
+	
+    +DONTBLAST
+	+THRUSPECIES
+	States
+	{
+	Spawn:
+		COMA A -1
+		Stop
+ 	 See:
+	    TNT1 A 0 A_JumpIfInventory("BerserkerTrigger",1,"TankMode")
+		COMA A 0 A_SpawnItemEx("HumanStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0) 
+		COMA AB 5
+		COMA C 0 A_SpawnItemEx("HumanStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0) 
+		COMA CD 5
+		Goto Spawn
+	TankMode:
+		COMA A 0 A_SpawnItemEx("TankStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0) 
+		COMA AB 5
+		COMA C 0 A_SpawnItemEx("TankStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0) 
+		COMA CD 5
+		Goto Spawn
+	Melee:
+		COMA F 6 Bright
+		Goto Missile
+	Missile:
+		COMA E 12
+		Goto Spawn
+	Pain:
+		COMA G 3
+		COMA G 3 A_Pain
+		Goto Spawn
+	Death:
+	AltSkinDeath:
+		COMA H 5 A_PlayerScream
+		COMA I 5 A_NoBlocking
+		COMA JKLM 5
+		COMA M 0 {
+			if(GetCvar("RO_DeathNukes")) {
+				A_SpawnItemEx("BlueStrike",0,0,0,0,0,0,0,SXF_SETTARGET);
+			}
+		}
+	DeathLoop:
+		COMA NX 10
+		Loop
+	XDeath:
+	AltSkinXDeath:
+		COMA P 3 A_XScream
+		COMA Q 3 A_NoBlocking
+		COMA RSTUV 3
+		COMA W 0 {
+			if(GetCvar("RO_DeathNukes")) {
+				A_SpawnItemEx("BlueStrike",0,0,0,0,0,0,0,SXF_SETTARGET);
+			}
+		}
+		COMA W -1
+    	Stop
+	}
+}
+
+ACTOR AloshaDummy : Alosha 24545
+{
+	Translation "112:127=128:143"
+}
+
+ACTOR AloszaTrigger : Inventory
+{
+	Inventory.MaxAmount 1
+}
+
+actor HumanStep : YuriStep
+{
+	deathsound "Marine/Step"
+}
+
+ACTOR Marty : ROPlayer
+{
+	Health 100
+   	player.maxhealth 50000
+	Radius 16
+	Height 56
+	Mass 65
+	PainChance 255
+    Player.SoundClass "Marty"
+    Player.ForwardMove 1.2
+	Player.SideMove 1.1
+	Player.GruntSpeed 20.0
+	Player.DisplayName "Treesagent"
+	Player.ColorRange 112, 127
+	Player.StartItem "MartyTrigger"
+	Player.ColorSet 0, "Capitalism Blue", 200, 207, 200
+
+	Player.StartItem "Hornet"
+	Player.StartItem "TreesFists"
+	Player.StartItem "StickyBombWeapon"
+	Player.StartItem "StickyBombItem"
+	Player.StartItem "StickyQuickTossItem"
+	Player.StartItem "StickyTossWeapon"
+	Player.StartItem "BaseAmmoRefill"
+	
+	Player.StartItem "JetThruster" 10
+	
+	//Weapon Mags
+	Player.StartItem "ExcaliAmmo" 100
+	Player.StartItem "CubeAmmo" 100
+	Player.StartItem "SatchelAmmo" 100
+	
+	Player.StartItem "BeefClip" 9
+	Player.StartItem "PetrovecClip" 30
+	Player.StartItem "SteamClip" 8
+	
+/*	Player.WeaponSlot 1, "Powercube","BerserkerFist","Porzygun","Caber","Razorjack","Excalibat","TreeFists"
+	Player.WeaponSlot 2, "Hornet","MP40"
+	Player.WeaponSlot 3, "Quadvolgue","Violator","Erasus","SchwarzerZwerg","Pantokrator","Leviathan"
+	Player.WeaponSlot 4, "Obliterator","Union","PowerOverwhelming","Matryoshka","Gorynch","Antonov"
+	Player.WeaponSlot 5, "Steamroller","Rasputin","Torchglow","Pushka","BeefSupreme","Hotrod"
+	Player.WeaponSlot 6, "Chton","Shurricane","Comrade","Colonel","Gopnik","Mutilator"
+	Player.WeaponSlot 7, "Ramjet","Petrovec","Tepesch","Stachanov","Instafun","Channeler"
+	Player.WeaponSlot 8, "Borsch","Gurumaster","Yamato","Deathhead","PlanetCracker","Vindicator"*/
+
+	Player.StartItem "Boolet" 80
+	Player.StartItem "BeefClip" 9
+
+	Player.StartItem "IsROPlayer"
+
+    DamageFactor "Nope", 0
+	
+	Species "Vodka"
+	
+    +DONTBLAST
+	+THRUSPECIES
+	States
+	{
+	Spawn:
+		TSAT A -1
+		Stop
+ 	 See:
+	    TNT1 A 0 A_JumpIfInventory("BerserkerTrigger",1,"TankMode")
+		TSAT A 0 A_SpawnItemEx("HumanStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0)
+		TSAT AB 5
+		TSAT C 0 A_SpawnItemEx("HumanStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0)
+		TSAT CD 5
+		Goto Spawn
+	TankMode:
+		TSAT A 0 A_SpawnItemEx("TankStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0)
+		TSAT AB 5
+		TSAT C 0 A_SpawnItemEx("TankStep",0,0,0,0,0,-20,0,SXF_SETTARGET,0)
+		TSAT CD 5
+		Goto Spawn
+	Melee:
+		TSAT F 6 Bright
+		Goto Missile
+	Missile:
+		TSAT E 12
+		Goto Spawn
+	Pain:
+		TSAT G 3
+		TSAT G 3 A_Pain
+		Goto Spawn
+	Death:
+	AltSkinDeath:
+		TSAT H 5 A_PlayerScream
+		TSAT I 5 A_NoBlocking
+		TSAT JK 5
+		TSAT L 0 {
+			if(GetCvar("RO_DeathNukes")) {
+				A_SpawnItemEx("YamatoHit",0,0,0,0,0,0,0,SXF_SETTARGET);
+			}
+		}
+		TSAT L -1
+		Stop
+	XDeath:
+	AltSkinXDeath:
+		TSAT A 0
+		TSAT A 0 A_PlaySoundEx("Marty/TREES","Normal",0,2)
+		TSAT MNOPPPPP 6
+		TSAT Q 5 A_NoBlocking
+		TSAT RQRQRQRQRQRQRQR 3
+		TSAT STU 5
+		TSAT A 0 {
+			if(GetCvar("RO_DeathNukes")) {
+				A_SpawnItemEx("YamatoHit",0,0,0,0,0,0,0,SXF_SETTARGET);
+			}
+		}
+		TSAT V 10
+		TSAT V 1 //A_SpawnItemEx("YamatoHit")
+		TSAT V -1
+    	Stop
+	}
+}
+
+ACTOR MartyDummy : Marty 24546
+{
+	Translation "112:120=200:207", "121:127=240:247"
+}
+
+Actor MartyTrigger : Inventory
+{
+	Inventory.MaxAmount 1
+}

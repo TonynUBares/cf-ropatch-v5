@@ -1,0 +1,302 @@
+/*
+CREDITS:
+Gun, turret sprites - 3DRealms (LameDuke)
+Explosion - Kronos (Doom 2.5)
+
+Sounds:
+Up, Down - Blizzard (Starcraft 1)
+Trigger - ?
+Fire - Team17 (Worms Armageddon)
+Add Fire - ?
+Explode - ID (Quake 2)
+Hold - ID (RTCW)
+Lock, Servo, Drop - Epic Games (Unreal)
+Load - Raven (Wolfenstein 3)
+*/
+
+actor BeefClip : Ammo
+{
+	Inventory.MaxAmount 9
+	Inventory.Icon TNT1A0 //RPGGX0
+	+IGNORESKILL
+}
+
+actor BeefSequence : Inventory { Inventory.MaxAmount 3 }
+actor BeefTurretOut : Inventory { Inventory.MaxAmount 1 }
+
+
+actor BeefSupremeGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Beef Supreme'' Massive Explosion Projectile Launcher MkII! Hey,double price!"
+	Obituary "%o was brought back to society in form of gibs, thanks to %k's ''Beef Supreme''."
+	States
+	{
+	Spawn:
+		RPGG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("BeefSupreme",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("BeefSupreme",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("TankShellAmmo",12)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+actor BeefSupreme : Weapon 24521
+{
+	//$Category Weapons
+	//$Title Beef Supreme
+	//$Sprite RPGGX0
+	Tag "Beef Supreme"
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Beef Supreme'' Massive Explosion Projectile Launcher MkII! Hey,double price!"
+	Obituary "%o was brought back to society in form of gibs, thanks to %k's ''Beef Supreme''."
+	Weapon.UpSound ""
+	Weapon.SelectionOrder 4
+	Weapon.AmmoGive 0
+	Weapon.AmmoType "BeefClip"
+	Weapon.AmmoUse 1
+	Weapon.AmmoGive2 12
+	Weapon.AmmoType2 "TankShellAmmo"
+	Weapon.AmmoUse2 0
+	Weapon.Kickback 50
+	Weapon.SlotNumber 5
+	Weapon.SlotPriority 25.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.2
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.1
+	+NOALERT
+	+AMMO_OPTIONAL
+	States
+	{
+	Spawn:
+		RPGG X -1
+		Stop
+	Ready:
+		TNT1 A 0 A_PlayWeaponSound("BeefSupreme/Up")
+		TNT1 A 34 { A_Overlay(2,"BeefUp"); A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); }
+		TNT1 A 0 A_PlayWeaponSound("BeefSupreme/Hold")
+		RPGG A 1 { A_WeaponOffset(1,33,WOF_INTERPOLATE); A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); }
+		RPGG A 1 { A_WeaponOffset(3,35,WOF_INTERPOLATE); A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); }
+		RPGG A 1 { A_WeaponOffset(6,41,WOF_INTERPOLATE); A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); }
+		RPGG A 1 { A_WeaponOffset(3,35,WOF_INTERPOLATE); A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); }
+		RPGG A 1 { A_WeaponOffset(1,33,WOF_INTERPOLATE); A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); }
+		RPGG A 0 { A_WeaponOffset(0,32,WOF_INTERPOLATE); A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); }
+		Goto ReadyMain
+	ReadyMain:
+		RPGG A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		RPGG A 0 {
+			A_ZoomFactor(1.0);
+			A_Overlay(2,"None");
+		}
+		RPGG A 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		TNT1 A 0 A_Raise(100)
+		Wait
+	BeefUp:
+		RPGL A 1 A_OverlayOffset(OverlayID(),-11,137)
+		RPGL A 1 A_OverlayOffset(OverlayID(),-5,134,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),-4,129,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),-1,120,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),4,116,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),14,114,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),26,110,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),44,105,WOF_INTERPOLATE)
+		RPGR E 1 A_OverlayOffset(OverlayID(),83,16)
+		RPGR D 1 A_OverlayOffset(OverlayID(),97,13)
+		RPGR C 1 A_OverlayOffset(OverlayID(),109,22)
+		RPGR B 1 A_OverlayOffset(OverlayID(),114,24)
+		RPGR A 1 A_OverlayOffset(OverlayID(),115,19)
+		RPGR A 1 A_OverlayOffset(OverlayID(),124,8,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),128,-2,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),132,-15,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),138,-23,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),142,-28,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),154,-27,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),165,-23,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),186,-20,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),196,-17,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),209,-8,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),219,32,WOF_INTERPOLATE)
+		RPGG F 1 A_OverlayOffset(OverlayID(),161,7)
+		RPGG F 1 A_OverlayOffset(OverlayID(),159,4,WOF_INTERPOLATE)
+		RPGG F 1 A_OverlayOffset(OverlayID(),156,-2,WOF_INTERPOLATE)
+		RPGG F 1 A_OverlayOffset(OverlayID(),148,-16,WOF_INTERPOLATE)
+		RPGG F 1 A_OverlayOffset(OverlayID(),134,-29,WOF_INTERPOLATE)
+		RPGG E 1 A_OverlayOffset(OverlayID(),128,-22,WOF_INTERPOLATE)
+		RPGG D 1 A_OverlayOffset(OverlayID(),124,-16,WOF_INTERPOLATE)
+		RPGG C 1 A_OverlayOffset(OverlayID(),126,-11)
+		RPGG B 1 A_OverlayOffset(OverlayID(),134,5)
+		RPGF J 1 A_OverlayOffset(OverlayID(),135,11)
+		Stop
+	BeefDown:
+		RPGF J 1 A_OverlayOffset(OverlayID(),135,11)
+		RPGG B 1 A_OverlayOffset(OverlayID(),134,5)
+		RPGG C 1 A_OverlayOffset(OverlayID(),126,-11)
+		RPGG D 1 A_OverlayOffset(OverlayID(),124,-16,WOF_INTERPOLATE)
+		RPGG E 1 A_OverlayOffset(OverlayID(),128,-22,WOF_INTERPOLATE)
+		RPGG F 1 A_OverlayOffset(OverlayID(),134,-29,WOF_INTERPOLATE)
+		RPGG F 1 A_OverlayOffset(OverlayID(),148,-16,WOF_INTERPOLATE)
+		RPGG F 1 A_OverlayOffset(OverlayID(),156,-2,WOF_INTERPOLATE)
+		RPGG F 1 A_OverlayOffset(OverlayID(),159,4,WOF_INTERPOLATE)
+		RPGG F 1 A_OverlayOffset(OverlayID(),161,7,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),219,32)
+		RPGR A 1 A_OverlayOffset(OverlayID(),209,-8,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),196,-17,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),186,-20,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),165,-23,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),154,-27,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),142,-28,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),138,-23,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),132,-15,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),128,-2,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),124,8,WOF_INTERPOLATE)
+		RPGR A 1 A_OverlayOffset(OverlayID(),115,19,WOF_INTERPOLATE)
+		RPGR B 1 A_OverlayOffset(OverlayID(),114,24)
+		RPGR C 1 A_OverlayOffset(OverlayID(),109,22)
+		RPGR D 1 A_OverlayOffset(OverlayID(),97,13)
+		RPGR E 1 A_OverlayOffset(OverlayID(),83,16)
+		RPGL A 1 A_OverlayOffset(OverlayID(),44,105)
+		RPGL A 1 A_OverlayOffset(OverlayID(),26,110,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),14,114,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),4,116,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),-1,120,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),-4,129,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),-5,134,WOF_INTERPOLATE)
+		RPGL A 1 A_OverlayOffset(OverlayID(),-11,137,WOF_INTERPOLATE)
+		Stop
+	Fire:
+		RPGG A 0 A_JumpIf(CountInv("BeefClip"),1)
+		Goto DryFire
+		RPGG A 0 {
+			A_WeaponOffset(135,11+32);
+			A_AlertMonsters;
+			A_Recoil(22.0);
+			A_PlaySound("BeefSupreme/Fire",1);
+			A_PlaySound("BeefSupreme/AFire",6);
+			A_GunFlash;
+			A_FireCustomMissile("BeefProjectile",0,1,10,0);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2,2,2,15,0,64,"none",QF_SCALEDOWN); }
+		}
+		RPGF A 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } A_WeaponOffset(139,12+32,WOF_INTERPOLATE); A_SetAngle(Angle-4.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-4.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		RPGF B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); } A_WeaponOffset(143,13+32,WOF_INTERPOLATE); A_SetAngle(Angle-2.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-2.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		RPGF C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } A_WeaponOffset(150,15+32,WOF_INTERPOLATE); A_SetAngle(Angle-1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		RPGF D 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); } A_WeaponOffset(159,17+32,WOF_INTERPOLATE); A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		RPGF E 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } A_WeaponOffset(164,18+32,WOF_INTERPOLATE); }
+		RPGF F 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } A_WeaponOffset(169,19+32,WOF_INTERPOLATE); }
+		RPGF G 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } A_WeaponOffset(171,21+32,WOF_INTERPOLATE); }
+		RPGF H 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } A_WeaponOffset(170,23+32,WOF_INTERPOLATE); }
+		RPGF I 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } A_WeaponOffset(164,27+32,WOF_INTERPOLATE); }
+		RPGF J 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } A_WeaponOffset(161,28+32,WOF_INTERPOLATE); }
+		RPGF J 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } A_WeaponOffset(153,29+32,WOF_INTERPOLATE); }
+		RPGF J 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } A_WeaponOffset(149,28+32,WOF_INTERPOLATE); }
+		RPGF J 1 A_WeaponOffset(146,27+32,WOF_INTERPOLATE)
+		RPGF J 1 A_WeaponOffset(142,26+32,WOF_INTERPOLATE)
+		RPGF J 1 A_WeaponOffset(140,23+32,WOF_INTERPOLATE)
+		RPGF J 1 A_WeaponOffset(137,19+32,WOF_INTERPOLATE)
+		RPGF J 1 A_WeaponOffset(136,14+32,WOF_INTERPOLATE)
+		RPGF J 5 A_WeaponOffset(135,11+32,WOF_INTERPOLATE)
+		RPGG A 0 A_WeaponOffset(0,32)
+		Goto ReadyMain
+	DryFire:
+		RPGG A 0 A_PlaySound("BeefSupreme/Trigger")
+		RPGG A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(6,39,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(8,43,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(9,45,WOF_INTERPOLATE)
+		RPGG A 4 A_WeaponOffset(10,46,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(9,45,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(8,43,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(6,39,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		Goto ReadyMain
+	Reload:
+		RPGG A 0 A_JumpIfInventory("BeefClip",0,"ReadyMain")
+		RPGG A 0 A_JumpIf(CountInv("TankShellAmmo") >= 2,1)
+		Goto ReadyMain
+		RPGR A 0 A_PlaySound("BeefSupreme/Down",5)
+		TNT1 A 34 A_Overlay(2,"BeefDown")
+		RPGR A 0 A_PlaySound("BeefSupreme/Lock",5)
+	ReloadMain:
+		RPGL A 8 A_WeaponOffset(-5,134+32)
+		RPGT G 0 A_PlaySound("BeefSupreme/Load",6)
+		RPGL A 1 A_WeaponOffset(-9,136+32,WOF_INTERPOLATE)
+		RPGL A 1 A_WeaponOffset(-20,141+32,WOF_INTERPOLATE)
+		RPGL A 1 A_WeaponOffset(-22,142+32,WOF_INTERPOLATE)
+		RPGL A 1 A_WeaponOffset(-20,141+32,WOF_INTERPOLATE)
+		RPGL A 1 A_WeaponOffset(-13,138+32,WOF_INTERPOLATE)
+		RPGL A 1 A_WeaponOffset(-9,136+32,WOF_INTERPOLATE)
+		RPGL A 1 A_WeaponOffset(-6,135+32,WOF_INTERPOLATE)
+		RPGL A 9 A_WeaponOffset(-5,134+32,WOF_INTERPOLATE)
+		RPGL A 0 { if(GetCvar("RO_ZoomRecoil")) { A_QuakeEx(1,1,1,6,0,3,"none",QF_SCALEDOWN); } }
+		RPGL AAAAAAAA 1 A_WeaponOffset(-5+frandom(2.0,-2.0),134+32+frandom(2.0,-2.0),WOF_INTERPOLATE)
+		RPGL A 1 A_WeaponOffset(-5,134+32,WOF_INTERPOLATE)
+	InnerSequence:
+		RPGR A 0 A_JumpifInventory("BeefClip",0,"Reset")
+		RPGR A 0 A_JumpIf(CountInv("TankShellAmmo") >= 2,1)
+		Goto Reset
+		RPGR A 0 A_GiveInventory("BeefSequence",1)
+		RPGR A 0 A_GiveInventory("BeefClip",1)
+		RPGR A 0 A_TakeInventory("TankShellAmmo",2,TIF_NOTAKEINFINITE)
+		RPGR A 0 A_JumpIf(CountInv("BeefSequence") >= 3,"Reset")
+		Goto InnerSequence
+	Reset:
+		RPGR A 0 A_TakeInventory("BeefSequence",3)
+		RPGL A 1 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_RELOAD &&
+			CountInv("TankShellAmmo") >= 2 &&
+			!A_JumpIfInventory("BeefClip",0,"Null"), "ReloadMain")
+		Goto ReloadDone
+	ReloadDone:
+		RPGR A 0 A_PlaySound("BeefSupreme/Servo")
+		RPGL A 10 A_WeaponOffset(-5,134+32,WOF_INTERPOLATE)
+		RPGR A 0 {
+			A_PlaySound("BeefSupreme/Up",6);
+			A_WeaponOffset(0,32);
+		}
+		TNT1 A 34 A_Overlay(2,"BeefUp")
+		RPGG A 0 A_PlaySound("BeefSupreme/Hold",6)
+		RPGG A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(6,41,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		RPGG A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		RPGG A 0 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		Goto ReadyMain
+   AltFire:
+		RPGR A 0 A_JumpIf(CountInv("TankShellAmmo") >= 36,2)
+		RPGG A 25 {
+			A_Print("\c[white]You need at least 36 shells to put a Beef Turret down.");
+			A_WeaponReady(WRF_NOSECONDARY);
+		}
+		Goto ReadyMain
+		TNT1 A 34 {
+			A_Overlay(2,"BeefDown");
+			A_PlaySound("BeefSupreme/Down",5);
+		}
+		TNT1 A 0 {
+			A_TakeInventory("TankShellAmmo",36,TIF_NOTAKEINFINITE);
+			A_PlaySound("BeefSupreme/Drop",6);
+			A_SpawnItemEx("BeefTurret",88,0,0,0,0,0,0,SXF_SETMASTER|SXF_NOCHECKPOSITION,0);
+			A_TakeInventory("BeefSupreme",1);
+		}
+		RPGT H 1 A_Lower(72)
+		Wait
+   }
+}

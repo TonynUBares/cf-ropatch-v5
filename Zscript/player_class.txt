@@ -1,0 +1,184 @@
+#include "zscript/player_refill.txt"
+
+Class RODoomWeapon: DoomWeapon {}
+
+Class ROWeapon: Weapon {}
+
+class ROPlayer : PlayerPawn {
+	
+	//Weapon switchback functionality.
+	Class<Weapon> PreviousWeapon;
+
+	static const string BlacklistedPrevWeapons [] = {"StickyTossWeapon"};
+
+	// A generic function for setting the player's previous weapon, ignoring blacklisted weapons.
+	void RO_SetPreviousWeapon()
+	{
+		let playerref = ROPlayer(self);
+		Class<Weapon> CurrentWeapon = playerref.player.ReadyWeapon.GetClass();
+		for(int i = 0; i < BlacklistedPrevWeapons.Size(); i++)
+		{
+			if(CurrentWeapon == BlacklistedPrevWeapons[i])
+			{
+				return; // Without doing anything.
+			}
+		}
+		// If no blacklisted weapons are found, set the current as previous
+		playerref.PreviousWeapon = CurrentWeapon;
+		return;
+	}
+	
+	//Shield hit effect stuff. (And player damage.)
+	color flashcolor;
+	float flashpower;
+	int flashtime;
+
+	//The sound to play if you get hit while shield is active.
+	String hitsound;
+
+	property HitFlash: flashcolor, flashpower, flashtime;
+	property HitSound: hitsound;
+	
+	override int DamageMobj(Actor inflictor, Actor source, int damage, Name mod, int flags, double angle)
+	{
+		let ourArmor = BasicArmor(FindInventory("BasicArmor"));
+		if(ourArmor && ourArmor.Amount)
+		{
+			Class<Actor> ourArmorType = ourArmor.ArmorType;
+			if(GetDefaultByType(ourArmorType).GetClass() is "Shield" && !CountInv("PowerInvulnerable"))
+			{
+				A_PlaySound(hitsound, 4, 0.5);
+				A_SetBlend(flashcolor, flashpower, flashtime);
+			}
+		}
+		return Super.DamageMobj(inflictor, source, damage, mod, flags, angle);
+	}
+	
+	// kd: These get called when the player spawns and respawns. Once for each map!
+	void GiveBaseScripts () {
+		// GET EQUIPPED WITH
+		// AIMBOT
+		//   AND
+		// REGEN
+		
+		// MESSAGE FROM DR LIGHT
+		// NOW YOU'VE REALLY
+		// CROSSED THE LINE
+		// YOUR HATE FOR ME
+		// IS DIVINE
+		
+		GiveInventory("Ro_ShurricaneGuidePower", 1);
+		GiveInventory("Ro_ViolatorGuidePower", 1);
+		GiveInventory("Ro_TurnGuidePower", 1);
+	}
+	
+	void CleanInventory () {
+		player.cheats &= ~(CF_FROZEN | CF_TOTALLYFROZEN);
+		
+		TakeInventory("DispenserOut",1); //What says on the tin.
+		TakeInventory("MegaShellOut", 1); //Overture 1812 shell.
+		TakeInventory("JelloOut", 1); //Shurricane decoy.
+		TakeInventory("ForkMaster", 1);
+		TakeInventory("CabernadoOut", 1); //Cabernado trigger.
+		TakeInventory("AntonovShieldUp", 1); //Antonov's THE WALL.
+		TakeInventory("WarpocRemover", 1);
+		
+		while(0 < CountInv("WarpocOut"))
+		{
+			GiveInventory("WarpocItem", 1);
+			TakeInventory("WarpocOut", 1);
+		}
+		if(0 < CountInv("BeefTurretOut"))
+		{
+			GiveInventory("BeefSupreme", 1);
+			TakeInventory("BeefTurretOut", 1);
+		}
+		
+		TakeInventory("MinibeliskCharge", 0); //The limit expands, and 0 didn't exactly seem to work like it does in decor, sooo~ kd: JUST KIDDING IT'S ZS ACS TIME
+	}
+	
+	Default {
+		ROPlayer.HitFlash "Green", 0.2, 15;
+		ROPlayer.HitSound "misc/shieldhit";
+	}
+
+
+// this fixes the crash after unmorphing
+
+  override void PreMorph(Actor mo, bool current)
+  {
+   TakeInventory("BaseAmmoRefill",1);
+  }
+
+  override void PostUnMorph(Actor mo, bool current)
+  {
+   GiveInventory("BaseAmmoRefill",1);
+  }
+
+
+ static const string ROWeapons[] = {"StickyBombWeapon","Razorjack","Excalibat","Powercube","BerserkerFist","Porzygun","Caber","Punchokrator",
+ "Hornet","Matchstick","Satcheler","BernieScreamer","MP40","Leviathan","Pantokrator","Quadvolgue","Violator","Erasus",
+ "SchwarzerZwerg","Gorynch","Antonov","Obliterator","Union","PowerOverwhelming","Matryoshka","BeefSupreme","Hotrod",
+ "Steamroller","Rasputin","Torchglow","Pushka","Gopnik","Mutilator","Chton","Shurricane","Comrade","Colonel","Instafun",
+ "Channeler","Ramjet","Petrovec","Tepesch","Stachanov","PlanetCracker","Vindicator","Borsch","Gurumaster","Yamato","Deathhead"};
+  
+
+  override void CheatGive (String name, int amount)
+  {
+   string goodarmor = "NemesisArmorGiver";
+   Class<Weapon> weap = name;
+
+   if(name ~== "all" || name ~== "weapons")
+    {
+     GiveInventory(goodarmor,1);
+     super.CheatGive(name, amount);
+     if(!weaponExt)
+      {
+	CheatTake("weapons",amount);
+	int x=0;
+
+	while( x < ROWeapons.Size() ) 
+	{
+	 GiveInventory(ROWeapons[x], 1); x++;
+	}
+      }
+    }
+
+   else if(weap)
+    {
+     CheatTake(name,amount);
+     Console.Printf("\cdUse the summon cheat and don't destroy \cgTonyn's work\cd :D");
+    }
+
+   else {super.CheatGive(name, amount);}
+
+  } //close override
+} //close class
+
+
+//Yuri's domination pointer.
+class DominationPointer : Actor
+{
+	Default
+	{
+		Renderstyle "Add";
+		+FLOATBOB
+		+NOINTERACTION
+	}
+	
+	States
+	{
+	Spawn:
+		INDC A 1 NoDelay {
+			if(Master) { A_Warp(AAPTR_MASTER,0,0,Master.Height*1.3,0,WARPF_BOB|WARPF_NOCHECKPOSITION); }
+			Return A_JumpIf(Master && Master.Health <= 0 || Master.bFRIENDLY == 0, "Death");
+		}
+		Loop;
+	Death:
+		INDC A 1 {
+			if(Master) { A_Warp(AAPTR_MASTER,0,0,Master.Height*1.3,0,WARPF_BOB|WARPF_NOCHECKPOSITION); }
+			A_FadeOut(0.1);
+		}
+		Loop;
+	}
+}

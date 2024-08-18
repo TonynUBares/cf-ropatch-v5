@@ -1,0 +1,288 @@
+/*
+CREDITS:
+
+Sprites:
+GUN - Marty Kirra, refined by me!
+PICKUP'N'PROJECTILE - base frame by DoomNukem, rest by me!
+
+Sounds:
+Up - Valve (Half-Life 2)
+Fire - ? (Another unrecognizable mashup that I just couldn't say no to, sigh)
+Throw - ID Soft. (Quake 2)
+Scream, slightly sped up - Generic sound pack
+
+*/
+
+actor BernieFired : Inventory { Inventory.MaxAmount 1 }
+
+actor BernieScreamer : Weapon //BERNI KRZYKACZ!
+{
+	Tag "Bernie Screamer"
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Bernie Screamer'' revolver! (2)"
+	Obituary "AND THE PANTS WERE DEAD, so %k Freeman shoot his gun - really fast, killing %o." //No one will really play this mod in deathmatch. If you read this then your dumb.
+	Weapon.UpSound "Weapons/BernieUp"
+	Weapon.SelectionOrder 6
+	Weapon.AmmoType "Boolet"
+	Weapon.AmmoGive 0
+	Weapon.AmmoUse 2
+	Weapon.AmmoType2 "Boolet"
+	Weapon.AmmoUse2 10
+	Weapon.Kickback 20
+	Weapon.SlotNumber 2
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.7
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	AttackSound ""
+	+WEAPON.CHEATNOTWEAPON
+	+NOALERT
+	States
+	{
+	Spawn:
+		TNT1 A -1
+		Stop
+	DeadLowered:
+		TNT1 A -1
+		Stop
+	ZweiReady:
+		TNT1 A 0 {
+			A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1);
+			A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0);
+			A_OverlayOffset(OverlayID(),0,32);
+		}
+		TNT1 A 1 A_JumpIfInventory("BasicUpgrade",1,1)
+		Wait
+		BERN A 5
+		BERN BCABCABCA 1
+	ZweiReadyMain:
+		BERN A 0 A_JumpIf(CountInv("Boolet") >= 10 && GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK && CountInv("BernieFired"), "AltFire")
+		BERN A 1 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK && CountInv("BernieFired"), "Fire")
+		Loop
+	Ready:
+		MSTG A 0 A_Overlay(2,"ZweiReady")
+		BERN A 5
+		BERN BCABCABCA 1
+	ReadyMain:
+		BERN A 0 A_JumpIf(CountInv("BasicUpgrade"),2)
+		BERN A 1 A_WeaponReady
+		Loop
+		BERN A 0 A_JumpIf(CountInv("Boolet") >= 10 && GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK, "AltFire")
+		BERN A 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "Fire")
+		BERN A 1 A_WeaponReady(WRF_NOFIRE)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		BERN A 0 {
+			A_WeaponOffset(0,32);
+			A_ZoomFactor(1.0);
+			If(CountInv("BasicUpgrade")) { A_Overlay(2,"ZweiDeselect"); }
+		}
+		BERN A 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		BERN A 0 {
+			A_ZoomFactor(1.0);
+			If(CountInv("BasicUpgrade")) { A_Overlay(2,"ZweiSelect"); }
+		}
+		BERN A 1 A_Raise(12)
+		Wait
+	ZweiSelect:
+	ZweiDeselect:
+		BERN A 0 A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1)
+		BERN A 1
+		Wait
+	RecoilRight:
+		TNT1 A 1 {
+			A_SetAngle(angle-1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch-1.2*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch-0.6*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle-0.125*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch-0.15*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle-0.125*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch-0.15*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		Stop
+	RecoilLeft:
+		TNT1 A 1 {
+			A_SetAngle(angle+1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch-1.2*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle+0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch-0.6*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle+0.125*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch-0.15*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle+0.125*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch-0.15*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		Stop
+	Fire:
+		BERN A 0 A_CheckReload
+		BERN BC 1
+		BERF A 1 Bright {
+			A_OverlayOffset(OverlayID(),123,32+41);
+			If(CountInv("CaliberUpgrade")) {
+				A_PlaySound("Weapons/WolgirHEndFire",6,0.8);
+				A_FireBullets(0.01,0.01,-1,240,"CaliberPuff",0);
+			} Else {
+				A_FireBullets(0.01,0.01,-1,120,"BulletPuff",0);
+			}
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+			if(OverlayID() == 1) { A_Overlay(3,"RecoilRight"); }
+			else			 	 { A_Overlay(4,"RecoilLeft"); }
+			A_GiveInventory("BooletCasing",2);
+			A_TakeInventory("Boolet",2,TIF_NOTAKEINFINITE);
+			A_Recoil(2.5);
+			A_Gunflash;
+			A_AlertMonsters;
+			A_PlaySound("Weapons/BernieFire",1,0.55);
+		}
+		BERF D 1 {
+			A_OverlayOffset(OverlayID(),190,32+54);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+			
+		}
+		BERF H 1 {
+			A_OverlayOffset(OverlayID(),187,32+36,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); }
+		}
+		BERF H 1 {
+			A_OverlayOffset(OverlayID(),196,32+22,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); }
+		}
+		BERF H 1 {
+			A_OverlayOffset(OverlayID(),202,32+14,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); }
+		}
+		BERF H 1 {
+			A_OverlayOffset(OverlayID(),203,32+12,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+		}
+		BERF H 1 {
+			A_OverlayOffset(OverlayID(),204,32+10,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+		}
+		BERF G 1 {
+			A_OverlayOffset(OverlayID(),208,32+8,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+		}
+		BERF G 1 {
+			If(OverlayID() == 1) { A_GiveInventory("BernieFired",1); }
+			If(OverlayID() == 2) { A_TakeInventory("BernieFired",1); }
+			A_OverlayOffset(OverlayID(),204,32+12,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); }
+		}
+		BERF F 1 {
+			A_OverlayOffset(OverlayID(),200,32+23,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); }
+		}
+		BERF E 1 A_OverlayOffset(OverlayID(),199,32+32,WOF_INTERPOLATE)
+		BERF D 1 A_OverlayOffset(OverlayID(),193,32+48,WOF_INTERPOLATE)
+		BERF C 1 A_OverlayOffset(OverlayID(),191,32+57,WOF_INTERPOLATE)
+		BERF B 1 A_OverlayOffset(OverlayID(),186,32+62,WOF_INTERPOLATE)
+		BERF B 1 A_OverlayOffset(OverlayID(),184,32+64,WOF_INTERPOLATE)
+		BERN A 2 A_OverlayOffset(OverlayID(),0,32)
+		BERN A 0 A_ClearReFire
+		BERN A 0 { If(OverlayID() == 1) { A_TakeInventory("BernieFired",1); } }
+		BERN A 0 A_JumpIf(OverlayID() == 2, "ZweiReadyMain")
+		Goto ReadyMain
+	ThrowCoil:
+		TNT1 A 1 {
+			A_SetAngle(angle+2.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch+1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle+1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch+0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle+0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch+0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle+0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch+0.125*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		Stop
+	ThrowCoilLeft:
+		TNT1 A 1 {
+			A_SetAngle(angle-2.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch+1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle-1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch+0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch+0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			A_SetAngle(angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(pitch+0.125*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		Stop
+	AltFire:
+		BERN A 0 A_CheckReload
+		BERF B 1 A_OverlayOffset(OverlayID(),184,32+67)
+		BERF C 1 A_OverlayOffset(OverlayID(),192,32+72,WOF_INTERPOLATE)
+		BERF D 1 A_OverlayOffset(OverlayID(),204,32+83,WOF_INTERPOLATE)
+		BERF E 1 A_OverlayOffset(OverlayID(),219,32+94,WOF_INTERPOLATE)
+		BERF F 1 A_OverlayOffset(OverlayID(),226,32+115,WOF_INTERPOLATE)
+		BERF G 1 A_OverlayOffset(OverlayID(),236,32+127,WOF_INTERPOLATE)
+		BERF H 1 A_OverlayOffset(OverlayID(),241,32+148,WOF_INTERPOLATE)
+		TNT1 A 0 {
+			If(OverlayID() == 1) { A_GiveInventory("BernieFired",1); }
+			If(OverlayID() == 2) { A_TakeInventory("BernieFired",1); }
+			Return A_Jump(256,2);
+		}
+	LetsDoItAgain:
+		TNT1 A 7
+		TNT1 A 5 A_OverlayOffset(OverlayID(),0,32)
+		TROW A 1 {
+			A_OverlayOffset(OverlayID(),244,32+13);
+			if(OverlayID() == 1) { A_FireCustomMissile("BernieTediore2",0,0,12,0);  A_Overlay(3,"ThrowCoil"); }
+			else			 	 { A_FireCustomMissile("BernieTediore",0,0,-12,0); A_Overlay(4,"ThrowCoilLeft"); }
+			A_GiveInventory("BooletCasing",10);
+			A_TakeInventory("Boolet",10,TIF_NOTAKEINFINITE);
+			A_PlaySound("Items/Throw",5,1.0);
+		}
+		TROW A 1 A_OverlayOffset(OverlayID(),228,32+23,WOF_INTERPOLATE)
+		TROW A 1 A_OverlayOffset(OverlayID(),203,32+35,WOF_INTERPOLATE)
+		TROW B 1 A_OverlayOffset(OverlayID(),186,32+70)
+		TROW B 1 A_OverlayOffset(OverlayID(),176,32+83,WOF_INTERPOLATE)
+		TROW B 1 A_OverlayOffset(OverlayID(),166,32+114,WOF_INTERPOLATE)
+		TROW C 1 A_OverlayOffset(OverlayID(),143,32+135)
+		TROW C 1 A_OverlayOffset(OverlayID(),131,32+153,WOF_INTERPOLATE)
+		TROW C 1 A_OverlayOffset(OverlayID(),126,32+165,WOF_INTERPOLATE)
+		TNT1 A 8
+		TNT1 A 0 A_JumpIf(CountInv("Boolet") >= 10 && GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK, "LetsDoItAgain")
+		BERF H 1 A_OverlayOffset(OverlayID(),241,32+148)
+		BERF G 1 A_OverlayOffset(OverlayID(),236,32+127,WOF_INTERPOLATE)
+		BERF F 1 A_OverlayOffset(OverlayID(),226,32+115,WOF_INTERPOLATE)
+		BERF E 1 A_OverlayOffset(OverlayID(),219,32+94,WOF_INTERPOLATE)
+		BERF D 1 A_OverlayOffset(OverlayID(),204,32+83,WOF_INTERPOLATE)
+		BERF C 1 A_OverlayOffset(OverlayID(),192,32+72,WOF_INTERPOLATE)
+		BERF B 1 A_OverlayOffset(OverlayID(),184,32+67,WOF_INTERPOLATE)
+		BERN A 4 A_OverlayOffset(OverlayID(),0,32)
+		BERN A 0 A_ClearReFire
+		REVG A 0 { If(OverlayID() == 1) { A_TakeInventory("BernieFired",1); } }
+		REVG A 0 A_JumpIf(OverlayID() == 2, "ZweiReadyMain")
+		Goto ReadyMain
+	}
+}

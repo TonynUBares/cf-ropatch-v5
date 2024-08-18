@@ -1,0 +1,208 @@
+/*
+CREDITS:
+
+Sprites - DoomNukem, with edits like clip animation or hammer by me
+Flash - Bane
+
+Sounds:
+Fire - Miztaegg\Generic Sounds from the 70s
+Altfire Launch - Valve (Team Fortress)
+Altfire Clunky noises - ID Soft. (Doom 3)
+*/
+
+actor HornetFired : Inventory { Inventory.MaxAmount 1 }
+
+actor Hornet : Weapon
+{
+	Tag "Silver Hornet"
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "Nabbed ''Silver Hornet'' shiny revol-over-kill! It's over... FOR YOU, YOU DAMN TREE!! HARHARAR! (2)"
+	Obituary "%k mistook %o with a tree."
+	Weapon.UpSound "Weapons/HornetUp"
+	Weapon.SelectionOrder 5
+	Weapon.AmmoType "Boolet"
+	Weapon.AmmoGive 0
+	Weapon.AmmoUse 3
+	Weapon.AmmoType2 "Boolet"
+	Weapon.AmmoGive2 0
+	Weapon.AmmoUse2 10
+	Weapon.Kickback 500
+	Weapon.SlotNumber 2
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.7
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	+WEAPON.CHEATNOTWEAPON
+	+NOALERT
+	+ALT_AMMO_OPTIONAL
+	States
+	{
+	Spawn:
+		TNT1 A -1
+		Stop
+	DeadLowered:
+		TNT1 A -1
+		Stop
+	ZweiReady:
+		TNT1 A 0 {
+			A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1);
+			A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0);
+			A_OverlayOffset(OverlayID(),0,32);
+		}
+		TNT1 A 1 A_JumpIfInventory("BasicUpgrade",1,1)
+		Wait
+		SHRN A 0 A_JumpIf(CountInv("Boolet") >= 10 && GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK && CountInv("HornetFired"), "AltFire")
+		SHRN A 1 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK && CountInv("HornetFired"), "Fire")
+		Goto ZweiReady+1
+	Ready:
+		SHRN A 0 A_Overlay(2,"ZweiReady")
+	ReadyMain:
+		SHRN A 0 A_JumpIf(CountInv("BasicUpgrade"),2)
+		SHRN A 1 A_WeaponReady
+		Loop
+		SHRN A 0 A_JumpIf(CountInv("Boolet") >= 10 && GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK, "AltFire")
+		SHRN A 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "Fire")
+		SHRN A 1 A_WeaponReady(WRF_NOFIRE)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		TNT1 A 0 {
+			A_WeaponOffset(0,32);
+			A_ZoomFactor(1.0);
+			If(CountInv("BasicUpgrade")) { A_Overlay(2,"ZweiDeselect"); }
+		}
+		SHRN A 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		TNT1 A 0 {
+			A_ZoomFactor(1.0);
+			If(CountInv("BasicUpgrade")) { A_Overlay(2,"ZweiSelect"); }
+		}
+		SHRN A 1 A_Raise(12)
+		Wait
+	ZweiSelect:
+	ZweiDeselect:
+		SHRN A 0 A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1)
+		SHRN A 1
+		Wait
+	Fire:
+		SHRN A 0 A_CheckReload
+		SHRN A 0 A_OverlayOffset(OverlayID(),0,32)
+		SHRN BC 1
+		SHRF A 1 Bright {
+			A_OverlayOffset(OverlayID(),3,3+32,WOF_INTERPOLATE);
+			A_ZoomFactor(0.99);
+			A_AlertMonsters;
+			A_Gunflash;
+			A_PlaySound("Weapons/FistMagnum",5,0.5);
+			A_Recoil(3.0);
+			A_GiveInventory("BooletCasing",3);
+			If(CountInv("CaliberUpgrade")) {
+				A_FireBullets(0.01,0.01,2,120,"InvisPuff",0);
+				A_FireBullets(0.01,0.01,1,120,"CaliberPuff",1);
+				A_PlaySound("Weapons/WolgirHEndFire",6);
+			} Else {
+				A_FireBullets(0.01,0.01,2,60,"InvisPuff",0);
+				A_FireBullets(0.01,0.01,1,60,"BulletPuff",1);
+			}
+			If(OverlayID() == 1) { A_SetAngle(Angle - 3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch - 3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+			Else				 { A_SetAngle(Angle + 3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch - 3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		}
+		SHRF B 1 Bright { A_OverlayOffset(OverlayID(),7,7+32,WOF_INTERPOLATE);	  if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		SHRF G 1 		{ A_OverlayOffset(OverlayID(),222,50+32); 			   	  if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		SHRF K 1 		{ A_OverlayOffset(OverlayID(),242,23+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		SHRF K 1 		  A_OverlayOffset(OverlayID(),251,11+32,WOF_INTERPOLATE)
+		SHRF L 1 		{ A_OverlayOffset(OverlayID(),258,4+32,WOF_INTERPOLATE);  if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		SHRF L 1 		{ A_OverlayOffset(OverlayID(),259,1+32,WOF_INTERPOLATE);  if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		SHRF L 1 		{ A_OverlayOffset(OverlayID(),260,-2+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		SHRF L 0 {
+			If(OverlayID() == 1) { A_GiveInventory("HornetFired",1); }
+			Else				 { A_TakeInventory("HornetFired",1); }
+		}
+		SHRF K 1 A_OverlayOffset(OverlayID(),257,32,WOF_INTERPOLATE)
+		SHRF J 1 A_OverlayOffset(OverlayID(),252,5+32,WOF_INTERPOLATE)
+		SHRF I 1 A_OverlayOffset(OverlayID(),244,15+32,WOF_INTERPOLATE)
+		SHRF H 1 A_OverlayOffset(OverlayID(),234,29+32,WOF_INTERPOLATE)
+		SHRF G 1 A_OverlayOffset(OverlayID(),226,43+32,WOF_INTERPOLATE)
+		SHRF F 1 A_OverlayOffset(OverlayID(),217,65+32,WOF_INTERPOLATE)
+		SHRF E 1 A_OverlayOffset(OverlayID(),207,81+32,WOF_INTERPOLATE)
+		SHRF D 1 A_OverlayOffset(OverlayID(),204,89+32,WOF_INTERPOLATE)
+		SHRF C 1 A_OverlayOffset(OverlayID(),204,92+32,WOF_INTERPOLATE)
+		SHRF C 1 A_OverlayOffset(OverlayID(),203,87+32,WOF_INTERPOLATE)
+		SHRF C 1 A_OverlayOffset(OverlayID(),202,82+32,WOF_INTERPOLATE)
+		SHRN A 1 A_OverlayOffset(OverlayID(),0,32)
+		SHRN A 0 { If(OverlayID() == 1) { A_TakeInventory("HornetFired",1); } }
+		SHRN A 0 A_JumpIf(OverlayID() == 2, "ZweiReady")
+		Goto ReadyMain
+	AltFire:
+		SHRN A 0 A_CheckReload
+		SHRN A 0 {
+			A_OverlayOffset(OverlayID(),0,32);
+			A_PlaySound("Weapons/HornetOpen",6);
+		}
+		SHRN ABCABC 2
+		SHRR C 0 {
+			If(OverlayID() == 1) { A_GiveInventory("HornetFired",1); }
+			Else				 { A_TakeInventory("HornetFired",1); }
+		}
+		SHRR A 2
+		SHRR B 8 
+		SHRR C 0 {
+			If(OverlayID() == 1) {
+				A_FireCustomMissile("HornetShot",0,0,8,-2);
+				A_FireCustomMissile("HornetShot",0,0,8,-2);
+				A_FireCustomMissile("HornetShot",0,0,8,-2);
+				A_FireCustomMissile("HornetShot",0,0,8,-2);
+				A_FireCustomMissile("HornetShot",0,0,8,-2);
+				A_FireCustomMissile("HornetShot",0,0,8,-2);
+			} Else {
+				A_FireCustomMissile("HornetShot",0,0,-8,-2);
+				A_FireCustomMissile("HornetShot",0,0,-8,-2);
+				A_FireCustomMissile("HornetShot",0,0,-8,-2);
+				A_FireCustomMissile("HornetShot",0,0,-8,-2);
+				A_FireCustomMissile("HornetShot",0,0,-8,-2);
+				A_FireCustomMissile("HornetShot",0,0,-8,-2);
+			}
+			A_PlaySound("Weapons/HornetMissile",1,0.7);
+			A_TakeInventory("Boolet",10,TIF_NOTAKEINFINITE);
+			A_GiveInventory("BooletCasing",10);
+			A_AlertMonsters;
+			A_Recoil(8.0);
+		}
+		SHRR C 1 { A_OverlayOffset(OverlayID(),5,5+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		SHRR C 1 { A_OverlayOffset(OverlayID(),13,13+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		SHRR C 1 { A_OverlayOffset(OverlayID(),19,19+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		SHRR C 1 { A_OverlayOffset(OverlayID(),22,22+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		SHRR C 1 A_OverlayOffset(OverlayID(),23,23+32,WOF_INTERPOLATE)
+		SHRR C 1 A_OverlayOffset(OverlayID(),24,24+32,WOF_INTERPOLATE)
+		SHRR C 1 { A_OverlayOffset(OverlayID(),23,23+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		SHRR C 1 { A_OverlayOffset(OverlayID(),21,21+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		SHRR C 1 { A_OverlayOffset(OverlayID(),18,18+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		SHRR C 1 { A_OverlayOffset(OverlayID(),14,14+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		SHRR C 1 { A_OverlayOffset(OverlayID(),9,9+32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		SHRR C 1 A_OverlayOffset(OverlayID(),4,4+32,WOF_INTERPOLATE)
+		SHRR C 1 A_OverlayOffset(OverlayID(),2,2+32,WOF_INTERPOLATE)
+		SHRR C 1 A_OverlayOffset(OverlayID(),1,1+32,WOF_INTERPOLATE)
+		SHRR C 8 {
+			A_OverlayOffset(OverlayID(),0,32,WOF_INTERPOLATE);
+			A_PlaySound("Weapons/HornetClose",6);
+		}
+		SHRR D 2
+		SHRN ABCABC 2
+		SHRN A 0 { If(OverlayID() == 1) { A_TakeInventory("HornetFired",1); } }
+		SHRN A 0 A_JumpIf(OverlayID() == 2, "ZweiReady")
+		Goto ReadyMain
+	Nope:
+		SHRN A 5 A_PlaySound("Weapons/HornetNope",6)
+		SHRN ABCABCA 2
+		Goto ReadyMain
+	Flash:
+		TNT1 A 2 A_Light2
+		TNT1 A 4 A_Light1
+		TNT1 A 0 A_Light0
+		Stop
+	}
+}

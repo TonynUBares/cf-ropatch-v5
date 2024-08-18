@@ -1,0 +1,398 @@
+/*
+
+kd: Similarly to the Deathhead's camera effect, you may toggle the Ramjet's crosshair effect by
+using the Activate and Deactivate functions. SetCrosshairActive(true / false) will open and close
+the crosshair. Calling KnockbackScale once will perform a knockback animation.
+
+*/
+
+class Ro_RamjetVision : EventHandler {
+	private Ro_ScreenInst	ro_screen;
+	private Ro_PurpleHaze	haze;
+	// private Ro_ActorHover	hover;
+	private Actor			user;
+	private Actor			viewer;
+	// private double			target_scale;
+	private vector2			scale;
+	
+	private bool	active;
+	
+	const visor_sprite_name	= "ramzc0";
+	const cross_sprite_name	= "ram_x";
+	const piece_sprite_name	= "ram_c";
+	const frame_color		= 0xff000000;
+	const haze_color		= 0xff500090;
+	const haze_alpha		= 0.25;
+	const haze_pulse_tics	= 80;
+	
+	override void RenderUnderlay (RenderEvent event) {
+		if(!active || automapactive) {
+			return;
+		}
+		
+		let t = event.fractic;
+		
+		// Interior pipe and glow:
+		visor_sprite.DrawWithFrame(t, frame_color, 0.7, 0.7);
+		haze.DrawGlowyStuff(haze_color);
+		
+		// The crosshair:
+		cross_sprite.Draw(base_alpha, t);
+		cross_piece1.Draw(0.8, t);
+		cross_piece2.Draw(0.8, t);
+		cross_piece3.Draw(0.8, t);
+		cross_piece4.Draw(0.8, t);
+	}
+	
+	private vector2 draw_origin;
+	private vector2 hud_draw_origin;
+	private vector2	sway_target_offset;
+	private vector2 old_sway_offset;
+	private vector2 sway_offset;
+	
+	void SwayVisor (
+	double in_ang,
+	double in_vang,
+	double sway_input_scale		= 0.0125,
+	double sway_distance		= 0.0769) {
+		let offset = sway_input_scale * (in_ang, in_vang);
+		sway_target_offset += offset;
+		sway_target_offset *= 0.9;
+		sway_target_offset = 0.9 * old_sway_offset + 0.1 * sway_target_offset;
+		
+		// NOTE TO SELF: Get this outta here, it looks sinful like this.
+		if(!(sway_target_offset ~== (0, 0))) {
+			double len = min(sway_distance, sway_target_offset.length());
+			sway_target_offset = len * sway_target_offset.Unit();
+		}
+		
+		old_sway_offset = sway_target_offset;
+	}
+	
+	private double sway_rate;
+	
+	void SetSwayRate (double rate = 0.5) {
+		sway_rate = clamp(rate, 0, 1);
+	}
+	
+	void KnockbackScale (double scale_) {
+		scale = scale_ * (1, 1);
+	}
+	
+	private bool	has_aim_target;
+	private double	piece_dist_f;
+	private double	piece_target_f;
+	private bool	piece_moving;
+	private double	base_alpha;
+	
+	const piece_move_rate	= 0.5;
+	const cross_in_f		= -0.1;
+	
+	private void HandleAimMarker (double f) {
+		// Lag it behind a bit:
+		double target_alpha	= has_aim_target ? 0.666 : 0.25;
+		// base_alpha			= Ro_Interpol.lerp_n(0.1, base_alpha, target_alpha);
+		base_alpha			= 0.1 * target_alpha + 0.9 * base_alpha;
+		
+		piece_target_f	= has_aim_target ? cross_in_f : (f + 5.0) * 0.1337;
+		// piece_dist_f	= Ro_Interpol.lerp_n(piece_move_rate, piece_dist_f, piece_target_f);
+		piece_dist_f	= piece_move_rate * piece_target_f + (1 - piece_move_rate) * piece_dist_f;
+	}
+	
+	private vector2 piece_offset_top_right;
+	private vector2 piece_offset_top_left;
+	
+	override void WorldTick () {
+		// Anything that bobs:
+		double bob_f = 0.5 * sin(level.time * 360 / haze_pulse_tics) + 0.5;
+		
+		// Handle swaying:
+		sway_offset =
+			     sway_rate  * sway_target_offset +
+			(1 - sway_rate) * sway_offset;
+		
+		// Return to centre, too:
+		sway_target_offset = sway_rate * sway_target_offset;
+		
+		// Move the pipe interior:
+		visor_sprite.StartTransform();
+		visor_sprite.MoveTo(draw_origin + (sway_offset.x, 1.2 * sway_offset.y));
+		visor_sprite.ScaleTo(scale);
+		visor_sprite.EndTransform();
+		
+		// Handle base cross movement:
+		cross_sprite.StartTransform();
+		cross_sprite.ScaleTo((0.8 * base_alpha + 0.75) * scale);
+		cross_sprite.EndTransform();
+		
+		// Handle cross piece movement:
+		HandleAimMarker(bob_f);
+		
+		vector2 piece_top_right	= piece_dist_f * piece_offset_top_left;
+		vector2 piece_top_left	= piece_dist_f * piece_offset_top_right;
+		
+		cross_piece1.StartTransform();
+		cross_piece1.MoveTo(hud_draw_origin + piece_top_left);
+		cross_piece1.ScaleTo(scale);
+		cross_piece1.EndTransform();
+		
+		cross_piece2.StartTransform();
+		cross_piece2.MoveTo(hud_draw_origin + piece_top_right);
+		cross_piece2.ScaleTo(scale);
+		cross_piece2.EndTransform();
+		
+		cross_piece3.StartTransform();
+		cross_piece3.MoveTo(hud_draw_origin - piece_top_left);
+		cross_piece3.ScaleTo(scale);
+		cross_piece3.EndTransform();
+		
+		cross_piece4.StartTransform();
+		cross_piece4.MoveTo(hud_draw_origin - piece_top_right);
+		cross_piece4.ScaleTo(scale);
+		cross_piece4.EndTransform();
+		
+		// Crosshair scale effect for knockback:
+		scale += 0.1 * ((1, 1) - scale);
+		
+		// Make the haze glow:
+		haze.SetAlpha(haze_alpha * bob_f);
+	}
+	
+	static Ro_RamjetVision FindThis () {
+		let handler = Ro_RamjetVision(EventHandler.Find("Ro_RamjetVision"));
+		
+		if(!handler) {
+			Console.printf(
+				"\c[ice]Ro_RamjetVision::FindThis: "
+				"\c-Couldn't find this event handler. Not registered?");
+		}
+		
+		return handler;
+	}
+	
+	void Activate () {
+		active = true;
+		ResetDrawData();
+	}
+	
+	void Deactivate () {
+		active = false;
+		ResetDrawData();
+	}
+	
+	void SetCrosshairActive (bool is_active) {
+		has_aim_target = is_active;
+	}
+	
+	private Ro_FittedHudSprite	visor_sprite;
+	private Ro_HudSprite		cross_sprite;
+	private Ro_HudSprite		cross_piece1;
+	private Ro_HudSprite		cross_piece2;
+	private Ro_HudSprite		cross_piece3;
+	private Ro_HudSprite		cross_piece4;
+	
+	override void OnRegister () {
+		Deactivate();
+	}
+	
+	override void WorldUnloaded (WorldEvent event) {
+		Deactivate();
+	}
+	
+	private void DefaultValues () {
+		SetSwayRate();
+	}
+	
+	private void LoadSprites () {
+		visor_sprite.LoadSprite(visor_sprite_name);
+		
+		Ro_Sprites.LoadHudSprite(cross_sprite, cross_sprite_name);
+		Ro_Sprites.LoadHudSprite(cross_piece1, piece_sprite_name);
+		Ro_Sprites.LoadHudSprite(cross_piece2, piece_sprite_name);
+		Ro_Sprites.LoadHudSprite(cross_piece3, piece_sprite_name);
+		Ro_Sprites.LoadHudSprite(cross_piece4, piece_sprite_name);
+		
+		cross_sprite.InitShape();
+		cross_piece1.InitShape();
+		cross_piece2.InitShape();
+		cross_piece3.InitShape();
+		cross_piece4.InitShape();
+	}
+	
+	private void ResetDrawData () {
+		LoadSprites();
+		DefaultValues();
+		ResetHaze();
+		ResetOffsets();
+		ResetAim();
+	}
+	
+	private void ResetAim () {
+		base_alpha		= 0.5;
+		piece_dist_f	= 0;
+		piece_target_f	= 0;
+		has_aim_Target	= false;
+	}
+	
+	private void ResetHaze () {
+		haze.SetAlpha(0);
+		haze.InitDrawData();
+	}
+	
+	private void ResetOffsets () {
+		ro_screen.InitToConsolePlayer();
+		scale				= (1, 1);
+		draw_origin			= (0.5, 0.5);
+		sway_offset			= (0, 0);
+		sway_target_offset	= (0, 0);
+		hud_draw_origin		= ro_screen.RelativeCoord(0.5, 0.5);
+		
+		piece_offset_top_right	= ro_screen.HeightCoord(0.05, 0.05);
+		piece_offset_top_left	=
+			(-piece_offset_top_right.x, piece_offset_top_right.y);
+		
+		visor_sprite.StartTransform();
+		visor_sprite.MoveTo(draw_origin);
+		visor_sprite.ScaleTo((1, 1));
+		visor_sprite.EndTransform();
+		
+		ro_screen.ScaleHudSpriteToHeight(cross_sprite, 0.5);
+		ro_screen.ScaleHudSpriteToHeight(cross_piece1, 0.25);
+		ro_screen.ScaleHudSpriteToHeight(cross_piece2, 0.25);
+		ro_screen.ScaleHudSpriteToHeight(cross_piece3, 0.25);
+		ro_screen.ScaleHudSpriteToHeight(cross_piece4, 0.25);
+		
+		cross_sprite.MoveTo(hud_draw_origin);
+		cross_sprite.ScaleTo((1, 1));
+		cross_sprite.OffsetTo((0.5, 0.5));
+		cross_sprite.HardTransform();
+		
+		cross_piece1.MoveTo(hud_draw_origin);
+		cross_piece1.ScaleTo((1, 1));
+		cross_piece1.RotateTo(0);
+		cross_piece1.OffsetTo((0, 1));
+		cross_piece1.HardTransform();
+		
+		cross_piece2.MoveTo(hud_draw_origin);
+		cross_piece2.ScaleTo((1, 1));
+		cross_piece2.RotateTo(90);
+		cross_piece2.OffsetTo((0, 1));
+		cross_piece2.HardTransform();
+		
+		cross_piece3.MoveTo(hud_draw_origin);
+		cross_piece3.ScaleTo((1, 1));
+		cross_piece3.RotateTo(180);
+		cross_piece3.OffsetTo((0, 1));
+		cross_piece3.HardTransform();
+		
+		cross_piece4.MoveTo(hud_draw_origin);
+		cross_piece4.ScaleTo((1, 1));
+		cross_piece4.RotateTo(270);
+		cross_piece4.OffsetTo((0, 1));
+		cross_piece4.HardTransform();
+		
+	}
+	
+	// private void Unload () {
+		
+	// }
+}
+
+struct Ro_PurpleHaze play {
+	// Sprites:
+	TextureId sprite_center;
+	TextureId sprite_rim;
+	
+	vector2 center_size;
+	vector2 rim_size;
+	
+	// Draw offsets:
+	double x_center;
+	double real_x_center;
+	double real_y_center;
+	double x_left_rim;
+	double x_right_rim;
+	
+	double dest_width_rim;
+	
+	double maspect;
+	double hud_height;
+	double hud_width;
+	
+	double alpha_base;
+	double alpha_cross;
+	
+	const sprite_name_center	= "ram_eye";
+	const sprite_name_rim		= "ram_rim";
+	const glow_color			= 0xffff0505;
+	
+	double rim_width;
+	double real_x_left_rim;
+	double real_x_right_rim;
+	double real_hud_width;
+	double real_hud_height;
+	
+	void DrawGlowyStuff (Color blend_color = glow_color) const {
+		Screen.DrawTexture(
+			sprite_center, true, x_center, hud_height,
+			DTA_CENTERBOTTOMOFFSET,	true,
+			DTA_KEEPRATIO,			true,
+			DTA_VIRTUALWIDTHF,		hud_width,
+			DTA_VIRTUALHEIGHTF,		hud_height,
+			DTA_ALPHA,				alpha_base,
+			DTA_COLOROVERLAY,		blend_color);
+		
+		Screen.Dim(blend_color, alpha_base, 0, 0, int(rim_width), int(real_hud_height));
+		Screen.Dim(blend_color, alpha_base, int(real_x_right_rim), 0, int(rim_width), int(real_hud_height));
+	}
+	
+	void SetAlpha (double alpha) {
+		alpha_base = clamp(alpha, 0, 1);
+	}
+	
+	// kd:
+	// Do all the boring stuff once, so drawing becomes fun again.
+	
+	void InitDrawData () {
+		InitSpriteData();
+		InitConsolePlayerScreen();
+		InitDrawCoords();
+	}
+	
+	protected bool InitSpriteData (
+		String name_center	= sprite_name_center,
+		String name_rim		= sprite_name_rim) {
+		
+		if(	Ro_Sprites.Load(sprite_center, name_center) &&
+			Ro_Sprites.Load(sprite_rim,    name_rim)) {
+			center_size	= TexMan.GetScaledSize(sprite_center);
+			rim_size		= TexMan.GetScaledSize(sprite_rim);
+		}
+		
+		return true;
+	}
+	
+	protected void InitConsolePlayerScreen () {
+		maspect		= Screen.GetAspectRatio();
+		hud_height	= center_size.y;
+		hud_width	= maspect * hud_height;
+		
+		real_hud_width		= Screen.GetWidth();
+		real_hud_height	= Screen.GetHeight();
+	}
+	
+	const base_cross_scale = 0.7666;
+	
+	protected void InitDrawCoords () {
+		x_center = 0.5 * hud_width;
+		
+		real_x_center = 0.5 * real_hud_width;
+		real_y_center = 0.5 * real_hud_height;
+		
+		double scaled_rim_width = 0.5 * (hud_width - center_size.x);
+		rim_width = scaled_rim_width * real_hud_width / hud_width;
+		
+		real_x_right_rim = (hud_width - scaled_rim_width) * real_hud_width / hud_width;
+		alpha_base = 0.3;
+	}
+}

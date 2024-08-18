@@ -1,0 +1,52 @@
+/*
+CREDITS:
+Sprite - Mor'ladim
+Sound - Croteam (Serious Sam 2)
+*/
+
+Actor Backpack2 : CustomInventory
+{
+	Inventory.PickupMessage "Picked up a condemned pack full'o'ammo!"
+	Inventory.PickupSound "items/backpack"
+	+INVENTORY.ALWAYSPICKUP
+	+COUNTITEM
+	States
+	{
+	Spawn:
+		BPAK B -1
+		Loop
+	Pickup:
+		TNT1 A 0 ACS_NamedExecuteAlways("BackpacksOPinator")
+		TNT1 A 0 A_Jump(256,"Bonus1","Bonus2","Bonus3","Bonus4","Bonus5")
+	Bonus1:
+		TNT1 A 0 A_GiveInventory("Redeemer")
+		Stop
+	Bonus2:
+		TNT1 A 0 A_GiveInventory("ShitstormDevice")
+		Stop
+	Bonus3:
+		TNT1 A 0 A_GiveInventory("WarpocItem")
+		Stop
+	Bonus4:
+		TNT1 A 0 A_GiveInventory("HindenburgBeacon")
+		Stop
+	Bonus5:
+		TNT1 A 0 {
+			if(GetCvar("RO_ClassRestriction")) {
+				if(CountInv("YuriTrigger")) { A_GiveInventory("Stalin"); Return State(""); }
+				if(CountInv("MartyTrigger")) { A_GiveInventory("Trocky"); Return State(""); }
+				if(CountInv("AloszaTrigger")) { A_GiveInventory("Lenin"); Return State(""); }
+			} else {
+				Return A_Jump(256,1,2,3);
+			}
+			Return State("");
+		}
+		Stop
+		TNT1 A 0 A_GiveInventory("Stalin")
+		Stop
+		TNT1 A 0 A_GiveInventory("Trocky")
+		Stop
+		TNT1 A 0 A_GiveInventory("Lenin")
+		Stop
+	}
+}

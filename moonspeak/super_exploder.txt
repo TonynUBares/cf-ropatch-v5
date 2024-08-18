@@ -1,0 +1,257 @@
+/*
+
+kd: Another thing that served us well in Guncaster. This is A_Explode but it can hit any sort of
+actor, has a nicer bounce and goes thru walls, except for players.
+
+*/
+
+class Ro_SuperExploder : Actor {
+	void A_SuperExplode (
+	int		damage,
+	double	radius,
+	String	damage_type		= "Normal",
+	double	thrust_f		= 1,
+	bool	can_damage_self	= true) {
+		let user = self;
+		
+		if(NULL == user || NULL == user.target || radius <= 0) {
+			return;
+		}
+		
+		let radius2 = radius * radius;
+		let it = ThinkerIterator.Create("Actor");
+		Actor mo;
+		
+		while(mo = Actor(it.Next())) if(
+		mo.bshootable		&&
+		0 < mo.health		&&
+		mo != user.target	&&
+		mo.IsHostile(user.target)) {
+			if(
+            (mo is 'ExplosiveBarrel' || (can_damage_self && mo == user.target)) &&
+            !mo.CheckSight(user)) {
+                continue;
+            }
+			
+            let diff = levellocals.vec3diff(
+				user.pos,
+				mo.vec3offset(0, 0, 0.5 * mo.height));
+			
+			let diff_len2		= diff dot diff;
+			let damage_dealt	= 0;
+			let diff_len		= 0;
+			bool is_in_range	= diff_len2 < radius2;
+			
+			if(is_in_range) {
+				diff_len			= int(sqrt(diff_len2));
+				damage_dealt		= int(max(0, floor((1 - diff_len / radius) * damage)));
+				
+				mo.DamageMobj(
+					user,
+					user.target,
+					damage_dealt,
+					damage_type);
+			}
+            
+			if(is_in_range && false == mo.bdontthrust) {
+				if(diff_len < 10) {
+					mo.vel.z += thrust_f * 100 / max(1, mo.mass) * damage_dealt;
+				}
+
+				else {
+					mo.vel += thrust_f * 100 / max(1, mo.mass) * damage_dealt * diff / diff_len;
+				}
+			}
+		}
+	}
+}
+
+// kd: And this here is a new thing that iterates bit by bit.
+class Ro_SuperExplosion play {
+	void Begin () {
+		is_done = false;
+		iterator = ThinkerIterator.Create("Actor");
+	}
+		
+	bool Next (int max_count = 30) {
+		let i = 0;
+		let thrust_f = base_thrust_f * 100;
+		let offset_pos = user.vec3offset(0, 0, base_height);
+		Actor mo = NULL;
+		
+		while(i < max_count && (mo = Actor(iterator.Next()) ) ) {
+			
+			i++;
+			
+			if(mo.health <= 0 || !mo.bshootable) {
+				continue;
+			}
+			
+			// kd: Barrels and the user will only be considered when within sight of the explosion.
+			if(
+			mo is "ExplosiveBarrel" ||
+			(can_damage_self && mo == user.target)) {
+				if(!user.CheckSight(mo)) {
+					continue;
+				}
+			}
+			
+			let diff		= levellocals.vec3diff(offset_pos, mo.pos);
+			let diff_len	= diff.length();
+			
+			if(explosion_radius < diff_len) {
+				continue;
+			}
+			
+			// kd: Hit and thrust actors away from the explosion.
+			if(core_range < diff_len) {
+				let damage = (1 - diff_len / explosion_radius) * base_damage;
+				mo.DamageMobj(user, user.target, int(damage), damage_type);
+				
+				if(false == mo.bdontthrust) {
+					mo.vel += thrust_f / max(1, mo.mass) * damage * diff / diff_len;
+				}
+			}
+			
+			// kd: Full damage and thrust only upwards.
+			else {
+				mo.DamageMobj(user, user.target, base_damage, damage_type);
+				
+				if(false == mo.bdontthrust) {
+					mo.vel.z += thrust_f / max(1, mo.mass) * base_damage;
+				}
+			}
+		}
+		
+		// kd: If the above iteration finished early, then all actors have been cycled through.
+		if(i < max_count) {
+			is_done = true;
+		}
+		
+		return is_done;
+	}
+	
+	bool IsDone () const {
+		return is_done;
+	}
+	
+	Actor user;
+	vector3 pos;
+	
+	int base_damage;
+	double base_thrust_f;
+	double explosion_radius;
+	Name damage_type;
+	ThinkerIterator iterator;
+	bool can_damage_self;
+	
+	bool is_done;
+	
+	// kd: not a falloff control. helps thrust when explosion is inside an actor (close to mo.pos).
+	const core_range = 5;
+	const base_height = 32;	// kd: causes a thrust upwards
+}
+
+class SuperExplodeTestAsub : Ro_SuperExploder {
+	default {
+		Projectile;
+	}
+	
+	states {
+	spawn:
+		TNT1 A 30 nodelay {
+			A_SuperExplode(1000, 1000);
+		}
+		
+		stop;
+	}
+}
+
+class SuperExplodeTestA : Ro_SuperExploder {
+	override void Tick () {
+		for(let i = 0; i < 100; i++) {
+			A_SuperExplode(1000, 1000);
+		}
+		
+		special1++;
+		
+		if(100 < special1) {
+			Destroy();
+			return;
+		}
+	}
+	
+	states {
+	spawn:
+		TNT1 A 100;
+		stop;
+	}
+	
+	default {
+		Projectile;
+	}
+}
+
+class SuperExplodeTestB : Actor {
+	override void Tick () {
+		for(let i = 0; i < 100; i++) {
+			Spawn("SuperExplodeTestBsub", pos);
+		}
+		
+		special1++;
+		
+		if(100 < special1) {
+			Destroy();
+			return;
+		}
+	}
+	
+	default {
+		Projectile;
+	}
+}
+
+class SuperExplodeTestBsub : Actor {
+	Ro_SuperExplosion ex;
+	
+	default {
+		Projectile;
+	}
+	
+	override void PostBeginPlay () {
+		ex = new("Ro_SuperExplosion");
+		ex.explosion_radius = 1000;
+		ex.base_damage = 1000;
+		ex.base_thrust_f = 1;
+		ex.user = self;
+		
+		ex.Begin();
+	}
+	
+	override void Tick () {
+		if(ex.IsDone()) {
+			Destroy();
+		}
+		
+		else {
+			ex.Next();
+		}
+	}
+}
+
+class KillEmAllLol : Actor {
+	override void PostBeginPlay () {
+		let it = ThinkerIterator.Create("Thinker");
+		Thinker to = NULL;
+		
+		while(to = it.Next()) {
+			console.printf("%s", to.GetClassName());
+			
+			if(!(to is 'PlayerPawn')) {
+				to.Destroy();
+			}
+		}
+		
+		Destroy();
+	}
+}

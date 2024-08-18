@@ -1,0 +1,219 @@
+/*
+CREDITS:
+
+Random name generator - for spawning this retarded weapon!
+Guided missile coding - Zhs2! (Sorry Keks, this one fits here better. However, your script is still used in the nuke!)
+Special props to Zrrion for helping me make the secondary fire to work somehow!
+
+Graphics:
+Gun graphic source - Shadow Warrior (3DRealms)
+Gun graphic - Neccronixis
+Discus projectile graphic - RSL
+Holograph effect - Cutman Mike
+Bertha Imp - ?? (Found it loafing around my hard drive, dunno from where it is, but I thought of giving it a fine use, teehee!)
+Embers - Hexen (Raven Software)
+Ember impact - ??
+
+Sounds:
+Up - A mix of sound I don't remember and one from Unreal (Epic Games)
+Fire - Starcraft 2 (Blizzard Entertainment)
+Shuriken flight - Painkiller (People can Fly, thanks Xaser for suggestion!)
+
+Alt Fire Sounds:
+Alt Fire - Serious Sam 3 (Croteam)
+Alt Fire Add - ??
+Discus Fly - Red Alert 2: Yuri's Revenge (Westwood)
+Discus Stop - Bulletstorm (People can Fly, Epic Games)
+Perversively seductive music - Ohhh Yeah (Jello)
+Discus Burst - Diablo 2 (Blizzard Ent.)
+
+Tertiary Fire stuff:
+Sprites - Midway (Turok)
+Sounds:
+Deploy - ID (Quake 2)
+Charge - Westwood (Renegade)
+WHEEEEE - Firefox Advertisement (yes, that's right!)
+
+Extremely weird fruit of random name generator, this gun seems to be
+pretty standard - still, who wouldn't want to shoot guided explosive
+shurikens?! All magic of this gun though lies in the alt-fire,
+which makes even me wonder how the hell I came up with that idea...
+*/
+
+Actor ShotsFired : Inventory { Inventory.MaxAmount 3 }
+
+actor ShurricaneGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Shurricane'' Explosive Guided Shuriken Launch System! Spinnning saw goes:spiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
+	Obituary "%o was swarmed by %k's explosive shurikens."
+	States
+	{
+	Spawn:
+		SPAM X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Shurricane",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Shurricane",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("RawketAmmo",20)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+Actor Shurricane : DoomWeapon 24536
+{
+	//$Category Weapons
+	//$Title Shurricane
+	//$Sprite SPAMX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Shurricane'' Explosive Guided Shuriken Launch System! Spinnning saw goes:spiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
+	Obituary "%o was swarmed by %k's explosive shurikens."
+	Weapon.UpSound "Shurricane/Up"
+	Weapon.SelectionOrder 3
+	Weapon.AmmoGive 20
+	Weapon.AmmoType "RawketAmmo"
+	Weapon.AmmoUse 1
+	Weapon.AmmoType2 "RawketAmmo"
+	Weapon.AmmoUse2 5
+	Weapon.Kickback 50
+	Weapon.SlotNumber 6
+	Weapon.SlotPriority 28.0
+    Weapon.BobStyle "InverseSmooth"
+    Weapon.BobSpeed 1.4
+    Weapon.BobRangeY 0.6
+    Weapon.BobRangeX 1.2
+	States 
+	{
+   	Spawn:
+		SPAM X -1
+		Stop
+	Ready:
+		SPAM A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+ 		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		SPAM A 0 A_ZoomFactor(1.0)
+		SPAM A 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		SPAM A 1 A_Raise(12)
+		Loop
+	Fire:
+		//The most amazing solution of them all to fix the goddamn cutoff! Yaaaaay. ._.
+		SPAF A 0 {
+			A_GiveInventory("ShotsFired",1);
+			if(CountInv("ShotsFired") == 1) {
+				A_PlaySound("Shurricane/Fire",1);
+			} else if(CountInv("ShotsFired") == 2) {
+				A_PlaySound("Shurricane/Fire",1);
+			} else {
+				A_PlaySound("Shurricane/Fire",6);
+				A_TakeInventory("ShotsFired",3);
+			}
+		}
+		SPAF AAAA 0 A_FireCustomMissile("ShurricaneMissile",frandom(-10.0,10.0), 0, 10, 0, 0, frandom(-2.0,2.0)) 
+		SPAF A 0 A_FireCustomMissile("ShurricaneMissile",frandom(-10.0,10.0), 1, 10, 0, 0, frandom(-2.0,2.0)) 
+		SPAF A 0 {
+			A_Recoil(4.0);
+			A_Gunflash;
+			/*A_SetAngle(Angle-3.0,SPF_INTERPOLATE);
+			A_SetPitch(Pitch-4.0,SPF_INTERPOLATE);*/
+		}
+      	SPAF A 1 Bright { A_WeaponOffset(8,40); 				if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } }
+      	SPAF B 1 Bright { A_WeaponOffset(7,39,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); } }
+		SPAF C 1 Bright { A_WeaponOffset(6,38,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } }
+      	SPAF D 1 Bright { A_WeaponOffset(5,37,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+      	SPAM A 1 		{ A_WeaponOffset(4,36,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+      	SPAM A 1 		{ A_WeaponOffset(3,35,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+   		SPAM A 1 		{ A_WeaponOffset(2,34,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+      	SPAM A 1 		{ A_WeaponOffset(1,33,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+   		SPAM A 0 A_ReFire
+        SPAM A 1 		{ A_WeaponOffset(0,32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0);  } }
+        SPAM A 5
+		Goto Ready
+	AltFire:
+		SPAM A 0 A_JumpifInventory("JelloOut",1,"Nope")
+		SPAF A 0 {
+			A_GiveInventory("JelloOut",1);
+			A_FireCustomMissile("JelloDiscus", 0, 1, 10);
+			A_PlaySound("Jello/Fire",1,1.0);
+			A_PlaySound("Jello/Add",5,0.75);
+			A_Recoil(6);
+			A_Gunflash;
+			A_SetAngle(Angle-4.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-5.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+      	SPAF A 1 Bright { A_WeaponOffset(8,40); 				if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } }
+      	SPAF B 1 Bright { A_WeaponOffset(7,39,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); } }
+		SPAF C 1 Bright { A_WeaponOffset(6,38,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } }
+      	SPAF D 1 Bright { A_WeaponOffset(5,37,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+      	SPAM A 1 		{ A_WeaponOffset(4,36,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+      	SPAM A 1 		{ A_WeaponOffset(3,35,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+   		SPAM A 1 		{ A_WeaponOffset(2,34,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+      	SPAM A 1 		{ A_WeaponOffset(1,33,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+        SPAM A 3 		{ A_WeaponOffset(0,32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0);  } }
+        SPAM A 10
+		Goto Ready
+	Nope:
+		SPAM A 0 {
+			A_GiveInventory("JelloStopper",1);
+			A_PlaySound("Jello/Stop",5);
+		}
+		SPAM A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		SPAM A 1 { A_WeaponOffset(2,34,WOF_INTERPOLATE); A_TakeInventory("JelloStopper",1); }
+		SPAM A 1 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		SPAM A 1 A_WeaponOffset(2,34,WOF_INTERPOLATE)
+		SPAM A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		SPAM A 10 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		Goto Ready
+	Reload:
+		SPAM A 0 A_JumpIfInventory("RawketAmmo",20,1)
+		Goto Nope2
+		SPAF A 0 {
+			A_TakeInventory("RawketAmmo",20,TIF_NOTAKEINFINITE);
+			A_FireCustomMissile("PickleGrenade", 0, 0, 10, 0, 0, 0);
+			A_PlaySound("Jello/Fire",1,1.0);
+			A_PlaySound("Jello/Add",5,0.75);
+			A_Recoil(8);
+			A_Gunflash;
+			A_SetAngle(Angle-4.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-5.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+      	SPAF A 1 Bright { A_WeaponOffset(8,40); 				if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } }
+      	SPAF B 1 Bright { A_WeaponOffset(7,39,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); } }
+		SPAF C 1 Bright { A_WeaponOffset(6,38,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } }
+      	SPAF D 1 Bright { A_WeaponOffset(5,37,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+      	SPAM A 1 		{ A_WeaponOffset(4,36,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+      	SPAM A 1 		{ A_WeaponOffset(3,35,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+   		SPAM A 1 		{ A_WeaponOffset(2,34,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+      	SPAM A 1 		{ A_WeaponOffset(1,33,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+        SPAM A 3 		{ A_WeaponOffset(0,32,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0);  } }
+        SPAM A 15
+		Goto Ready
+	Nope2:
+		SPAM A 0 {
+			A_PlaySound("Jello/Stop",5);
+			A_Print("\c[white]You need at least 20 rockets for that one, hun.");
+		}
+		SPAM A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		SPAM A 1 A_WeaponOffset(2,34,WOF_INTERPOLATE)
+		SPAM A 1 A_WeaponOffset(3,35,WOF_INTERPOLATE)
+		SPAM A 1 A_WeaponOffset(2,34,WOF_INTERPOLATE)
+		SPAM A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		SPAM A 10 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		Goto Ready
+	Gunflash:
+		TNT1 A 4 A_Light2
+		TNT1 A 5 A_Light1
+		TNT1 A 0 A_Light0
+		Stop
+	}
+}

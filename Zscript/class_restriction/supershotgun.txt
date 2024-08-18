@@ -1,0 +1,177 @@
+//Super shotgun replacements
+class NewSuperShotgunSpawner : Actor
+{
+	Default
+	{
+		+NOINTERACTION
+	}
+	
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(RO_ClassRestriction) { A_SpawnItemEx("SuperShotgunSpawnerRestricted",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+			else { A_SpawnItemEx("SuperShotgunSpawner",0,0,0,0,0,0,0,SXF_TRANSFERSPECIAL); }
+		}
+		Stop;
+	}
+}
+
+class SuperShotgunSpawnerRestricted : RORestrictPiece
+{
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay {
+			if(random(0,1) == 0) {
+				invoker.TypeTwo = 0;
+				A_SpawnItemEx("SchwarzerZwergYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("PantokratorMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("ViolatorAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			} else {
+				invoker.TypeTwo = 1;
+				A_SpawnItemEx("TorchglowYuri",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("BeefSupremeMarty",0,0,0,0,0,0,0,SXF_SETMASTER);
+				A_SpawnItemEx("SteamrollerAlosha",0,0,0,0,0,0,0,SXF_SETMASTER);
+			}
+			Return ResolveState(Null);
+		}
+		TNT1 A 1;
+		Wait;
+	Pickup:
+		TNT1 A 0 A_JumpIf(CountInv("YuriTrigger"),"YuriWeapon");
+		TNT1 A 0 A_JumpIf(CountInv("MartyTrigger"),"MartyWeapon");
+		TNT1 A 0 A_JumpIf(CountInv("AloszaTrigger"),"AloshaWeapon");
+	YuriWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"YuriWeapon2");
+		TNT1 A 0 { if(CountInv("SchwarzerZwerg") && A_JumpIfInventory("ErasusAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("SchwarzerZwergGiver"); thingtogive.touch(self); }
+		Stop;
+	YuriWeapon2:
+		TNT1 A 0 { if(CountInv("Torchglow") && A_JumpIfInventory("TankShellAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("TorchglowGiver"); thingtogive.touch(self); }
+		Stop;
+	MartyWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"MartyWeapon2");
+		TNT1 A 0 { if(CountInv("Pantokrator") && A_JumpIfInventory("ErasusAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("PantokratorGiver"); thingtogive.touch(self); }
+		Stop;
+	MartyWeapon2:
+		TNT1 A 0 { if(CountInv("BeefSupreme") && A_JumpIfInventory("TankShellAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("BeefSupremeGiver"); thingtogive.touch(self); }
+		Stop;
+	AloshaWeapon:
+		TNT1 A 0 A_JumpIf(invoker.TypeTwo,"AloshaWeapon2");
+		TNT1 A 0 { if(CountInv("Violator") && A_JumpIfInventory("ErasusAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("ViolatorGiver"); thingtogive.touch(self); }
+		Stop;
+	AloshaWeapon2:
+		TNT1 A 0 { if(CountInv("Steamroller") && A_JumpIfInventory("TankShellAmmo",0,"Null")) { Return ResolveState("Nope"); } Return ResolveState(Null); }
+		TNT1 A 0 { let thingtogive = Spawn("SteamrollerGiver"); thingtogive.touch(self); }
+		Stop;
+	Nope:
+		TNT1 A 0;
+		Fail;
+	}
+}
+
+class SchwarzerZwergYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+		Scale 0.9;
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		ZWRG X -1;
+		Stop;
+	}
+}
+
+class TorchglowYuri : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Yuri";
+		Scale 0.78;
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		FRGG X -1;
+		Stop;
+	}
+}
+
+class PantokratorMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+		Scale 0.8;
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		PANT X -1;
+		Stop;
+	}
+}
+
+class BeefSupremeMarty : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Marty";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		RPGG X -1;
+		Stop;
+	}
+}
+
+class ViolatorAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		VOLG X -1;
+		Stop;
+	}
+}
+
+
+class SteamrollerAlosha : ROVisualPiece
+{
+	Default
+	{
+		VisibleToPlayerClass "Alosha";
+		Scale 0.8;
+		+NOBLOCKMAP
+	}
+	
+	States
+	{
+	Spawn:
+		STIG X -1;
+		Stop;
+	}
+}

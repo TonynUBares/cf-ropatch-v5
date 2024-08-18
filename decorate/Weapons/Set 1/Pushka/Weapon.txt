@@ -1,0 +1,310 @@
+/*
+CREDITS:
+Sprite - NMN\Paul
+Pickup by me from some other weapon bits by Paul.
+
+Fire, reload - Westwood (C&C Renegade)
+Add fire - Blizzard ( Starcraft II)
+Tank shell bouncing - ID (ET:Quake Wars)
+*/
+
+ACTOR PushkaBurst : Ammo
+{
+	Inventory.Amount 1
+	Inventory.MaxAmount 10
+	Ammo.BackpackAmount 0
+	Ammo.BackpackMaxAmount 10
+	Inventory.Icon "TNT1A0" //"ERMGX0"
+}
+
+ACTOR VortexOut : Inventory { Inventory.MaxAmount 1 }
+ACTOR VortexEnd : VortexOut {}
+ACTOR PushkaReloading : VortexOut {}
+ACTOR JuiceSpringsteen : VortexOut {}
+Actor PushkaInfo : VortexOut {}
+
+
+actor PushkaGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Pushka'' personal cannon! *SPAM EXPLOSIVE INTENSIFIES*"
+	Obituary "%o was command'n'conquered by %k's high caliber gift."
+	States
+	{
+	Spawn:
+		ERMG X 1
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Pushka",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Pushka",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("TankShellAmmo",6)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+ACTOR Pushka : ROWeapon 24506
+{
+	//$Category Weapons
+	//$Title Pushka
+	//$Sprite ERMGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Pushka'' personal cannon! *SPAM EXPLOSIVE INTENSIFIES*"
+	Obituary "%o was command'n'conquered by %k's high caliber gift."
+	Weapon.UpSound "Weapons/PushkaUp"
+	Weapon.SelectionOrder 4
+	Weapon.AmmoType "TankShellAmmo"
+	Weapon.AmmoGive 6
+	Weapon.AmmoUse 1
+	Weapon.AmmoType2 "PushkaBurst"
+	Weapon.AmmoUse2 0
+	Weapon.Kickback 50
+	Weapon.SlotNumber 5
+	Weapon.SlotPriority 30.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.4
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	+NOAUTOFIRE
+	+NOALERT
+	Scale 0.78
+	States
+	{
+	Spawn:
+		ERMG X -1
+		Stop
+	Ready:
+		ERMG A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		ERMG A 0 {
+			A_TakeInventory("PushkaReloading",1);
+			A_ZoomFactor(1.0);
+		}
+		ERMG A 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		ERMG A 0 {
+			If(random(1,100) <= GetCvar("RO_Voices")) {
+				A_PlaySound("Misc/W_Pushka_Pkup",2);
+			}
+		}
+		ERMG A 1 A_Raise(12)
+		Wait
+   Fire:
+		ERMF A 0 A_JumpIfInventory("PushkaBurst",1,"BurschtFire")
+		ERMF A 0 {
+			A_GunFlash;
+			A_Recoil(12.0);
+			A_AlertMonsters;
+			A_PlaySound("Weapons/PushkaAltFire",1);
+			A_PlaySound("Weapons/PushkaFire",5);
+			A_PlaySound("Weapons/PushkaFireAdd",6,0.8);
+			A_FireCustomMissile("TankShell",0,1,10,0);
+			A_SetAngle(Angle - 3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		ERMF A 1 Bright { A_WeaponOffset(2.0,2.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE); 	 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); } }
+		ERMF B 1 Bright { A_WeaponOffset(5.0,5.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE); 	 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } }
+		ERMF C 1 Bright { A_WeaponOffset(3.0,3.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE);	 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); } }
+		ERMG A 1 		{ A_WeaponOffset(2.0,2.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE);	 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } }
+		ERMG A 1 		{ A_WeaponOffset(1.0,1.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE);	 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		ERMG A 1 		{								  									 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		ERMG A 1 		{ A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		ERMG A 1 		{ A_WeaponOffset(-2.0,-2.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		ERMG A 1 		{ A_WeaponOffset(-4.0,-4.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		ERMG A 1 		{ A_WeaponOffset(-3.0,-3.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		ERMG A 1		  A_WeaponOffset(-2.0,-2.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		ERMG A 1		  A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		ERMG A 0 A_PlaySound("Weapons/PushkaReload",0)
+		ERMG A 3
+		ERMR A 1
+		ERMR A 1		 A_WeaponOffset(1.0,2.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		ERMR B 1		 A_WeaponOffset(3.0,7.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		ERMR B 1		 A_WeaponOffset(5.0,11.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		ERMR C 1		 A_WeaponOffset(2.0,5.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		
+		ERMR C 1	   { A_WeaponOffset(1.0,1.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE); A_FireCustomMissile("TankShellCasingSpawner", 0, 0, 36, 8); }
+		ERMR C 1		 A_WeaponOffset(1.0,1.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		ERMR C 1 		 A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		ERMR C 1		 A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		
+		ERMR C 1		 A_WeaponOffset(-2.0,-5.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		ERMR B 1		 A_WeaponOffset(-5.0,-11.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		ERMR B 1		 A_WeaponOffset(-3.0,-7.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		ERMR A 1		 A_WeaponOffset(-1.0,-2.0,WOF_ADD|WOF_INTERPOLATE|WOF_INTERPOLATE)
+		ERMR A 1
+
+		ERMG A 3
+		Goto Ready
+	BurschtPreFire:
+		ERMG A 0 A_JumpIfInventory("TankShellAmmo", 1, 1)
+	  Goto Ready
+	BurschtFire:
+		ERMF A 0 A_JumpIfInventory("TankShellAmmo", 1, 1)
+		Goto BurschtEnd
+		ERMF A 0 A_JumpIfInventory("PushkaBurst", 1, 1)
+		Goto BurschtEnd
+		ERMF A 0 {
+			A_GunFlash;
+			A_Recoil(2.0);
+			A_AlertMonsters;
+			A_PlaySound("Weapons/PushkaAltFire", 1);
+			A_PlaySound("Weapons/PushkaFire", 5);
+			A_PlaySound("Weapons/PushkaFireAdd", 6, 0.8);
+			A_FireCustomMissile("TankShell", 0, 1, 10, 0);
+			A_SetAngle(Angle - 0.75*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.75*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		ERMF A 0 A_JumpIfInventory("TankShellAmmo",1,1)
+		Goto BurschtEnd
+		ERMF A 1 Bright { A_WeaponOffset(2.0,34.0, WOF_INTERPOLATE); 		 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9);  } }
+		ERMF B 1 Bright { A_WeaponOffset(7.0,39.0, WOF_INTERPOLATE); 		 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } }
+		ERMF C 1 Bright { A_WeaponOffset(10.0,42.0, WOF_INTERPOLATE);		 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); } }
+		ERMG A 0 A_TakeInventory("PushkaBurst",1)
+		ERMG A 0 A_FireCustomMissile("TankShellCasingSpawner", 0, 0, 36, 8)
+		ERMG A 0 A_ReFire("BurschtFire")
+	BurschtEnd:
+		ERMG A 1 		{ A_WeaponOffset(2.0,2.0,WOF_ADD|WOF_INTERPOLATE);   if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } }
+		ERMG A 1		{ A_WeaponOffset(1.0,1.0,WOF_ADD|WOF_INTERPOLATE);   if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		ERMG A 1 		{								     				 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		ERMG A 1		{ A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		ERMG A 1 		{ A_WeaponOffset(-2.0,-2.0,WOF_ADD|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		ERMG A 1 		{ A_WeaponOffset(-4.0,-4.0,WOF_ADD|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		ERMG A 1 		{ A_WeaponOffset(-3.0,-3.0,WOF_ADD|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		ERMG A 1		  A_WeaponOffset(-2.0,-2.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 1		  A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 3
+		Goto Ready
+	Reload:
+		ERMG A 0 A_JumpIfInventory("PushkaReloading", 1, "LetsLoodUpDaTwerps")
+		ERMG A 0 A_JumpIfInventory("PushkaBurst",  0, "Ready")
+		ERMR A 0 A_GiveInventory("PushkaReloading",1)
+		ERMR A 1
+		ERMR A 1		 A_WeaponOffset(1.0,2.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR B 1		 A_WeaponOffset(3.0,7.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR B 1		 A_WeaponOffset(5.0,11.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR C 1		 A_WeaponOffset(2.0,5.0,WOF_ADD|WOF_INTERPOLATE)
+	LetsLoodUpDaTwerps:
+		ERMR A 0 A_JumpIfInventory("PushkaBurst",0,"Endo")
+		ERMR A 0 A_GiveInventory("PushkaBurst",2)
+		
+		ERMR A 0 A_JumpIfInventory("JuiceSpringsteen",1,4)
+		ERMR A 0 A_GiveInventory("JuiceSpringsteen",1)
+		ERMR A 0 A_PlaySound("Weapons/PushkaReload",5)
+		ERMR A 0 A_Jump(256,3)
+		ERMR A 0 A_TakeInventory("JuiceSpringsteen",1)
+		ERMR A 0 A_PlaySound("Weapons/PushkaReload",1)
+
+		ERMR C 1 		 A_WeaponOffset(1.0,1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR C 1 		 A_WeaponOffset(2.0,2.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR C 1 		 A_WeaponOffset(3.0,3.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR C 1 		 A_WeaponOffset(6.0,6.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR C 1 		 A_WeaponOffset(4.0,4.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR C 1 		 A_WeaponOffset(-3.0,-3.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR C 1		 A_WeaponOffset(-5.0,-5.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR C 1 		 A_WeaponOffset(-4.0,-4.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR C 1 		 A_WeaponOffset(-3.0,-3.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR C 1 		 A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR C 1
+		ERMR C 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH|WRF_NOBOB|WRF_ALLOWRELOAD)
+	Endo:
+		ERMR A 0 A_TakeInventory("PushkaReloading",1)
+		ERMR C 1		 A_WeaponOffset(-2.0,-5.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR B 1		 A_WeaponOffset(-5.0,-11.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR B 1		 A_WeaponOffset(-3.0,-7.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR A 1		 A_WeaponOffset(-1.0,-2.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMR A 1
+		Goto Ready
+	AltFire:
+		ERMF A 0 A_JumpIfInventory("TankShellAmmo",3,1)
+		Goto Nope
+		//ERMF A 0 A_JumpIfInventory("VortexOut",1,"Nope")
+		//ERMF A 0 A_GiveInventory("VortexOut",1)
+		ERMF A 0 {
+			if(!CountInv("SteamInfo") && !GetCvar("RO_IGotIt")) {
+				A_Print("\c[white]Detonate repulsion field with \c[cyan]Zoom/Quaternary firing mode\c[white], it uses your ammo as it goes.");
+				A_GiveInventory("SteamInfo",1);
+			}
+			A_GunFlash;
+			A_Recoil(5.0);
+			A_AlertMonsters;
+			A_PlaySound("Weapons/PushkaFire",0);
+			A_PlaySound("Weapons/BlasterAltFire",6);
+			A_FireCustomMissile("BlasterShell",0,0,10,0);
+			A_TakeInventory("TankShellAmmo",3,TIF_NOTAKEINFINITE);
+			A_SetAngle(Angle - 3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		ERRF A 1 Bright { A_WeaponOffset(2.0,2.0,WOF_ADD|WOF_INTERPOLATE); 	 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9);  } }
+		ERRF B 1 Bright { A_WeaponOffset(7.0,7.0,WOF_ADD|WOF_INTERPOLATE); 	 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } }
+		ERRF C 1 Bright { A_WeaponOffset(4.0,4.0,WOF_ADD|WOF_INTERPOLATE);	 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); } }
+		ERMG A 1 		{ A_WeaponOffset(2.0,2.0,WOF_ADD|WOF_INTERPOLATE);	 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } }
+		ERMG A 1 		{ A_WeaponOffset(1.0,1.0,WOF_ADD|WOF_INTERPOLATE);	 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		ERMG A 1 		{								  					 if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		ERMG A 1 		{ A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		ERMG A 1 		{ A_WeaponOffset(-2.0,-2.0,WOF_ADD|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		ERMG A 1 		{ A_WeaponOffset(-4.0,-4.0,WOF_ADD|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		ERMG A 1 		{ A_WeaponOffset(-4.0,-4.0,WOF_ADD|WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		ERMG A 1		  A_WeaponOffset(-3.0,-3.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 1		  A_WeaponOffset(-2.0,-2.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 1		  A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 2 A_PlaySound("Weapons/PushkaAltReload",5)
+		ERMR A 1
+		ERMR A 1		  A_WeaponOffset(1.0,34.0, WOF_INTERPOLATE)
+		ERMR A 1		  A_WeaponOffset(3.0,37.0, WOF_INTERPOLATE)
+		ERMR B 1		  A_WeaponOffset(6.0,42.0, WOF_INTERPOLATE)
+		ERMR B 1		  A_WeaponOffset(10.0,51.0, WOF_INTERPOLATE)
+		ERMR B 1		  A_WeaponOffset(13.0,58.0, WOF_INTERPOLATE)
+		ERMR C 1		  A_WeaponOffset(15.0,63.0, WOF_INTERPOLATE)
+		ERMR C 1		  A_WeaponOffset(17.0,68.0, WOF_INTERPOLATE)
+		
+		ERMR CCCCCCCCCCCC 1 A_WeaponOffset(0.2,0.2,WOF_ADD|WOF_INTERPOLATE)
+		ERMR CCCCCCCCCCCCCCC 1 A_WeaponOffset(17.0 + frandom(3.0,-3.0), 68.0 + frandom(3.0,-3.0), WOF_INTERPOLATE)
+		
+		ERMR C 1		  A_WeaponOffset(17.0,68.0, WOF_INTERPOLATE)
+		ERMR C 1		  A_WeaponOffset(15.0,63.0, WOF_INTERPOLATE)
+		ERMR B 1		  A_WeaponOffset(13.0,58.0, WOF_INTERPOLATE)
+		ERMR B 1		  A_WeaponOffset(10.0,51.0, WOF_INTERPOLATE)
+		ERMR B 1		  A_WeaponOffset(6.0,42.0, WOF_INTERPOLATE)
+		ERMR A 1		  A_WeaponOffset(3.0,37.0, WOF_INTERPOLATE)
+		ERMR A 1		  A_WeaponOffset(1.0,34.0, WOF_INTERPOLATE)
+		
+		ERMG A 1		  A_WeaponOffset(0.0,32.0, WOF_INTERPOLATE)
+		ERMG A 4
+		Goto Ready
+	Zoom:
+		ERMG A 0 A_PlaySound("Weapons/PushkaNope",5)
+		ERMG A 1		{ A_WeaponOffset(4.0,4.0,WOF_ADD|WOF_INTERPOLATE); A_GiveInventory("VortexEnd",1); }
+		ERMG A 1		  A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 1		  A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 1		  A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 1		  A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 3 A_TakeInventory("VortexEnd",1)
+		ERMG A 10 A_WeaponReady(WRF_NOSWITCH|WRF_NOBOB)
+		Goto Ready
+	Nope:
+		ERMG A 0 A_PlaySound("Weapons/PushkaNope",5)
+		ERMG A 1 		 A_WeaponOffset(4.0, 4.0, WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 1 		 A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 1 		 A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 1 		 A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 1 		 A_WeaponOffset(-1.0,-1.0,WOF_ADD|WOF_INTERPOLATE)
+		ERMG A 3
+		ERMG A 10 A_WeaponReady(WRF_NOSWITCH|WRF_NOBOB)
+		Goto Ready
+	Flash:
+		TNT1 A 3 Bright A_Light2
+		TNT1 A 3 Bright A_Light1
+		TNT1 A 0 Bright A_Light0
+		Stop
+	}
+}

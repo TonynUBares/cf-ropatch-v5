@@ -1,0 +1,180 @@
+//DO A BARREL ROLL!!
+actor ROBarrelSpawner : RandomSpawner // replaces ExplosiveBarrel
+{
+    DropItem "BoomyBarrel" 255 1
+    DropItem "StuffedBarrel" 255 1
+}
+
+ACTOR StuffedBarrel : ExplosiveBarrel
+{
+//	DropItem "HealthBonusSpawner" 86
+	DropItem "ROArmorBonusSpawner" 64
+
+	DropItem "ROClipSpawner" 128
+	DropItem "ROShellSpawner" 128
+	DropItem "RORocketAmmoSpawner" 128
+	DropItem "ROCellSpawner" 64
+
+	DropItem "MediumHp" 48
+	DropItem "MajorHp" 24
+
+	DropItem "MP40" 8
+
+	DropItem "ROChaingunSpawner" 18
+	DropItem "ROShotgunSpawner" 18
+
+//	DropItem "GreenArmorSpawner" 6
+	DropItem "ROBackpackSpawner" 6
+	DropItem "ROBerserkSpawner" 6
+
+	Obituary "%o thought that these barrels don't explode. Well, this one did!"
+    DeathSound "barrel/destroy"
+	
+	+CANBLAST
+	States
+	{
+	Spawn:
+		BARR X -1
+		Stop
+	Death:
+		BARR Y 1 {
+			A_SpawnItemEx("BarrelPartsSpawner",0,0,0,0,0,0,0,SXF_CLIENTSIDE) ;
+			A_NoBlocking;
+			A_CustomMissile("BarrelShell",0,0,0,0,2);
+			A_Scream;
+		}
+		Stop
+	}
+}
+
+ACTOR BarrelPartsSpawner
+{
+	var int User_Counter;
+	States
+	{
+	Spawn:
+		TNT1 A 0 NoDelay { User_Counter = GetCVar("RO_BarrelAmount"); }
+		TNT1 A 0 {
+			if(User_Counter) {
+				A_SpawnItemEx("BarrelParts",frandom(5.0,-5.0),frandom(5.0,-5.0),
+				frandom(0.5,10.0),frandom(2.0,8.0),0,random(6.0,12.0),
+				frandom(0.0,360.0),SXF_CLIENTSIDE,20);
+				User_Counter--;
+			}
+			Return A_JumpIf(User_Counter <= 0,"Null");
+		}
+		Wait
+	}
+}
+ACTOR BoomyBarrel : ExplosiveBarrel
+{
+	DeathSound "Weapons/PushkaExp"
+	Obituary "%o shouldn't have touched that darned thing!"
+	+CANBLAST
+	States
+	{
+	Spawn:
+		BAR1 AB 6
+		Loop
+	Death:
+		TNT1 A 0 A_Jump(1,"PANTS")
+	YeOldeBoom:
+		TNT1 A 0 {
+			A_NoBlocking;
+			A_SpawnItemEx("BarrelShell",0,0,0,0,0,0,0,SXF_CLIENTSIDE);
+			A_SpawnItemEx("BarrelPartsSpawner",0,0,0,0,0,0,0,SXF_CLIENTSIDE);
+			A_Explode(100,164);
+			A_SpawnItemEx("PushkaExplode",0,0,0,0,0,0,0,SXF_CLIENTSIDE,0);
+			A_Explode(100,256,0);
+			A_Scream;
+		}
+		TNT1 BCD 6
+		Stop
+	PANTS:
+		TNT1 A 0 A_Jump(3,1)
+		Goto YeOldeBoom
+		TNT1 A 0 A_SpawnItemEx("Nuke",0,0,0,0,0,0,0,SXF_TRANSFERPOINTERS) //HUEHUEHUEHUEHUEHEU~
+		Stop
+	}
+}
+
+
+ACTOR BarrelShell
+{
+	ReactionTime 400
+	+NOINTERACTION
+	States
+	{
+	Spawn:
+      	BARY Y 1 {
+			if(random(0,1) == 0) { A_Countdown; }
+		}
+		Loop
+	Death:
+		BARY Y 1 A_FadeOut(0.05)
+		Wait
+	}
+}
+
+ACTOR BarrelParts
+{
+	Radius 2
+	Height 2
+	Scale 0.3
+	ReactionTime 2
+	BounceType "Hexen"
+	Projectile
+	-NOGRAVITY
+	Scale 0.75
+	States
+	{
+	Spawn:
+		TNT1 A 0 A_Countdown
+		BARF AABBCCDDEE 2
+		TNT1 A 0 A_Jump(128,2)
+		TNT1 A 0 A_Countdown
+		BARF FFGGHHIIJJ 2
+		Loop
+	Death:
+		TNT1 A 1 A_SpawnItemEx("BarrelPartsDrop",0,0,0,0,0,0,0,SXF_CLIENTSIDE)
+		Stop
+	}
+}
+
+ACTOR BarrelPartsDrop
+{
+	Scale 0.75
+	+NOCLIP
+	States
+	{
+	Spawn:
+		TNT1 A 0
+		TNT1 A 0 A_SetTranslucent(1,0)
+		TNT1 A 0 A_Jump(255,"BARFA","BARFB","BARFC","BARFD","BARFE",
+							"BARFF","BARFG","BARFH","BARFI","BARFJ")
+	BARFA:
+		BARF A 0 A_Jump(256,"Main")
+	BARFB:
+		BARF B 0 A_Jump(256,"Main")
+	BARFC:
+		BARF C 0 A_Jump(256,"Main")
+	BARFD:
+		BARF D 0 A_Jump(256,"Main")
+	BARFE:
+		BARF E 0 A_Jump(256,"Main")
+	BARFF:
+		BARF F 0 A_Jump(256,"Main")
+	BARFG:
+		BARF G 0 A_Jump(256,"Main")
+	BARFH:
+		BARF H 0 A_Jump(256,"Main")
+	BARFI:
+		BARF I 0 A_Jump(256,"Main")
+	BARFJ:
+		BARF J 0 A_Jump(256,"Main")	
+	Main:
+		"####" "#" 200
+		"####" "#" 1 A_FadeOut(0.01)
+		Wait
+	}
+}

@@ -1,0 +1,255 @@
+/*
+CREDITS:
+
+Sprites:
+Source - Volition (Red Faction)
+Rip and edits by Woodchuck
+
+Sounds:
+Up, Fire - Ubisoft (WillRock)
+Add Fire - Raven, I think? (Wolfenstein 3)
+Start, Buzz, Exp, Shield Loop, Shield Button, Shield Detonate - Raven (Wolfenstein 3)
+Boom - ?
+Hit1-Hit3, Nope - ID (Doom 3)
+Deploy - ?
+*/
+
+Actor VindicatorInfo : Inventory { Inventory.MaxAmount 1 }
+Actor SanctumTrigger : VindicatorInfo {}
+
+actor VindicatorGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Vindicator'' Plasma Tantrum Cannon Prototype! I swear I could just kill everyone around me...... so I did. HAAAA-HAHAHAHAHAHAAA! (8)"
+	Obituary "%o was evaporated by unstable plasma eruption, thanks to %k's ''Vindicator''."
+	States
+	{
+	Spawn:
+		ATMG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Vindicator",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Vindicator",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("PlasmaAmmo",100)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+Actor Vindicator : Weapon 24527
+{
+	//$Category Weapons
+	//$Title Vindicator
+	//$Sprite ATMGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Vindicator'' Plasma Tantrum Cannon Prototype! I swear I could just kill everyone around me...... so I did. HAAAA-HAHAHAHAHAHAAA! (8)"
+	Obituary "%o was evaporated by unstable plasma eruption, thanks to %k's ''Vindicator''."
+	Weapon.SelectionOrder 1
+	Weapon.UpSound "Weapons/VindicatorUp"
+	Weapon.AmmoGive 100
+	Weapon.AmmoType "PlasmaAmmo"
+	Weapon.AmmoUse 18
+	Weapon.AmmoType2 "PlasmaAmmo"
+	Weapon.AmmoUse2 90
+	Weapon.Kickback 100
+	Weapon.SlotNumber 8
+	Weapon.SlotPriority 26.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.2
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.1
+	Scale 0.65
+	States
+	{
+	Spawn:
+		ATMG X -1
+		Stop
+	Ready:
+		ATMR HIJKL 2
+		Goto ReadyMain
+	ReadyMain:
+		ATMG A 1 A_WeaponReady(WRF_ALLOWRELOAD|WRF_ALLOWZOOM)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		ATME B 0 A_ZoomFactor(1)
+		ATME B 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		ATME A 1 A_Raise(12)
+		Loop
+	RecoilOne:
+		TNT1 A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); }
+			A_SetAngle(Angle-4.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-4.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); }
+			A_SetAngle(Angle-2.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-2.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); }
+			A_SetAngle(Angle-1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-1.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.7); }
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.75); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		Stop
+	Fire:
+		ATMG A 0 {
+			A_FireCustomMissile("VindicatorMinorBomb",0,1,15,7);
+			A_Overlay(2,"RecoilOne");
+			A_AlertMonsters;
+			A_Recoil(20.0);
+			A_PlaySound("Weapons/VindicatorFire",1,0.8);
+			A_GunFlash;
+		}
+	FireAnimator:
+		ATMF A 1 Bright A_WeaponOffset(94,32-74)
+		ATMF B 1 Bright A_WeaponOffset(97,32-74,WOF_INTERPOLATE)
+		ATMF C 1 Bright A_WeaponOffset(108,32-73,WOF_INTERPOLATE)
+		ATMF D 1 Bright A_WeaponOffset(115,32-72,WOF_INTERPOLATE)
+		ATMF E 1 Bright A_WeaponOffset(121,32-71,WOF_INTERPOLATE)
+		ATMF F 1 Bright A_WeaponOffset(126,32-70,WOF_INTERPOLATE)
+		ATMF G 1 Bright A_WeaponOffset(131,32-69,WOF_INTERPOLATE)
+		ATMF H 1 Bright A_WeaponOffset(134,32-68,WOF_INTERPOLATE)
+		ATMF I 1 Bright A_WeaponOffset(135,32-67,WOF_INTERPOLATE)
+		
+		ATMF J 1 A_WeaponOffset(233,32-66)
+		ATMF J 1 A_WeaponOffset(230,32-65,WOF_INTERPOLATE)
+		ATMF J 1 A_WeaponOffset(225,32-65,WOF_INTERPOLATE)
+		ATMF J 1 A_WeaponOffset(219,32-66,WOF_INTERPOLATE)
+		ATMF J 1 A_WeaponOffset(213,32-67,WOF_INTERPOLATE)
+		ATMF J 1 A_WeaponOffset(208,32-68,WOF_INTERPOLATE)
+		ATMF J 1 A_WeaponOffset(200,32-71,WOF_INTERPOLATE)
+		ATMF J 1 A_WeaponOffset(193,32-73,WOF_INTERPOLATE)
+		ATMF J 1 A_WeaponOffset(192,32-74,WOF_INTERPOLATE)
+		
+		ATMR A 1 A_WeaponOffset(-2,31)
+		ATMR A 1 A_WeaponOffset(-4,30,WOF_INTERPOLATE)
+		ATMR B 1 A_WeaponOffset(-8,29,WOF_INTERPOLATE)
+		ATMR B 1 A_WeaponOffset(-12,29,WOF_INTERPOLATE)
+		ATMR C 1 A_WeaponOffset(-16,31,WOF_INTERPOLATE)
+		ATMR C 1 A_WeaponOffset(-17,32,WOF_INTERPOLATE)
+		ATMR D 1 A_WeaponOffset(-20,33,WOF_INTERPOLATE)
+		ATMR D 2 A_WeaponOffset(-23,35,WOF_INTERPOLATE)
+		ATMR D 1 A_WeaponOffset(-21,34,WOF_INTERPOLATE)
+		ATMR E 1 A_WeaponOffset(-19,33,WOF_INTERPOLATE)
+		ATMR E 1 A_WeaponOffset(-15,31,WOF_INTERPOLATE)
+		ATMR F 1 A_WeaponOffset(-12,30,WOF_INTERPOLATE)
+		ATMR F 1 A_WeaponOffset(-7,30,WOF_INTERPOLATE)
+		ATMR G 1 A_WeaponOffset(-3,31,WOF_INTERPOLATE)
+		ATMR G 1 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		
+		ATMR HIJKL 2
+		ATMF J 6 A_WeaponOffset(192,32-74)
+		ATMG A 6 A_WeaponOffset(0,32)
+		Goto ReadyMain
+		
+	AltFire:
+		ATMG A 0 {
+			A_FireCustomMissile("VindicatorBomb",0,1,15,7);
+			A_Overlay(2,"RecoilTwo");
+			A_AlertMonsters;
+			A_Recoil(40.0);
+			if(GetCvar("QuakeRecoil")) { A_QuakeEx(3,3,6,35,0,128,"none",QF_SCALEDOWN); }
+			A_SetBlend("Blue",0.2,35);
+			A_GunFlash;
+			A_PlaySound("Weapons/VindicatorFire",1,0.8);
+			A_PlaySound("Weapons/VindicatorAddFire",6,1,0);
+		}
+		Goto FireAnimator
+	RecoilTwo:
+		TNT1 A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.75); }
+			A_SetAngle(Angle-6.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-6.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); }
+			A_SetAngle(Angle-4.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-4.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.65); }
+			A_SetAngle(Angle-3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-3.0*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.7); }
+			A_SetAngle(Angle-1.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-1.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.75); }
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); }
+			A_SetAngle(Angle-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.25*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		TNT1 A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		Stop
+   Reload:
+		ATMG A 0 A_JumpIfInventory("PlasmaAmmo",20,1)
+		Goto Nope
+		ATMG A 0 {
+			if(!CountInv("VindicatorInfo") && !GetCvar("RO_IGotit")) {
+				A_GiveInventory("VindicatorInfo",1);
+				A_Print("\c[cyan]Quaternary mode \c[white]detonates the Vindicator's repulsion field, it uses your ammo as it goes.");
+			}
+			A_TakeInventory("PlasmaAmmo",20,TIF_NOTAKEINFINITE);
+			A_FireCustomMissile("VindicatorSanctumProjectile",0,0,15,7);
+			A_Overlay(2,"RecoilOne");
+			A_GunFlash;
+			A_AlertMonsters;
+			A_Recoil(20.0);
+			A_PlaySound("Weapons/VindicatorFire",1,0.8);
+		}
+		Goto FireAnimator
+    Zoom:
+		ATMG A 0 {
+			A_PlaySound("Weapons/VindicatorButton",5,0.8);
+		}
+		ATMG C 16 A_GiveInventory("SanctumTrigger",1)
+		ATMG A 16 A_TakeInventory("SanctumTrigger",1)
+		Goto ReadyMain
+	Nope:
+		ATMG C 3 A_PlaySound("Weapons/VindicatorNope",0)
+		ATMG A 2
+		ATMG C 3
+		ATMG A 2
+		ATMG C 3
+		ATMG A 8
+		Goto ReadyMain
+   }
+}

@@ -1,0 +1,228 @@
+/*
+CREDITS:
+
+Sprites:
+Weapon - ?
+Pickup - ID (Doom 64)
+
+Sounds:
+Up - People can Fly (Painkiller)
+Fire - ID (RTCW)
+Rest of sounds - Ubisoft (Will Rock)
+*/
+
+ACTOR GorynchCycleA : Inventory { Inventory.MaxAmount 4 }
+ACTOR GorynchCycleB : GorynchCycleA {}
+ACTOR Spinned : Inventory { Inventory.MaxAmount 1 }
+ACTOR Wedel : Spinned {}
+
+
+actor GorynchGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You've got the Tungushka Corp. ''Gorynch'' ShVAK-MPSh powercharged-overdrive-superblahblah... etc etc.lead beam, nickname ''The Fucker''! This boi kills the improve minigun 5 times"
+	Obituary "%o should not fuck around with %k's ''Gorynch''."
+	States
+	{
+	Spawn:
+		FCKG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Gorynch",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Gorynch",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("Boolet",100)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+ACTOR Gorynch : Weapon 24519
+{
+	//$Category Weapons
+	//$Title Gorynch
+	//$Sprite FCKGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You've got the Tungushka Corp. ''Gorynch'' ShVAK-MPSh powercharged-overdrive-superblahblah... etc etc.lead beam, nickname ''The Fucker''! This boi kills the improve minigun 5 times"
+	Obituary "%o should not fuck around with %k's ''Gorynch''."
+	Weapon.UpSound "Weapons/GorynchUp"
+	Weapon.SelectionOrder 5
+	Weapon.AmmoType "Boolet"
+	Weapon.AmmoGive 100
+	Weapon.AmmoUse 1
+	Weapon.Kickback 35
+	Weapon.SlotNumber 4
+	Weapon.SlotPriority 25.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.2
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	+NOALERT
+	States
+	{
+	Spawn:
+		FCKG X -1
+		Stop
+	Ready:
+		FCKG A 0 A_JumpIfInventory("Spinned",1,"ReadySpinned")
+		FCKG A 1 A_WeaponReady
+		Loop
+	ReadySpinned:
+		FCKG A 0 A_PlaySound("Weapons/GorynchLoop", 5, 0.7, 1)
+		FCKG ABCDABCDABCD 1 { A_WeaponReady; A_AlertMonsters; }
+		FCKG A 0 A_JumpIfInventory("Spinned",1,"ReadySpinned")
+		
+		FCKG C 0 A_PlaySound("Weapons/GorynchStop", 5, 0.7)
+		FCKG ABCDABCD 1
+		FCKG ABCDA 2
+		FCKG BC 2
+		FCKG D 4
+		Goto Ready
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		FCKG A 0 A_JumpIfInventory("Spinned",1,"DeselectSpinned")
+		FCKG A 0 {
+			A_ZoomFactor(1.0);
+			A_StopSound(5);
+			A_StopSound(6);
+			ACS_NamedExecute("Slowride", 0, 100, 0, 0);
+			A_WeaponOffset(0.0, 32.0);
+			A_TakeInventory("GorynchCycleA", 9);
+			A_TakeInventory("GorynchCycleB", 9);
+		}
+		FCKG ABCD 1 A_Lower(12)
+		Goto Deselect+3
+	DeselectSpinned:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectSpinnedLoop:
+		FCKG A 0 {
+			A_PlaySound("Weapons/GorynchStop",5,0.7);
+			A_TakeInventory("Spinned",1);
+			ACS_NamedExecute("Slowride",0,100,0,0);
+		}
+		FCKG ABCDABCD 1
+		FCKG ABCDA 2
+		FCKG BC 2
+		FCKG D 4
+		Goto Deselect
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		FCKG A 1 A_Raise
+		FCKG B 1 A_Raise(12)
+		FCKG C 1 A_Raise
+		FCKG D 1 A_Raise(12)
+		Loop
+	Fire:
+		FCKG A 0 A_JumpIf(CountInv("Spinned"), "Hold")
+		FCKG A 0 A_PlaySound("Weapons/GorynchStart", 5, 0.7)
+		FCKG ABCDABCD 3 { A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); A_AlertMonsters; }
+		FCKG ABCD 2 { A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); A_AlertMonsters; }
+		FCKG ABCDABCDABCD 1 { A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); A_AlertMonsters; }
+		FCKG A 0 A_GiveInventory("Spinned",1)
+		Goto ReadySpinned
+	Hold:
+		FCKG A 0 {
+			ACS_NamedExecute("Slowride", 0, 75, 0, 0);
+			A_PlaySound("Weapons/GorynchALoop", 5, 0.7, 1);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); }
+		}
+	CycleRestart:
+		FCKG A 0 A_GiveInventory("GorynchCycleA",1)
+	CycleDecideA:
+		FCKF D 0 A_JumpIf(CountInv("GorynchCycleA") == 4,"FireMain")
+		FCKF C 0 A_JumpIf(CountInv("GorynchCycleA") == 3,"FireMain")
+		FCKF B 0 A_JumpIf(CountInv("GorynchCycleA") == 2,"FireMain")
+		FCKF A 0 A_JumpIf(CountInv("GorynchCycleA") == 1,"FireMain")
+		Goto FireMain
+	CycleDecideB:
+		"####" "#" 0 A_GiveInventory("GorynchCycleB", 1)
+		"####" "#" 0 A_TakeInventory("GorynchCycleA", 9)
+		"####" "#" 0 A_JumpIf(CountInv("GorynchCycleB") >= 4, "Endler")
+	FireMain:
+		"####" "#" 0 {
+			If(CountInv("CaliberUpgrade"))
+			{
+				A_PlaySound("Weapons/WolgirHFire", 6, 0.8, 1);
+				A_FireBullets(4, 2, 8, 30, "CaliberPuff", 1, 0, "GorynchTracer", 0, 0);
+			}
+			else {
+				A_FireBullets(4, 2, 8, 15, "BulletPuff", 1, 0, "GorynchTracer", 0, 0);
+			}
+		}
+		"####" "#" 1 Bright {
+			A_AlertMonsters;
+			A_GiveInventory("BooletCasing", 1);
+			A_PlaySound("Weapons/GorynchFire", 1, 0.8);
+			A_GunFlash;
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(1, 1, 1, 10, 0, 128, "none", QF_SCALEDOWN); }
+			A_Recoil(0.1);
+			A_SetPitch(Pitch - 0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(0.0 + frandom(3.0, -3.0), 32.0 + frandom(3.0, -3.0), WOF_INTERPOLATE);
+			Return A_JumpIf(CountInv("GorynchCycleA") >= 4, "CycleDecideB");
+		}
+		Goto CycleRestart	
+	Endler:
+		FCKG A 0 A_TakeInventory("GorynchCycleB", 9)
+		FCKG A 0 A_WeaponOffset(0.0, 32.0, WOF_INTERPOLATE)
+		FCKG A 0 A_ReFire("Hold")
+		FCKG A 0 ACS_NamedExecute("Slowride", 0, 100, 0, 0)
+		FCKG A 0 {
+			If (A_JumpIf(CountInv("CaliberUpgrade") > 0, "Null"))
+			{
+				A_PlaySound("Weapons/WolgirHEndFire", 6, 0.8);
+			}
+		}
+		FCKG A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } A_WeaponReady; A_WeaponOffset(0.0,40.0, WOF_INTERPOLATE); }
+		FCKG B 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } A_WeaponReady; A_WeaponOffset(0.0,38.0, WOF_INTERPOLATE); }
+		FCKG C 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } A_WeaponReady; A_WeaponOffset(0.0,36.0, WOF_INTERPOLATE); }
+		FCKG D 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } A_WeaponReady; A_WeaponOffset(0.0,34.0, WOF_INTERPOLATE); }
+		FCKG A 0 A_ZoomFactor(1.0)
+		Goto Ready
+	AltFire:
+		FCKG A 0 A_JumpIf(CountInv("Spinned"),1)
+		Goto Ready
+		FCKG A 0 {
+			A_TakeInventory("Spinned", 1);
+			A_PlaySound("Weapons/GorynchStop", 5, 0.7);
+		}
+		FCKG ABCDABCD 1 { A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); A_AlertMonsters; }
+		FCKG ABCDA 2 { A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); A_AlertMonsters; }
+		FCKG BC 2 { A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); A_AlertMonsters; }
+		FCKG D 4 { A_WeaponReady(WRF_NOFIRE|WRF_NOBOB); A_AlertMonsters; }
+		Goto Ready
+	Flash:
+		TNT1 A 2 A_Light2
+		TNT1 A 4 A_Light1
+		TNT1 A 0 A_Light0
+		Goto LightDone
+	}
+}
+
+Actor GorynchTracer : FastProjectile
+{
+	Radius 7
+	Height 3
+	Speed 250
+	Damage 0
+	Renderstyle "Add"
+	MissileHeight 8
+	Scale 0.1
+	Projectile
+	+THRUGHOST
+	+DONTSPLASH
+	+MTHRUSPECIES
+	States
+	{
+	Spawn:
+		10BA A 1 Bright
+		Goto Spawn
+	Death:
+		TNT1 A 0
+		Stop
+	}
+}

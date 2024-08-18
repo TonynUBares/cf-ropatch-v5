@@ -1,0 +1,327 @@
+/*
+CREDITS:
+Gun Graphics - Zrrion the Insect! (Original ones from DNF, Gearbox Soft.)
+Spiffy Charging Animation - Cage!
+Pickup, partially - Eriance
+
+Sounds - Welp, this will be kinda complicated.
+Up - UT2004 & Wolfenstein 3 (Epic Games, Raven Software)
+Idle - Not sure from where... but my spider senses are tingling it must be made by ID Software
+Charge - Quake 4 (ID Software)
+Fire, Load, Trigger, Blast2 - Wolfenstein 3 (Raven Software)
+Add Fire - Sound from nowhere, sigh... but I think I got it from some mod by Zanaveth. Kudos to you for such great sound!
+Projectile flight - A mixup of various sounds, barely can tell from which ones...
+Blast1 - Diablo II & Wolfenstein 3 (Blizzard Entertaiment, Raven Soft.)
+Hit - Diablo II & Quake 2 (Blizzard Ent., ID Soft.)
+Loop - Again, a mixup of various sounds, even less able to tell what were used.
+Struck - Starcraft II (Blizzard Ent.)
+Ammo - Serious Sam 2, Quake 4(Croteam, ID Soft.)
+*/
+
+//COUNTER\TRIGGER
+actor GuruCharge : Inventory { Inventory.MaxAmount 5 }
+actor GuruMode : Inventory { Inventory.MaxAmount 1 }
+
+actor GurumasterGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got a ''Gurumaster'' vearetelium cannon prototype! When the true legendary bfg or the nemesis bfg aren't enough"
+	Obituary "%o was utilised into deuter and nutrients by %k's ''Gurumaster''."
+	States
+	{
+	Spawn:
+		GRMG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Gurumaster",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Gurumaster",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("VearAmmo",50)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+actor Gurumaster : Weapon 24540
+{
+	//$Category Weapons
+	//$Title Gurumaster
+	//$Sprite PWRGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got a ''Gurumaster'' vearetelium cannon prototype! When the true legendary bfg or the nemesis bfg aren't enough"
+	Obituary "%o was utilised into deuter and nutrients by %k's ''Gurumaster''."
+	Weapon.UpSound "Weapons/GuruUp"
+	Weapon.AmmoGive 50
+	Weapon.AmmoType1 "VearAmmo"
+	Weapon.AmmoUse1 12
+	Weapon.AmmoType2 "VearAmmo"
+	Weapon.AmmoUse2 60
+	Weapon.KickBack 90
+	Weapon.SlotNumber 8
+	Weapon.SlotPriority 28.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.0
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	+NOAUTOFIRE
+	states
+	{
+	Spawn:
+		GRMG X -1
+		Stop
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		GRMU A 1 A_Raise(12)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		GRMU A 0 {
+			A_StopSound(5);
+			A_StopSound(6);
+			A_ZoomFactor(1.0);
+		}
+		GRMU A 1 A_Lower(12)
+		Wait
+	Ready:
+		GRMG A 0 A_PlaySound("Weapons/GuruIdle",5,1.0,1)
+		GRMG ABCDEFGHIJIHGFEDCB 1 A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+	Reload:
+		GRMU A 10 {
+			A_PlaySound("Weapons/GuruLoad",1);
+			if(!CountInv("GuruMode")) { A_GiveInventory("GuruMode",1); A_Print("\c[white]Mortar mode."); }
+			else					  { A_TakeInventory("GuruMode",1); A_Print("\c[white]Sweeper mode."); }
+		}
+		GRMG ABCDEFGHIJIHGFEDCB 1 A_WeaponReady
+		Goto Ready
+	Fire:
+		GRMG A 0 A_PlaySound("Weapons/GuruTrigger",1)
+		GRMG ABCDEFGHIJ 1
+		GRMG IHGFED 1
+	FireLoop:
+		GRMF A 1 Bright {
+			A_StopSound(5);
+			A_PlaySound("Weapons/GuruFire",6);
+			if(CountInv("GuruMode")) { A_FireCustomMissile("GuruMortarShot", 0, 1, 12, 0); }
+			else { A_FireCustomMissile("Guruball", 0, 1, 12, 0); }
+			A_Recoil(15);
+			A_GunFlash;
+			A_SetBlend("White",0.25,20,"Yellow");
+			A_WeaponOffset(4,36,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); }
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		GRMF A 1 Bright {
+			A_WeaponOffset(8,40,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); }
+			A_SetAngle(Angle-2.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-2.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		GRMG J 1 Bright {
+			A_WeaponOffset(9,41,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); }
+			A_SetAngle(Angle-1.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-1.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		GRMG I 1 Bright {
+			A_WeaponOffset(10,42,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); }
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		GRMG H 1 Bright {										if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.865); } }
+		GRMG G 1 Bright { A_WeaponOffset(9,41,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.845); } }
+		GRMG F 1 Bright { A_WeaponOffset(8,40,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.825); } }
+		GRMG E 1 Bright { A_WeaponOffset(7,39,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.835); } }
+		GRMG D 1 Bright { A_WeaponOffset(6,38,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.855); } }
+		GRMG C 1 Bright { A_WeaponOffset(5,37,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.875); } }
+		GRMG A 1 Bright { A_WeaponOffset(4,36,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } }
+		GRMU A 1 		{ A_WeaponOffset(3,35,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.965); } }
+		GRMU A 1 		{ A_WeaponOffset(2,34,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } }
+		GRMU A 1 		{ A_WeaponOffset(1,33,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		GRMU A 1		  A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		GRMG A 0 A_ReFire("Delay")
+		GRMU A 10 A_PlaySound("Weapons/GuruLoad",1)
+		PWRG A 0 A_PlaySound("Weapons/GuruIdle",5,1.0,1)
+		GRMG ABCDFEFGHIJIHGFEDCB 1
+		Goto Ready
+	Delay:
+		PWRG A 0 A_PlaySound("Weapons/GuruIdle",5,1.0,1)
+		GRMG ABCDEFGHIJIHGFEDCB 1
+		Goto FireLoop
+		
+	AltFire:
+		GRMG A 0 A_PlaySound("Weapons/GuruTrigger",1)
+		GRMG ABCDEFGHIJ 1
+		GRMG A 0 A_PlaySound("Weapons/GuruCharge",6)
+		GRMG IHGFED 1
+		GRMG A 0 A_GiveInventory("GuruCharge",5)
+  Gurucharger:
+		GRMG A 0 A_TakeInventory("GuruCharge",1)
+		GRMC ABCDEFGHIJKLMNOPQRST 1 Bright {
+			A_WeaponOffset(0+frandom(1.0,5-CountInv("GuruCharge"))*frandom(1,-1),
+						   32+frandom(1.0,5-CountInv("GuruCharge")),
+						   WOF_INTERPOLATE);
+			if(GetCvar("RO_QuakeRecoil")) { A_Quake(5-CountInv("GuruCharge"),4,0,2,"none"); }
+		}
+		GRMG A 0 A_JumpIf(CountInv("GuruCharge"),"Gurucharger")
+		GRMC ABC 1 Bright
+		GRMF A 1 Bright {
+			A_StopSound(5);
+			A_PlaySound("Weapons/GuruFire",5);
+			A_PlaySound("Weapons/GuruAddFire",6);
+			if(CountInv("GuruMode")) { A_FireCustomMissile("GuruDeathMortarShot", 0, 1, 12, 0); }
+			else { A_FireCustomMissile("GuruDeathball", 0, 1, 12, 0); }
+			A_Recoil(65.0);
+			A_GunFlash;
+			A_SetBlend("White",0.5,60,"Yellow");
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); }
+			A_WeaponOffset(2,34,WOF_INTERPOLATE);
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		GRMF A 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); }
+			A_WeaponOffset(4,36,WOF_INTERPOLATE);
+			A_SetAngle(Angle-2.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-2.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+  //Recoil
+		GRMF A 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); }
+			A_WeaponOffset(8,40,WOF_INTERPOLATE); 
+			A_SetAngle(Angle-1.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-1.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		GRMF A 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.875); }
+			A_WeaponOffset(12,44,WOF_INTERPOLATE); 
+			A_SetAngle(Angle-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+			A_SetPitch(Pitch-0.5*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE);
+		}
+		GRMG J 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); }
+			A_WeaponOffset(15,47,WOF_INTERPOLATE);
+		}
+		GRMG I 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.75); }
+			A_WeaponOffset(17,49,WOF_INTERPOLATE);
+		}
+		GRMG H 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.74); }
+			A_WeaponOffset(18,50,WOF_INTERPOLATE);
+		}
+		GRMG G 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.73); }
+			A_WeaponOffset(19,51,WOF_INTERPOLATE);
+		}
+		GRMG F 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.72); }
+			A_WeaponOffset(20,52,WOF_INTERPOLATE);
+		}
+		GRMG E 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.71); }
+		}
+		GRMG D 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.7); }
+			A_WeaponOffset(19,51,WOF_INTERPOLATE);
+		}
+		GRMG C 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.69); }
+			A_WeaponOffset(18,50,WOF_INTERPOLATE);
+		}
+		GRMG B 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.68); }
+			A_WeaponOffset(17,49,WOF_INTERPOLATE);
+		}
+		GRMG A 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.67); }
+			A_WeaponOffset(16,48,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.66); }
+			A_WeaponOffset(15,47,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.67); }
+			A_WeaponOffset(14,46,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.68); }
+			A_WeaponOffset(13,45,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.69); }
+			A_WeaponOffset(12,44,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.7); }
+			A_WeaponOffset(11,43,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.71); }
+			A_WeaponOffset(10,42,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.72); }
+			A_WeaponOffset(9,41,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.73); }
+			A_WeaponOffset(8,40,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.74); }
+			A_WeaponOffset(7,39,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.75); }
+			A_WeaponOffset(6,38,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.775); }
+			A_WeaponOffset(5,37,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); }
+			A_WeaponOffset(4,36,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.775); }
+			A_WeaponOffset(3,35,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); }
+			A_WeaponOffset(2,34,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.825); }
+			A_WeaponOffset(1,33,WOF_INTERPOLATE);
+		}
+		GRMU A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); }
+			A_WeaponOffset(0,32,WOF_INTERPOLATE);
+		}
+		GRMU A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.875); } }
+		GRMU A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); } }
+		GRMU A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } }
+		GRMU A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		GRMU A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); } }
+		GRMU A 1 { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		GRMU A 10 A_PlaySound("Weapons/GuruLoad",1)
+		PWRG A 0 A_PlaySound("Weapons/GuruIdle",5,1,1)
+		GRMG ABCDFEFGHIJIHGFEDCB 1
+		Goto Ready
+	Flash:
+		TNT1 A 7 bright A_Light2
+		TNT1 A 4 bright A_Light1
+		TNT1 A 0 bright A_Light0
+		Stop
+	}
+}

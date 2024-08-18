@@ -1,0 +1,245 @@
+/*
+CREDITS:
+This weapon is not made by me in 90%, so it's sounds sources were one great mystery to me... and some of them still do.
+Whole thing was made by Woodchuck, my cousin. I only did some small adjustments. :P
+
+Sprites:
+Source - Westwood (C&C Renegade)
+Rip and animation - Woodchuck
+Reload animation - Hellcatx
+Pickup - WildWeasel
+LoganMTM - Blast sprites, PBOMA0 to PBOMN0
+
+Sounds:
+Up, Down, Clang, Beep2, Beep3 - ID (Doom 3)
+Fire, Reload, Trocky pickup, Ion storm, Ion struck, Beep4 (Steam eject) - Westwood (C&C Renegade)
+Impact - Raven (Wolfenstein 3)
+Boom - A mashup for sure, one must be the EMP discharge from C&C Tiberian Sun... the other part? Dunno.
+Hit, Charge1, Charge2, Charge3 - ?
+Ready - Monolith (Blood 2)
+Charge - ID (Quake 4)
+Beep1 - ID (Quake 1)
+Mechanism1-Mechanism3 - LucasArts (SW:JKIII)
+Void - ?
+*/
+
+
+actor PlanetCrackerGiver : CustomInventory
+{
+	inventory.pickupsound "misc/w_pkup"
+	inventory.PickupMessage "You've got the ''Planet Cracker'' ion cannon! You know what they say - all toasters toast... ''You''. (8)"
+	obituary "%o was positively charged up by %k's concentrated ion blast."
+	States
+	{
+	Spawn:
+		IONG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("PlanetCracker",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("PlanetCracker",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("IonAmmo",30)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+actor PlanetCracker : Weapon 24526
+{
+    //$Category Weapons
+    //$Title Planet NutCracker
+    //$Sprite IONGX0
+    Tag "Planet Cracker"
+	inventory.pickupsound "misc/w_pkup"
+	inventory.PickupMessage "You've got the ''Planet Cracker'' ion cannon! You know what they say - all toasters toast... ''You''. (8)"
+	obituary "%o was positively charged up by %k's concentrated ion blast."
+	Weapon.UpSound "Planetcracker/Up"
+	Weapon.SelectionOrder 1
+	Weapon.AmmoType "IonAmmo"
+	Weapon.AmmoGive 30
+	Weapon.AmmoUse 6
+	Weapon.AmmoType2 "IonAmmo"
+	Weapon.AmmoUse2 30
+	Weapon.Kickback 100
+	Weapon.SlotNumber 8
+	Weapon.SlotPriority 25.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.2
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	States
+	{
+	Spawn:
+		IONG X -1
+		Stop
+	Ready:
+		IONG A random(30,35) A_WeaponReady
+		IONG BCDEFGHIJKL 1 A_WeaponReady
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		IONG A 0 {
+			A_PlaySound("Planetcracker/Down",0);
+			A_ZoomFactor(1.0);
+		}
+		IONG A 1 A_Lower(4)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		IONG A 1 A_Raise(4)
+		Loop
+	BarrelSmoke:
+		TNT1 AAAAAAAAAAAAA 1 A_FireCustomMissile("PlanetCrackerSmokeSpawner",0,0,15,5)
+		TNT1 AAA 2 A_FireCustomMissile("PlanetCrackerSmokeSpawner",0,0,15,5)
+		TNT1 AA 3 A_FireCustomMissile("PlanetCrackerSmokeSpawner",0,0,15,5)
+		Stop
+   Fire:
+		IONF A 1 Bright {
+			A_WeaponOffset(11,5+32,WOF_INTERPOLATE);
+			A_PlaySound("PlanetCracker/Fire",6);
+			A_FireCustomMissile("PlanetBeam",0,1,15,10);
+			A_Recoil(30.0);
+			if(GetCvar("QuakeRecoil")) { A_QuakeEx(7,7,7,25,0,2,"none",QF_SCALEDOWN); }
+			A_SetBlend("0289ff",0.1,40);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+			A_Overlay(2,"BarrelSmoke");
+		}
+		IONF A 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } A_WeaponOffset(22,10+32,WOF_INTERPOLATE); }
+		IONF B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.965); } A_WeaponOffset(29,14+32,WOF_INTERPOLATE); }
+		IONF B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } A_WeaponOffset(35,17+32,WOF_INTERPOLATE); }
+		IONF C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } A_WeaponOffset(38,18+32,WOF_INTERPOLATE); }
+		IONF D 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); } A_WeaponOffset(39,19+32,WOF_INTERPOLATE); }
+		IONF E 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } A_WeaponOffset(40,20+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.875); } A_WeaponOffset(39,19+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); } A_WeaponOffset(38,18+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } A_WeaponOffset(35,17+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } A_WeaponOffset(29,14+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); } A_WeaponOffset(22,10+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } A_WeaponOffset(11,5+32,WOF_INTERPOLATE); }
+		IONG A 1		A_WeaponOffset(7,3+32,WOF_INTERPOLATE)
+		IONG A 1		A_WeaponOffset(4,2+32,WOF_INTERPOLATE)
+		IONG A 1		A_WeaponOffset(2,1+32,WOF_INTERPOLATE)
+		IONG A 12		A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		Goto Drilldo
+	Drilldo:
+		IONG A 0 A_PlaySound("PlanetCracker/Reload",5)
+		IONR AB 2
+		IONR CDECDECDE 2
+		IONR BA 2
+		IONG A 10
+        Goto Ready
+	SuperBarrelSmoke:
+		TNT1 AAAAAAAAAAAAAAAAAAAA 1 A_FireCustomMissile("PlanetCrackerSmokeSpawner",0,0,15,5)
+		TNT1 AAAAAA 2 A_FireCustomMissile("PlanetCrackerSmokeSpawner",0,0,15,5)
+		TNT1 AAAA 3 A_FireCustomMissile("PlanetCrackerSmokeSpawner",0,0,15,5)
+		Stop
+	SoundSequence:
+		TNT1 A 20 {
+			A_PlaySound("PlanetCracker/Charge",5);
+			A_PlaySound("PlanetCracker/MiniBip1",1);
+			A_PlaySound("PlanetCracker/MiniCharge1",6);
+			A_Quake(1,20,0,2,"none");
+		}
+		TNT1 H 20 {
+			A_PlaySound("PlanetCracker/MiniCharge2",6);
+			A_PlaySound("PlanetCracker/MiniBip2",1);
+			A_Quake(3,20,0,2,"none");
+		} 
+		TNT1 A 20 {
+			A_PlaySound("PlanetCracker/MiniCharge3",6);
+			A_PlaySound("PlanetCracker/MiniBip3",1);
+			A_Quake(6,20,0,2,"none");
+		}
+		TNT1 A 18 {
+			A_PlaySound("PlanetCracker/Ready",6);
+			A_PlaySound("PlanetCracker/Cling",1);
+			A_Quake(7,18,0,2,"none");
+		}
+		Stop
+	AltFire:
+		IONC A 0 A_Overlay(3,"SoundSequence")
+		IONC AAABBBCCCDDDEEEFFFGGGHHHIIIJJJKKKLLLMMMNNNOOOPPPQQQRRRSSSTTTUUUVVVWWWVVVUUUVVV 1 A_WeaponOffset(frandom(1.0,-1.0),frandom(1.0,-1.0)+32,WOF_INTERPOLATE)
+		IONC V 0 A_JumpIfInventory("TrockyActive",1,"JebutorKosimazakiBimysz")
+		
+		IONF A 1 Bright {
+			A_WeaponOffset(11,5+32,WOF_INTERPOLATE);
+			A_Recoil(50.0);
+			A_Overlay(2,"SuperBarrelSmoke");
+			A_SetBlend("0289ff",0.4,90);
+			A_PlaySound("PlanetCracker/Fire",5);
+			A_FireCustomMissile("PlanetBeamSuper",0,1,15,10);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(9,9,9,35,0,2,"none",QF_SCALEDOWN); }
+		}
+		IONF A 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } A_WeaponOffset(22,10+32,WOF_INTERPOLATE); }
+		IONF B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.965); } A_WeaponOffset(29,14+32,WOF_INTERPOLATE); }
+		IONF B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } A_WeaponOffset(35,17+32,WOF_INTERPOLATE); }
+		IONF C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } A_WeaponOffset(41,20+32,WOF_INTERPOLATE); }
+		IONF C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); } A_WeaponOffset(44,21+32,WOF_INTERPOLATE); }
+		IONF D 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } A_WeaponOffset(46,22+32,WOF_INTERPOLATE); }
+		IONF D 1 Bright	{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.875); } A_WeaponOffset(47,23+32,WOF_INTERPOLATE); }
+		IONF E 1 Bright	{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); } }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } A_WeaponOffset(46,22+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } A_WeaponOffset(43,21+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } A_WeaponOffset(38,18+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } A_WeaponOffset(33,16+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } A_WeaponOffset(29,14+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); } A_WeaponOffset(22,10+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } A_WeaponOffset(11,5+32,WOF_INTERPOLATE); }
+		IONG A 1		  A_WeaponOffset(7,3+32,WOF_INTERPOLATE)
+		IONG A 1		  A_WeaponOffset(4,2+32,WOF_INTERPOLATE)
+		IONG A 1		  A_WeaponOffset(2,1+32,WOF_INTERPOLATE)
+		IONG A 1		  A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		IONG A 12
+        Goto Ready
+	SuperSoundSequence:
+		TNT1 A 41 {
+			A_PlaySound("PlanetCracker/Void",6);
+			A_PlaySound("PlanetCracker/Mechanism2",0);
+			A_Quake(8,41,0,2,"none");
+		}
+		Stop
+	JebutorKosimazakiBimysz:
+		IOND A 0 A_Overlay(3,"SuperSoundSequence")
+		IOND AAABBBCCCDDDEEEFFFGGGHHHIIIJJKKKLLLMMMNNN 1 A_WeaponOffset(frandom(1.5,-1.5),frandom(1.5,-1.5)+32,WOF_INTERPOLATE)
+		IONG A 0 {
+			A_WeaponOffset(0,32);
+			If(!GetCvar("RO_InfiniteAmp")) {
+				A_TakeInventory("TrockyActive",1);
+				A_TakeInventory("Trocky",1);
+			}
+			A_Recoil(70.0);
+			A_Overlay(2,"SuperBarrelSmoke");
+			A_SetBlend("0289ff",0.8,180);
+			A_PlaySound("PlanetCracker/Hyper",5);
+			A_PlaySound("PlanetCracker/Fire",6);
+			A_FireCustomMissile("PlanetBeamHyper",0,0,15,10);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(9,9,9,55,0,2,"none",QF_SCALEDOWN); }
+		}
+		IONF A 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } A_WeaponOffset(22,10+32,WOF_INTERPOLATE); }
+		IONF B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.965); } A_WeaponOffset(29,14+32,WOF_INTERPOLATE); }
+		IONF B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } A_WeaponOffset(35,17+32,WOF_INTERPOLATE); }
+		IONF C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } A_WeaponOffset(41,20+32,WOF_INTERPOLATE); }
+		IONF C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); } A_WeaponOffset(44,21+32,WOF_INTERPOLATE); }
+		IONF D 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } A_WeaponOffset(46,22+32,WOF_INTERPOLATE); }
+		IONF D 1 Bright	{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.875); } A_WeaponOffset(47,23+32,WOF_INTERPOLATE); }
+		IONF E 1 Bright	{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9);} }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } A_WeaponOffset(46,22+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } A_WeaponOffset(43,21+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } A_WeaponOffset(38,18+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } A_WeaponOffset(33,16+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } A_WeaponOffset(29,14+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); } A_WeaponOffset(22,10+32,WOF_INTERPOLATE); }
+		IONG A 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } A_WeaponOffset(11,5+32,WOF_INTERPOLATE); }
+		IONG A 1		  A_WeaponOffset(7,3+32,WOF_INTERPOLATE)
+		IONG A 1		  A_WeaponOffset(4,2+32,WOF_INTERPOLATE)
+		IONG A 1		  A_WeaponOffset(2,1+32,WOF_INTERPOLATE)
+		IONG A 1		  A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		IONG A 12
+        Goto Ready
+	}
+}

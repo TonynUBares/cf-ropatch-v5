@@ -1,0 +1,389 @@
+/*
+CREDITS:
+
+Sprites:
+Weapon sprites by Marty Kirra. (Base by Kronos, Doom 2.5 - Original by ID, Doom 3)
+Reload animation inspired by Sgt. Shivers.
+Scope from a Brink rip by Sinael.
+Rod base by Xaser.
+Huge edits, pickup, projectiles (except for the non-hot flak), muzzle flash and whole animating by me!
+
+Sounds:
+Up, Zoom in, Zoom out - ID (ET:WQ)
+Fire - Blizzard (Starcraft 2)
+Rod impact - Valve (Half-Life 2)
+Sizzling - Raven (Wolfenstein 3)
+Alt-Fire - Mashup. Part by Epic Games and People can Fly (Bulletstorm)
+Flak load - Epic Games (Unreal)
+*/
+
+actor HotrodGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "Picked up a ''Hotrod'' molder cannon! You thought I was a sniper,BUT IT'S ME,A HOT ROD!"
+	Obituary "%o was ripped open and roasted like a chicken by %k's ''Hotrod''."
+	States
+	{
+	Spawn:
+		HRDG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Hotrod",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Hotrod",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("TankShellAmmo",6)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+Actor Hotrod : DoomWeapon 24520
+{
+	//$Category Weapons
+	//$Title  Hotrod
+	//$Sprite HRDGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "Picked up a ''Hotrod'' molder cannon! You thought I was a sniper,BUT IT'S ME,A HOT ROD!"
+	Obituary "%o was ripped open and roasted like a chicken by %k's ''Hotrod''."
+	Weapon.UpSound "Hotrod/Up"
+	Weapon.SelectionOrder 4
+	Weapon.AmmoType "TankShellAmmo"
+	Weapon.AmmoUse 1
+	Weapon.AmmoGive 6
+	Weapon.AmmoType2 "TankShellAmmo"
+	Weapon.AmmoUse2 1
+	Weapon.Kickback 35
+	Weapon.SlotNumber 5
+	Weapon.SlotPriority 26.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.4
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	+NOALERT
+	//+NOAUTOFIRE
+	States
+	{
+	Spawn:
+		HRDG X -1
+		Stop
+		
+	UnZoom:
+		HRDZ A 0 {
+			A_PlaySound("Hotrod/ZoomOut",5);
+			A_TakeInventory("Zoomed",999);
+		}
+		HRDZ A 1 {
+			A_SetTranslucent(0.9,0);
+			A_SetBlend("Black",0.15,3);
+		}
+		HRDZ A 1 {
+			A_SetTranslucent(0.92,0);
+			A_SetBlend("Black",0.3,3);
+		}
+		HRDZ A 1 {
+			A_SetTranslucent(0.94,0);
+			A_SetBlend("Black",0.45,3);
+			A_ZoomFactor(1.00);
+		}
+		HRDZ A 1 {
+			A_SetTranslucent(0.96,0);
+			A_SetBlend("Black",0.6,3);
+		}
+		HRDZ A 1 {
+			A_SetTranslucent(0.98,0);
+			A_SetBlend("Black",0.75,3);
+		}
+		HRDZ A 1 {
+			A_SetTranslucent(1.0,0);
+			A_SetBlend("Black",0.9,3);
+		}
+		HRDG A 15 A_SetBlend("Black",1.0,15)
+	Ready:
+		HRDG A 0 A_JumpIfInventory("Zoomed",1,"ZoomedReady")
+		HRDG A 1 A_WeaponReady(WRF_ALLOWZOOM|WRF_ALLOWRELOAD)
+		Loop
+	ZoomedReady:
+		HRDZ A 1 A_WeaponReady(WRF_NOBOB|WRF_ALLOWZOOM|WRF_ALLOWRELOAD)
+		Goto Ready	
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		HRDG A 1 A_Raise(12)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		HRDG A 0 A_ZoomFactor(1.0)
+		HRDG A 0 A_JumpIfInventory("Zoomed",1,"UnZoom")
+		HRDG A 0 A_SetTranslucent(1.0,0)
+		HRDG A 1 A_Lower(12)
+		Wait	
+	Fire:
+		HRDG A 0 A_JumpIfInventory("Zoomed",1,"ZoomedFire")
+		HRDF A 0 Bright {
+			A_FireCustomMissile("HotrodProjectile",0,1,6,0,0,0);
+			A_PlaySound("Hotrod/Fire",1);
+			A_PlaySound("Hotrod/Add",5);
+			A_PlaySound("Weapons/ErasusAmbient",6);
+		}
+		Goto Anim
+	Reload:
+		GSGG A 0 A_JumpIfInventory("Zoomed",1,"ZoomedReload")
+		GSGG A 0 A_JumpIfInventory("TankShellAmmo",1,1)
+		Goto Ready
+		GSGF A 0 {
+			A_FireCustomMissile("HotbombProjectile",0,1,6,0,0,0);
+			A_PlaySound("Hotrod/FlakFire",1);
+			A_PlaySound("Hotrod/FlakBomb",5);
+			A_PlaySound("Hotrod/ErasusAmbient",6);
+		}
+		Goto Anim
+   AltFire:
+		HRDG A 0 A_JumpIfInventory("Zoomed",1,"ZoomedAltFire")
+	  
+		HRDF A 0 Bright {
+			A_FireCustomMissile("HotflakProjectile",frandom(4.0,-4.0),1,6,0,0,frandom(2.0,-2.0));
+			A_PlaySound("Hotrod/FlakFire",1);
+			A_PlaySound("Hotrod/FlakShot",5);
+		}
+		//GSGF A 0 A_PlaySound("Weapons/ErasusAmbient",6)
+		HRDF AAAAAAAAAAAAAAAAAAAAAAAA 0 Bright A_FireCustomMissile("HotflakProjectile",
+			frandom(4.0,-4.0),0,6,0,0,frandom(2.0,-2.0))
+		goto Anim
+		
+	Anim:
+		HRDF A 0 Bright {
+			A_GunFlash;
+			A_Recoil(8.0);
+			A_AlertMonsters;
+		}
+		HRDF A 1 Bright {
+			A_WeaponOffset(0.5,0.5,WOF_INTERPOLATE|WOF_ADD);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+			A_SetPitch(Pitch - 0.2*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.2*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		HRDF B 1 Bright {
+			A_WeaponOffset(5.0,5.0,WOF_INTERPOLATE|WOF_ADD);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); }
+			A_SetPitch(Pitch - 0.4*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.4*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		HRDF C 1 Bright {
+			A_WeaponOffset(6.0,6.0,WOF_INTERPOLATE|WOF_ADD);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); }
+			A_SetPitch(Pitch - 0.6*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.6*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		HRDF D 1 Bright {
+			A_WeaponOffset(3.0,3.0,WOF_INTERPOLATE|WOF_ADD);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); }
+			A_SetPitch(Pitch - 0.4*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.4*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		HRDF E 1 Bright {
+			A_WeaponOffset(2.0,2.0,WOF_INTERPOLATE|WOF_ADD);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.91); }
+			A_SetPitch(Pitch - 0.2*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.2*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		HRDF F 1 Bright {
+			A_WeaponOffset(2.0,2.0,WOF_INTERPOLATE|WOF_ADD);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); }
+			A_SetPitch(Pitch - 0.1*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(Angle - 0.1*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		HRDF G 1 Bright {
+			A_WeaponOffset(1.0,1.0,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDF H 1 Bright {
+			A_WeaponOffset(1.0,1.0,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDF I 1 Bright {
+			A_WeaponOffset(0.5,0.5,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDF J 1 Bright {
+			//Fill the glass, Wiese, yes.
+		}
+		HRDF K 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.91); }
+			A_WeaponOffset(-0.5,-0.5,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDF L 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); }
+			A_WeaponOffset(-1.0,-1.0,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDF M 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); }
+			A_WeaponOffset(-2.0,-2.0,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDF N 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); }
+			A_WeaponOffset(-2.0,-2.0,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDR A 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); }
+			A_WeaponOffset(-3.0,-3.0,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDR B 1 {
+			A_PlaySound("Hotrod/Reload",6);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); }
+			A_WeaponOffset(-2.0,-2.0,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDR C 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); }
+			A_WeaponOffset(-1.0,-1.0,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDR D 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+		}
+		HRDR E 1 {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+			A_WeaponOffset(1.0,1.0,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDR F 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); }
+			A_WeaponOffset(3.0,3.0,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDR G 1 Bright {
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); }
+			A_WeaponOffset(2.0,2.0,WOF_INTERPOLATE|WOF_ADD);
+		}
+		HRDR H 1 Bright A_WeaponOffset(1.0,1.0,WOF_INTERPOLATE|WOF_ADD)	
+		HRDR I 1 Bright
+		HRDR J 1 Bright A_WeaponOffset(-1.0,-1.0,WOF_INTERPOLATE|WOF_ADD)
+		HRDR K 1 Bright A_WeaponOffset(-2.0,-2.0,WOF_INTERPOLATE|WOF_ADD)
+		HRDR L 1 Bright A_WeaponOffset(-3.0,-3.0,WOF_INTERPOLATE|WOF_ADD)
+		HRDR M 1 A_WeaponOffset(-3.0,-3.0,WOF_INTERPOLATE|WOF_ADD)
+		HRDR N 1 A_WeaponOffset(-2.0,-2.0,WOF_INTERPOLATE|WOF_ADD)
+		HRDR O 1 A_WeaponOffset(-2.0,-2.0,WOF_INTERPOLATE|WOF_ADD)
+		HRDR P 1 A_WeaponOffset(-1.0,-1.0,WOF_INTERPOLATE|WOF_ADD)
+		HRDG A 1 A_WeaponOffset(-0.5,-0.5,WOF_INTERPOLATE|WOF_ADD)
+		HRDG A 1 A_WeaponOffset(-0.5,-0.5,WOF_INTERPOLATE|WOF_ADD)
+		HRDG A 1 A_WeaponOffset(-0.5,-0.5,WOF_INTERPOLATE|WOF_ADD)
+		HRDG A 1 A_WeaponOffset(-0.5,-0.5,WOF_INTERPOLATE|WOF_ADD)
+		HRDG A 1 A_WeaponOffset(-0.5,-0.5,WOF_INTERPOLATE|WOF_ADD)
+		goto Ready
+	ZoomedFire:
+		HRDZ A 0 A_JumpIfNoAmmo("UnZoom")
+		HRDZ A 0 {
+			//Recoil(4.0); //Uprgejd.
+			A_PlaySound("Hotrod/Fire",1);
+			A_PlaySound("Hotrod/Add",5);
+			A_PlaySound("Weapons/ErasusAmbient",6);
+			A_FireCustomMissile("HotrodProjectile",0,1,0,-3,0,0);
+		}
+		Goto ZoomedAnim
+	ZoomedAltFire:
+		HRDZ A 0 A_JumpIfNoAmmo("UnZoom")
+		HRDZ A 0 {
+			A_FireCustomMissile("HotflakProjectile",frandom(4.0,-4.0),1,0,-3,0,frandom(2.0,-2.0));
+			A_PlaySound("Hotrod/FlakFire",1);
+			A_PlaySound("Hotrod/FlakShot",5);
+		}
+		HRDZ AAAAAAAAAAAAAAAAAAAAAAAA 0 A_FireCustomMissile("HotflakProjectile",frandom(4.0,-4.0),0,0,-3,0,frandom(2.0,-2.0))
+		Goto ZoomedAnim
+	ZoomedReload:
+		HRDZ A 0 A_JumpIfNoAmmo("UnZoom")
+		HRDZ A 0 {
+			A_FireCustomMissile("HotbombProjectile",0,1,0,-3,0,0);
+			A_PlaySound("Hotrod/FlakFire",1);
+			A_PlaySound("Hotrod/FlakBomb",5);
+			A_PlaySound("Hotrod/ErasusAmbient",6);
+		}
+		Goto ZoomedAnim
+	ZoomedAnim:
+		HRDZ A 0 {
+			A_Recoil(4.0);
+			A_AlertMonsters;
+			A_GunFlash;
+			A_SetBlend("Yellow",0.25,35,"Red");
+		}
+		HRDZ C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.85); } }
+		HRDZ D 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.4); } }
+		HRDZ F 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.2); } }
+		HRDZ G 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.0); } }
+		HRDZ G 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.9); } }
+		HRDZ G 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.1); } }
+		HRDZ F 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.2); } }
+		HRDZ E 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.4); } }
+		HRDZ D 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.6); } }
+		HRDZ C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(2.8); } }
+		HRDZ B 1		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(3.0); } }
+		HRDZ A 1
+		HRDZ A 1
+		HRDZ A 1
+		HRDZ A 1
+		HRDZ A 20 A_PlaySound("Hotrod/Reload",6)
+		Goto ZoomedReady
+		/*HRDZ C 1 Bright { A_ZoomFactor(2.995); A_SetPitch(-0.5, SPF_INTERPOLATE);  }
+		HRDZ D 1 Bright { A_ZoomFactor(2.985); A_SetPitch(-0.75, SPF_INTERPOLATE); }
+		HRDZ F 1 Bright { A_ZoomFactor(2.975); A_SetPitch(-1.5, SPF_INTERPOLATE);  }
+		HRDZ G 1 Bright { A_ZoomFactor(2.97);  A_SetPitch(-1.0, SPF_INTERPOLATE);  }
+		HRDZ G 1 Bright { A_ZoomFactor(2.965); A_SetPitch(-0.5, SPF_INTERPOLATE);  }
+		HRDZ G 1 Bright   A_ZoomFactor(2.96)
+		HRDZ F 1 Bright { A_ZoomFactor(2.965); A_SetPitch(0.25, SPF_INTERPOLATE);  }
+		HRDZ E 1 Bright { A_ZoomFactor(2.975); A_SetPitch(0.75, SPF_INTERPOLATE);  }
+		HRDZ D 1 Bright { A_ZoomFactor(2.985); A_SetPitch(0.75, SPF_INTERPOLATE);  }
+		HRDZ C 1 Bright { A_ZoomFactor(2.995); A_SetPitch(0.75, SPF_INTERPOLATE);  }
+		HRDZ B 1		{ A_ZoomFactor(3.0);   A_SetPitch(0.5, SPF_INTERPOLATE);   }
+		HRDZ A 1		  A_SetPitch(0.5, SPF_INTERPOLATE)
+		HRDZ A 1		  A_SetPitch(0.25, SPF_INTERPOLATE)
+		HRDZ A 1		  A_SetPitch(0.25, SPF_INTERPOLATE)
+		HRDZ A 1
+		HRDZ A 20 A_PlaySound("Hotrod/Reload",6)
+		Goto ZoomedReady*/
+	Zoom:
+		HRDG A 0 A_JumpIfInventory("Zoomed",1,"UnZoom")
+		HRDG A 0 {
+			A_GiveInventory("Zoomed",1);
+			A_PlaySound("Hotrod/ZoomIn",5);
+			A_ZoomFactor(1.0);
+		}
+		HRDG A 1 A_SetBlend("Black",0.15,3)
+		HRDG A 1 A_SetBlend("Black",0.3,3)
+		HRDG A 1 A_SetBlend("Black",0.45,3)
+		HRDG A 1 A_SetBlend("Black",0.6,3)
+		HRDG A 1 A_SetBlend("Black",0.75,3)
+		HRDG A 1 A_SetBlend("Black",0.9,3)
+		HRDG A 1 A_SetBlend("Black",1.0,15)
+		HRDZ A 1 {
+			A_ZoomFactor(3.0);
+			A_SetTranslucent(0.98,0);
+			A_SetBlend("Black",0.9,3);
+		}
+		HRDZ A 1 {
+			A_SetTranslucent(0.96,0);
+			A_SetBlend("Black",0.85,3);
+		}
+		HRDZ A 1 {
+			A_SetTranslucent(0.84,0);
+			A_SetBlend("Black",0.75,3);
+		}
+		HRDZ A 1 {
+			A_SetTranslucent(0.82,0);
+			A_SetBlend("Black",0.65,3);
+		}
+		HRDZ A 1 {
+			A_SetTranslucent(0.81,0);
+			A_SetBlend("Black",0.55,3);
+		}
+		HRDZ A 1 {
+			A_SetTranslucent(0.8,0);
+			A_SetBlend("Black",0.40,3);
+		}
+		HRDZ A 1 A_SetBlend("Black",0.38,3)
+		HRDZ A 1 A_SetBlend("Black",0.36,3)
+		HRDZ A 1 A_SetBlend("Black",0.34,3)
+		HRDZ A 1 A_SetBlend("Black",0.32,3)
+		Goto ZoomedReady
+	Flash:
+		TNT1 A 9 A_Light2
+		TNT1 A 8 A_Light1
+		TNT1 A 0 A_Light0
+		Stop
+	}
+}

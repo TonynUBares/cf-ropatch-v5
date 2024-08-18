@@ -1,0 +1,536 @@
+/*
+
+kd: Handles sprite movements with uncapped fps interpolation and some other special attributes such
+as drawing a frame around them.
+
+*/
+
+struct Ro_HudSprite {
+	// Cached in those moments you don't bother calling rotate (which can be
+	// pretty often), to avoid sin and cos.
+	private vector2 right;
+	private vector2 down;
+	
+	// Transform:
+	private vector2 pos;
+	private vector2 old_pos;
+	
+	private vector2 size;
+	private vector2 old_size;
+	
+	private vector2 scale;
+	private vector2 old_scale;
+	
+	private vector2 draw_size;
+	private vector2 old_draw_size;
+	
+	// Rotation on the screen plane:
+	private double rotation;
+	private double old_rotation;
+	
+	// Flag determines calling a lighter transform function.
+	private bool rotated;
+	
+	void StartTransform () {
+		rotated		= false;
+		SharedTransform();
+	}
+
+	private void SharedTransform () {
+		old_pos			= pos;
+		old_size		= size;
+		old_scale		= scale;
+		old_draw_size	= draw_size;
+		old_rotation	= rotation;
+	}
+	
+	void RotateTo (double ang = 0) {
+		if(!(rotation ~== ang)) {
+			rotation = ang;
+			rotated = true;
+		}
+	}
+	
+	void SizeTo (vector2 size_) {
+		size	= size_;
+	}
+	
+	void ScaleTo (vector2 scale_) {
+		scale	= scale_;
+	}
+	
+	void MoveTo (vector2 pos_) {
+		pos = pos_;
+	}
+	
+	void OffsetTo (vector2 offset_) {
+		offset = offset_;
+	}
+	
+	void EndTransform () {
+		draw_size = (size.x * scale.x, size.y * scale.y);
+	}
+	
+	void HardTransform () {
+		SharedTransform();
+		EndTransform();
+		old_draw_size = draw_size;
+	}
+	
+	void SetSize (vector2 size_) {
+		size = old_size = size_;
+	}
+	
+	private TextureId	sprite;
+	private vector2		offset;
+	
+	void InitShape () {
+		Ro_Shapes.MakeRect(shape);
+		
+		scale		= (1, 1);
+		old_scale	= scale;
+	}
+	
+	void SetSprite (TextureId sprite_) {
+		if(sprite_.IsValid()) {
+			sprite	= sprite_;
+			size	= TexMan.GetScaledSize(sprite);
+		}
+		
+		else {
+			Console.printf(
+				"\c[ice]Ro_HudSprite::SetSprite: \c-Invalid sprite passed.");
+		}
+	}
+	
+	TextureId SpriteId () const {
+		return sprite;
+	}
+	
+	private Shape2d shape;
+	
+	// kd:
+	// We have to do some weird things here. It says "const", but for some
+	// reason, it certainly doesn't keep gzd from writing to shape, right or
+	// down. It's really funny.
+	
+	void Draw (double alpha = 1, double t = 1) const {
+		if(!shape) {
+			return;
+		}
+		
+		vector2 inter_pos		= t * pos       + (1 - t) * old_pos;
+		vector2 inter_draw_size	= t * draw_size + (1 - t) * old_draw_size;
+		
+		// if(rotated) {
+			Ro_Shapes.TransformOffset(
+				shape, inter_pos, inter_draw_size,
+				t * rotation + (1 - t) * old_rotation, offset);
+		// }
+		
+		/*else {
+			Ro_Shapes.TranslateScaleOffset(
+				shape, inter_pos, inter_scale,
+				rotation, offset, right, down);
+		}*/
+		
+		Screen.DrawShape(
+			sprite,
+			true,
+			shape,
+			DTA_ALPHA, alpha);
+	}
+	
+	void DrawColor (Color stencil_color, double alpha = 1, double t = 1) const {
+		vector2 inter_pos		= t * pos       + (1 - t) * old_pos;
+		vector2 inter_draw_size	= t * draw_size + (1 - t) * old_draw_size;
+		
+		// if(rotated) {
+			Ro_Shapes.TransformOffset(
+				shape, inter_pos, inter_draw_size,
+				t * rotation + (1 - t) * old_rotation, offset);
+		// }
+		
+		/*else {
+			Ro_Shapes.TranslateScaleOffset(
+				shape, inter_pos, inter_scale,
+				rotation, offset, right, down);
+		}*/
+		
+		Screen.DrawShape(
+			sprite,
+			true,
+			shape,
+			DTA_ALPHA,			alpha,
+			DTA_COLOROVERLAY,	stencil_color);
+	}
+}
+
+/*	kd:
+	This draws a sprite on the screen with coordinates in such a way that the
+	sprite is adjusted to fit either the entire width or the height of the
+	screen, depending on the aspect ratio (so all computer screens, it'll be
+	fitted to the height, because those screens are wider).
+	
+	The rest can optionally be filled in with a solid colour. */
+
+struct Ro_FittedHudSprite {
+	private TextureId		sprite;
+	private	vector2			sprite_size;
+	private vector2			real_sprite_size;
+	private	double			hud_width;
+	private double			hud_height;
+	private	double			real_hud_width;
+	private double			real_hud_height;
+	
+	private vector2			scale;
+	private vector2			old_scale;
+	private vector2			pos;
+	private vector2			old_pos;
+	private vector2			real_pos;
+	private vector2			old_real_pos;
+	
+	private double			scaled_hud_width;
+	private double			scaled_hud_height;
+	private	vector2			scaled_pos;
+	private	vector2			scaled_old_pos;
+	
+	void Draw (double t) const {
+	}
+	
+	void DrawWithFrame (
+	double t,
+	Color frame_color,
+	double base_alpha = 1,
+	double frame_alpha = 1) const {
+		
+		// Draw the sprite:
+		vector2 inter_pos = t * scaled_pos + (1 - t) * scaled_old_pos;
+		
+		Screen.DrawTexture(
+			sprite, true, inter_pos.x, inter_pos.y,
+			DTA_CENTEROFFSET,		true,
+			DTA_KEEPRATIO,			true,
+			DTA_VIRTUALWIDTHF,		scaled_hud_width,
+			DTA_VIRTUALHEIGHTF,		scaled_hud_height,
+			DTA_ALPHA,				base_alpha);
+		
+		// Draw the frame:
+		vector2 to_corner = 0.5 * real_sprite_size;
+		vector2 real_inter_pos = t * real_pos + (1 - t) * old_real_pos;
+		
+		DrawFrame(
+			frame_color, frame_alpha,
+			real_inter_pos - to_corner + (1, 1),
+			real_inter_pos + to_corner);
+	}
+	
+	// We can move this out of here!
+	void DrawFrame (
+	Color frame_color,
+	double frame_alpha,
+	vector2 top_left,
+	vector2 bottom_right) {
+		
+		// Top:
+		Screen.Dim(
+			frame_color, frame_alpha,
+			0, 0, int(real_hud_width), int(top_left.y));
+		
+		// Bottom:
+		Screen.Dim(
+			frame_color, frame_alpha,
+			0, int(bottom_right.y), int(real_hud_width), int(real_hud_height - bottom_right.y + 1));
+		
+		// Left:
+		Screen.Dim(
+			frame_color, frame_alpha,
+			0, int(top_left.y), int(1 * top_left.x), int(1 * (bottom_right.y - top_left.y)));
+		
+		// Right:
+		Screen.Dim(
+			frame_color, frame_alpha,
+			int(1 * bottom_right.x), int(top_left.y),
+			int(1 * (real_hud_width - bottom_right.x)), int(1 * (bottom_right.y - top_left.y)));
+	}
+	
+	void StartTransform () {
+		old_pos		= pos;
+		old_scale	= scale;
+	}
+	
+	void MoveTo (vector2 new_pos) {
+		pos = new_pos;
+		real_pos.x = pos.x * real_hud_width;
+		real_pos.y = pos.y * real_hud_height;
+	}
+	
+	void ScaleTo (vector2 new_scale) {
+		scale = new_scale;
+	}
+	
+	void EndTransform () {
+		scaled_hud_width		= hud_width  / scale.x;
+		scaled_hud_height		= hud_height / scale.y;
+		
+		scaled_pos		=  pos;
+		scaled_pos.x	*= scaled_hud_width;
+		scaled_pos.y	*= scaled_hud_height;
+		
+		scaled_old_pos		=  old_pos;
+		scaled_old_pos.x	*= scaled_hud_width;
+		scaled_old_pos.y	*= scaled_hud_height;
+		
+		real_pos		= pos;
+		real_pos.x		*= real_hud_width;
+		real_pos.y		*= real_hud_height;
+		
+		old_real_pos	= old_pos;
+		old_real_pos.x	*= real_hud_width;
+		old_real_pos.y	*= real_hud_height;
+	}
+	
+	vector2 block1_pos;		// Top
+	vector2 block1_size;
+	vector2 block2_pos;		// Left middle
+	vector2 block2_size;
+	vector2 block3_pos;		// Right middle
+	vector2 block3_size;
+	vector2 block4_pos;		// Bottom
+	vector2 block4_size;
+	
+	void PrepareFrame () {
+		block1_pos	= (0, 0);
+		block1_size	= (real_hud_width, real_pos.y - sprite_size.y * 0.5);
+		
+		block2_pos	= (0, block1_size.y);
+		block2_size	= ((real_pos.x - sprite_size.x) * 0.5, sprite_size.y);
+		
+		block3_pos	= (real_pos.x + sprite_size.x * 0.5, block2_pos.y);
+		block3_size	= (real_hud_width - real_pos.x - sprite_size.x * 0.5, block2_size.y);
+		
+		block4_pos	= (0, real_pos.y + sprite_size.y * 0.5);
+		block4_size	= (real_hud_width, real_hud_height - real_pos.y - sprite_size.y * 0.5);
+	}
+	
+	private void InitFrame () {
+		block1_pos	= (0, 0);
+		block2_pos	= (0, 0);
+		block3_pos	= (0, 0);
+		block4_pos	= (0, 0);
+		block1_size	= (0, 0);
+		block2_size	= (0, 0);
+		block3_size	= (0, 0);
+		block4_size	= (0, 0);
+	}
+	
+	bool LoadSprite (String sprite_name) {
+		sprite = TexMan.CheckForTexture(sprite_name, TexMan.type_any);
+		
+		if(sprite.IsValid()) {
+			InitScreen();
+			return true;
+		}
+		
+		Console.printf("\c[ice]Ro_FittedHudSprite::LoadSprite(%s): "
+			"\c-Sprite load failed (TextureId::IsValid failed).", sprite_name);
+		return false;
+	}
+	
+	private void InitScreen () {
+		sprite_size = TexMan.GetScaledSize(sprite);
+		double aspect = Screen.GetAspectRatio();
+		
+		real_hud_width	= Screen.GetWidth();
+		real_hud_height	= Screen.GetHeight();
+		
+		if(aspect < 1) {
+			hud_width	= sprite_size.x;
+			hud_height	= hud_width / aspect;
+			
+			real_sprite_size = real_hud_width / sprite_size.x * sprite_size;
+		}
+		
+		else {
+			hud_height	= sprite_size.y;
+			hud_width	= aspect * hud_height;
+			
+			real_sprite_size = real_hud_height / sprite_size.y * sprite_size;
+		}
+	}
+}
+
+// kd:
+// For when you call a lot of RelativeCoord and such. It's so you don't call
+// the Screen methods all the time. Small thing, trivial to maintain, so...
+
+struct Ro_ScreenInst {
+	double width;
+	double height;
+	double aspect;
+	
+	void InitToConsolePlayer () {
+		width		= Screen.GetWidth();
+		height		= Screen.GetHeight();
+		aspect		= Screen.GetAspectRatio();
+	}
+	
+	void InitToDesiredHeight (double height) {
+		aspect		= Screen.GetAspectRatio();
+		height		= max(0.000001, height);
+		width		= aspect * height;
+	}
+	
+	// kd:
+	// Returns scaled sprite size so it fills rel_y * height vertically. In
+	// other words, draw the thing the same relative size
+	// regardless of resolution.
+	
+	vector2 VerPropSpriteSize (TextureId sprite, double rel_y = 1) {
+		vector2 scaled_size = (1, 1);
+		
+		if(sprite.IsValid()) {
+			vector2 size = TexMan.GetScaledSize(sprite);
+			
+			double scale		 = rel_y * height / max(0.0001, size.y);
+			scaled_size.y	*= scale;
+			scaled_size.x	*= scale;
+		}
+		
+		return scaled_size;
+	}
+	
+	void ScaleHudSpriteToHeight (out Ro_HudSprite sprite, double rel_y = 1) {
+		vector2 scaled_size = (1, 1);
+		TextureId sprite_id = sprite.SpriteId();
+		
+		if(sprite_id.IsValid()) {
+			vector2 size = TexMan.GetScaledSize(sprite_id);
+			
+			double scale	= rel_y * height / max(0.0001, size.y);
+			scaled_size	= scale * size;
+			sprite.SetSize(scaled_size);
+		}
+	}
+	
+	/* void InitToScaledSpriteHeight (TextureId sprite, double scale = 1) {
+		aspect		= Screen.GetAspectRatio();
+		
+		if(sprite.IsValid()) {
+			vector2 size = TexMan.GetScaledSize(sprite);
+			
+			height		= size.y / 2;
+			width		= aspect * height;
+		}
+		
+		else {
+			width = height = 1;
+		}
+	}
+	
+	void InitToScaledHudSpriteHeight (Ro_HudSprite sprite, double scale = 1) {
+		InitToScaledSpriteHeight(sprite.Sprite(), scale);
+	} */
+	
+	vector2 RelativeCoord (double rel_x = 0.5, double rel_y = 0.5) const {
+		return (rel_x * width, rel_y * height);
+	}
+	
+	vector2 HeightCoord (double rel_x = 0.5, double rel_y = 0.5) const {
+		return height * (rel_x, rel_y);
+	}
+}
+
+class Ro_Screen {
+	// kd:
+	// Scales screen coordinates so the passed sprite will appear to cover
+	// a certain percentage of the screen's height (cover same space in all
+	// resolutions).
+	
+	static vector2 ScaleToSprite (
+		TextureId	sprite,
+		double		sprite_fill_pc = 0.5) {
+		
+		double screen_height	= 0;
+		double screen_width	= 0;
+		
+		if(sprite.IsValid()) {
+			vector2 size = TexMan.GetScaledSize(sprite);
+			
+			double height	= Screen.GetHeight();
+			double scale		= sprite_fill_pc * height / size.y;
+			
+			screen_height	*= scale;
+			screen_width	= screen_height * Screen.GetAspectRatio();
+		}
+		
+		return (screen_width, screen_height);
+	}
+	
+	static vector2 RelativeCoord (double rel_x = 0.5, double rel_y = 0.5) {
+		return (rel_x * Screen.GetWidth(), rel_y * Screen.GetHeight());
+	}
+}
+
+class Ro_Sprites {
+	static bool Load (
+	out	TextureId	sprite,
+	in	String		sprite_name) {
+		
+		sprite = TexMan.CheckForTexture(sprite_name, TexMan.type_any);
+		
+		if(!sprite.IsValid()) {
+			Console.printf(
+				"\c[ice]Ro_Sprites::Load: "
+				"\c-Couldn't load sprite %s.", sprite_name);
+			return false;
+		}
+		
+		return true;
+	}
+	
+	static bool LoadHudSprite (
+	out	Ro_HudSprite	sprite,
+	in	String			sprite_name) {
+		TextureId sprite_id;
+		
+		if(Load(sprite_id, sprite_name)) {
+			sprite.SetSprite(sprite_id);
+		}
+		
+		else {
+			Console.printf(
+				"\c[ice]Ro_Sprites::LoadHudSprite: \c-Failed load.");
+		}
+		
+		return true;
+	}
+	
+	/*static vector2 ScaleToScreenWidth (
+	TextureId		sprite,
+	double			width = 0.5) {
+		
+		double screen_width = Screen.GetWidth();
+		int sprite_width;
+		int sprite_height;
+		
+		[sprite_width, sprite_height] = TexMan.GetGetScaledSize(sprite);
+		double scale = screen_width * width / sprite_width;
+		
+		return (sprite_width * scale, sprite_height * scale);
+	}
+	
+	static vector2 ScaleToScreenHeight (
+	TextureId		sprite,
+	double			height = 0.5) {
+		
+		double screen_width = Screen.GetHeight();
+		int sprite_width;
+		int sprite_height;
+		
+		[sprite_width, sprite_height] = TexMan.GetGetScaledSize(sprite);
+		double scale = screen_height * height / sprite_height;
+		
+		return (sprite_width * scale, sprite_height * scale);
+	}*/
+}

@@ -1,0 +1,33 @@
+[enu default]
+
+Mod1Replacer0 = "ROClipSpawner";
+Mod1Replacer1 = "ROClipBoxSpawner";
+Mod1Replacer2 = "ROShellSpawner";
+Mod1Replacer3 = "ROShellBoxSpawner";
+Mod1Replacer4 = "RORocketAmmoSpawner";
+Mod1Replacer5 = "RORocketBoxSpawner";
+Mod1Replacer6 = "ROCellSpawner";
+Mod1Replacer7 = "ROCellPackSpawner";
+Mod1Replacer8 = "ROMegasphereSpawner";
+Mod1Replacer9 = "ROSoulsphereSpawner";
+Mod1Replacer10 = "ROInvuSphereSpawner";
+Mod1Replacer11 = "ROBlursphereSpawner";
+Mod1Replacer12 = "ROBerserkSpawner";
+Mod1Replacer13 = "ModdedRadSuit";
+Mod1Replacer14 = "ChainsawSpawner";
+Mod1Replacer15 = "ShotgunSpawnerMain";
+Mod1Replacer16 = "SuperShotgunSpawner";
+Mod1Replacer17 = "ChaingunSpawner";
+Mod1Replacer18 = "RocketLauncherSpawner";
+Mod1Replacer19 = "PlasmaRifleSpawner";
+Mod1Replacer20 = "BFG9000Spawner";
+
+
+ROExtraWeapon1 = "ChainsawSpawner";
+ROExtraWeapon3 = "ShotgunSpawnerMain";
+ROExtraWeapon4 = "SuperShotgunSpawner";
+ROExtraWeapon5 = "ChaingunSpawner";
+ROExtraWeapon6 = "RocketLauncherSpawner";
+ROExtraWeapon7 = "PlasmaRifleSpawner";
+ROExtraWeapon8 = "BFG9000Spawner";
+ROExtraWeapon9 = "BFG9000Spawner";

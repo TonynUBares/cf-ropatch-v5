@@ -1,0 +1,263 @@
+/*
+CREDITS:
+INFO - Frankensprite - a sprite made of parts of other sprites.
+Just like frankenstein is a mashup of other people's limbs. Crazy, eh?
+
+Sprites:
+Frankensprite - Mike12, bits from 3DRealms (Shadow Warrior)
+Projectile - ?
+
+Sounds:
+Up - ID (ET: Quake Wars)
+Fire - ?
+Reload - ID (Quake 2)
+Time manipulations - Raven (Wolfenstein 3)
+Mode change - ?
+*/
+
+ACTOR ComradeMode : Inventory { Inventory.MaxAmount 1 }
+ACTOR ComradeDeselected : Inventory { Inventory.MaxAmount 1 }
+
+actor PowerComradeTimeFreeze : PowerTimeFreezer
+{
+	Inventory.icon "TNT1A0"
+}
+
+actor ComradeTimeStop : PowerupGiver
+{
+	Inventory.MaxAmount 0
+	+INVENTORY.AUTOACTIVATE
+	Powerup.Type "ComradeTimeFreeze"
+	Powerup.Color Cyan, 0.08
+	Powerup.Duration 0x7FFFFFFF
+	States
+	{
+	Spawn:
+		TNT1 A -1
+		Stop
+	}
+}
+
+
+actor ComradeGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Comrade'' time-wrangling grenade launcher! THE WORLD! *FREEZES TIME*"
+	Obituary "%k rained upon %o a hailstorm of grenades - for the union!"
+	States
+	{
+	Spawn:
+		RTGG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Comrade",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Comrade",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("Rawketammo",20)
+	TNT1 A 0 A_GiveInventory("NukeCellAmmo",20)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+ACTOR Comrade : ROWeapon 24509 //BORSZT IZ DELISZJIUS!
+{
+	//$Category Weapons
+	//$Title Comrade
+	//$Sprite RTGGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Comrade'' time-wrangling grenade launcher! THE WORLD! *FREEZES TIME*"
+	Obituary "%k rained upon %o a hailstorm of grenades - for the union!"
+	Weapon.UpSound "Comrade/Up"
+	Weapon.SelectionOrder 3
+	Weapon.AmmoGive1 20
+	Weapon.AmmoGive2 20
+	Weapon.AmmoType "RawketAmmo"
+	Weapon.AmmoType2 "NukeCellAmmo"
+	Weapon.AmmoUse 1
+	Weapon.AmmoUse2 1
+	Weapon.Kickback 45
+	Weapon.SlotNumber 6
+	Weapon.SlotPriority 29.0
+	Weapon.BobStyle InverseSmooth
+	Weapon.BobSpeed 1.4
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	Scale 0.8
+	States
+	{
+	Spawn:
+		RTGG X -1
+		Stop
+	Ready:
+		RTGG A 0 A_JumpIf(!CountInv("NukeCellAmmo") && CountInv("PowerComradeTimeFreeze"), "UnTime")
+		RTGG A 0 A_JumpIfInventory("ComradeMode",1,"BouncerReady")
+		RTGG A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+	BouncerReady:
+		RTGG E 1 A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		RTGG A 0 A_JumpIfInventory("PowerComradeTimeFreeze",1,"BeforeIGo")
+		RTGG A 0 {
+			A_TakeInventory("ComradeDeselected",1);
+			A_ZoomFactor(1);
+			A_StopSound(6);
+		}
+		RTGG A 1 A_Lower(12)
+		Wait
+	BeforeIGo:
+		RTGG A 0 A_GiveInventory("ComradeDeselected",1)
+		Goto UnTime
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		RTGG A 1 A_Raise(12)
+		Loop
+	Fire:
+		RTGG A 0 A_JumpIfInventory("ComradeMode",1,"BouncerFire")
+		RTGF AAAA 0 A_FireCustomMissile("ComradeGrenade",frandom(7.0,-7.0),0,10,-5,0,frandom(3.0,-3.0))
+		RTGF A 0 A_FireCustomMissile("ComradeGrenade",frandom(7.0,-7.0),1,10,-5,0,frandom(3.0,-3.0))
+		Goto Biscuits
+	BouncerFire:
+		RTGF AAAA 0 A_FireCustomMissile("ComradeBounceGrenade",frandom(7.0,-7.0),0,10,-5,0,frandom(3.0,-3.0))
+		RTGF A 0 A_FireCustomMissile("ComradeBounceGrenade",frandom(7.0,-7.0),1,10,-5,0,frandom(3.0,-3.0))
+		Goto Biscuits
+	Biscuits:
+		RTGF A 0
+		{
+			If(CountInv("PowerComradeTimeFreeze"))
+			{
+				A_PlaySound("Weapons/ErasusAmbient",5|CHAN_NOPAUSE);
+				Return;
+			}
+			Else
+			{
+				A_Recoil(3.0);
+				A_SetAngle(Angle - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+				A_SetPitch(Pitch - 1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+				A_PlaySound("Comrade/Reload",6);
+				A_PlaySound("Comrade/Fire",1);
+				A_PlaySound("Weapons/ErasusAmbient",5|CHAN_NOPAUSE);
+				Return;
+			}
+		}
+		RTGF A 0 A_JumpIfInventory("PowerComradeTimeFreeze",1,"TimeSequence")
+		RTGF A 1 Bright {
+			A_WeaponOffset(2,34,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+			A_SetAngle(Angle - 0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		RTGF B 1 Bright {
+			A_WeaponOffset(5,37,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+			A_SetAngle(Angle - 0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetPitch(Pitch - 0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		RTGG B 1 { A_WeaponOffset(7,39,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } }
+		RTGG B 1 { A_WeaponOffset(8,40,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		RTGG C 1 { A_WeaponOffset(7,39,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		RTGG C 1 { A_WeaponOffset(4,36,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9975); } }
+		RTGG D 1 { A_WeaponOffset(3,35,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		RTGG D 1 A_WeaponOffset(2,34,WOF_INTERPOLATE)
+		RTGG A 0 A_Refire
+		RTGG A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		RTGG A 4 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		Goto Ready
+	TimeSequence:
+		RTGF A 1 Bright { A_WeaponOffset(2,34,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.78); } }
+		RTGF B 1 Bright { A_WeaponOffset(5,37,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.785); } }
+		RTGG B 1 { 		  A_WeaponOffset(7,39,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.79); } }
+		RTGG B 1 { 		  A_WeaponOffset(8,40,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.78); } }
+		RTGG C 1 { 		  A_WeaponOffset(7,39,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.795); } }
+		RTGG C 1 { 		  A_WeaponOffset(4,36,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.7975); } }
+		RTGG D 1 { 		  A_WeaponOffset(3,35,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); } }
+		RTGG D 1 A_WeaponOffset(2,34,WOF_INTERPOLATE)
+		RTGG A 0 A_Refire
+		RTGG A 1 A_WeaponOffset(1,33,WOF_INTERPOLATE)
+		RTGG A 4 A_WeaponOffset(0,32,WOF_INTERPOLATE)
+		Goto Ready
+	AltFire:
+		RTGG A 0 A_JumpIfInventory("PowerComradeTimeFreeze",1,"UnTime")
+		RTGG A 0 {
+			A_PlaySound("Comrade/TimeFreezeStart",5|CHAN_NOPAUSE,1,0,ATTN_NONE);
+			A_PlaySound("Comrade/TimeFreezeLoop",6|CHAN_NOPAUSE,1,1,ATTN_NONE);
+			A_SetBlend("Cyan",0.3,28);
+			// ACS_NamedExecuteAlways("Comrade Time");
+			A_GiveInventory("ComradeTimeStop",1);
+			A_GiveInventory("ComradeTimeDefill",1);
+		}
+		RTGG A 1 A_ZoomFactor(0.99)
+		RTGG A 1 A_ZoomFactor(0.98)
+		RTGG A 1 A_ZoomFactor(0.97)
+		RTGG A 1 A_ZoomFactor(0.94)
+		RTGG A 1 A_ZoomFactor(0.92)
+		RTGG A 1 A_ZoomFactor(0.9)
+		RTGG A 1 A_ZoomFactor(0.875)
+		RTGG A 1 A_ZoomFactor(0.85)
+		RTGG A 1 A_ZoomFactor(0.825)
+		RTGG A 1 A_ZoomFactor(0.815)
+		RTGG A 1 A_ZoomFactor(0.8075)
+		RTGG A 1 A_ZoomFactor(0.8)
+		RTGG A 10
+		Goto Ready
+	UnTime:
+		RTGG A 0 {
+			A_PlaySound("Comrade/TimeFreezeStop",5|CHAN_NOPAUSE,1,0,ATTN_NONE);
+			A_StopSound(6);
+			A_SetBlend("Cyan",0.5,36);
+			A_TakeInventory("PowerComradeTimeFreeze",1);
+			A_TakeInventory("ComradeTimeDefill",1);
+		}
+		RTGG A 1 A_ZoomFactor(0.8)
+		RTGG A 1 A_ZoomFactor(0.825)
+		RTGG A 1 A_ZoomFactor(0.85)
+		RTGG A 1 A_ZoomFactor(0.875)
+		RTGG A 1 A_ZoomFactor(0.9)
+		RTGG A 1 A_ZoomFactor(0.92)
+		RTGG A 1 A_ZoomFactor(0.94)
+		RTGG A 1 A_ZoomFactor(0.97)
+		RTGG A 1 A_ZoomFactor(0.98)
+		RTGG A 1 A_ZoomFactor(0.99)
+		RTGG A 1 A_ZoomFactor(1)
+		RTGG A 10
+		RTGG A 0 A_JumpIfInventory("ComradeDeselected",1,"Deselect")
+		Goto Ready
+	Reload: //Fire mode
+		RTGG A 0 {
+			A_PlaySound("Comrade/Mode",6);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2, 2, 2, 9, 0, 2, "none", QF_SCALEDOWN); }
+			Return A_JumpIfInventory("ComradeMode",1,"UnReload");
+		}
+		RTGG A 0 {
+			A_Print("\c[gray]Bouncer Mode.");
+			A_GiveInventory("ComradeMode",1);
+		}
+		Goto ReloadAnim
+	UnReload:
+		RTGG E 0 {
+			A_Print("\c[gray]Impact Mode.");
+			A_TakeInventory("ComradeMode",1);
+		}
+		Goto ReloadAnim
+	ReloadAnim:
+		"####" "#" 1 { A_WeaponOffset(1,33,WOF_INTERPOLATE); A_WeaponReady(WRF_NOSWITCH|WRF_NOFIRE); }
+		"####" "#" 1 { A_WeaponOffset(3,35,WOF_INTERPOLATE); A_WeaponReady(WRF_NOSWITCH|WRF_NOFIRE); }
+		"####" "#" 1 { A_WeaponOffset(4,36,WOF_INTERPOLATE); A_WeaponReady(WRF_NOSWITCH|WRF_NOFIRE); }
+		"####" "#" 1 { A_WeaponOffset(6,38,WOF_INTERPOLATE); A_WeaponReady(WRF_NOSWITCH|WRF_NOFIRE); }
+		"####" "#" 1 { A_WeaponOffset(4,36,WOF_INTERPOLATE); A_WeaponReady(WRF_NOSWITCH|WRF_NOFIRE); }
+		"####" "#" 1 { A_WeaponOffset(3,33,WOF_INTERPOLATE); A_WeaponReady(WRF_NOSWITCH|WRF_NOFIRE); }
+		"####" "#" 1 { A_WeaponOffset(1,33,WOF_INTERPOLATE); A_WeaponReady(WRF_NOSWITCH|WRF_NOFIRE); }
+		"####" "#" 1 { A_WeaponOffset(0,32,WOF_INTERPOLATE); A_WeaponReady(WRF_NOSWITCH|WRF_NOFIRE); }
+		RTGG A 0 A_JumpIf(CountInv("ComradeMode") > 0, 2)
+		RTGG E 0
+		"####" "##" 8 A_WeaponReady(WRF_NOSWITCH|WRF_NOFIRE)
+		Goto Ready
+	}
+}

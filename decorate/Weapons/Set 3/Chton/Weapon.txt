@@ -1,0 +1,277 @@
+/*
+CREDITS:
+Gun sprite - 3DRealms, mainly (Kill me, I recently remembered who made that chamber on right, but now I don't D:... I am pretty sure it was NMN\Paul.)
+Gun sprite construction - Duducrazy, Xaser
+Projectile and effects - KeksDose
+
+Sounds:
+Reloads, Up, Dry fire when meteor shower beacon is out - dunno from which game are the original sounds, but those are modified ones from NeoCore. Ripped by Sangelothi.
+Meteor hit, flying down swoosh - Tiberian Sun (Westwood Ent.)
+Beacon sounds - UT2004, mainly (Epic Games)
+Fire, Add, Alt - ??
+*/
+
+Actor ChtonInfo : Inventory { Inventory.MaxAmount 1 }
+Actor ChtonDetonate : Inventory { Inventory.MaxAmount 1 }
+
+
+actor ChtonGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Chton'' meteor cannon! You pick up a hard weapon to pronounce"
+	Obituary "%o was tampered %k's firebolt."
+	States
+	{
+	Spawn:
+		CHMG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Chton",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Chton",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("RawketAmmo",25)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+ACTOR Chton : Weapon 24537
+{
+	//$Category Weapons
+	//$Title Chton
+	//$Sprite CHMGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Chton'' meteor cannon! You pick up a hard weapon to pronounce"
+	Obituary "%o was tampered %k's firebolt."
+	Weapon.UpSound "Chton/Up"
+	Weapon.SelectionOrder 6
+	Weapon.AmmoType "RawketAmmo"
+	Weapon.AmmoGive 25
+	Weapon.AmmoUse 5
+	Weapon.AmmoType2 "RawketAmmo"
+	Weapon.AmmoUse2 25
+	Weapon.Kickback 90
+	Weapon.SlotNumber 6
+	Weapon.SlotPriority 27.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.2
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	Scale 0.9
+	+NOAUTOFIRE
+	+NOALERT
+	States
+	{
+	Spawn:
+		CHMG X -1
+		Stop
+	ReadyMain:
+		CHMG A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		CHMT A 0 {
+			A_TakeInventory("ChtonDetonate",1);
+			A_ZoomFactor(1.0);
+		}
+		CHMT A 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+		CHMT A 0 A_Raise(12)
+		Wait
+   Ready:
+		CHMT P 1 A_WeaponOffset(-34.0,90.0,WOF_INTERPOLATE)
+		CHMT P 1 A_WeaponOffset(-30.0,82.0,WOF_INTERPOLATE)
+		CHMT P 1 A_WeaponOffset(-26.0,74.0,WOF_INTERPOLATE)
+		CHMT P 1 A_WeaponOffset(-23.0,68.0,WOF_INTERPOLATE)
+		CHMT P 1 A_WeaponOffset(-20.0,62.0,WOF_INTERPOLATE)
+		CHMT P 1 A_WeaponOffset(-18.0,58.0,WOF_INTERPOLATE)
+		CHMT P 1 A_WeaponOffset(-16.0,54.0,WOF_INTERPOLATE)
+		CHMT O 1 A_WeaponOffset(-14.0,51.0,WOF_INTERPOLATE)
+		CHMT N 1 A_WeaponOffset(-12.0,46.0,WOF_INTERPOLATE)
+		CHMT M 1 A_WeaponOffset(-11.0,44.0,WOF_INTERPOLATE)
+		CHMT L 1 A_WeaponOffset(-10.0,42.0,WOF_INTERPOLATE)
+		CHMT K 1 A_WeaponOffset(-8.0,40.0,WOF_INTERPOLATE)
+		CHMT J 1 A_WeaponOffset(-6.0,38.0,WOF_INTERPOLATE)
+		CHMT I 1 A_WeaponOffset(-5.0,37.0,WOF_INTERPOLATE)
+		CHMT H 1 A_WeaponOffset(-4.0,36.0,WOF_INTERPOLATE)
+		CHMT G 1 A_WeaponOffset(-3.0,35.0,WOF_INTERPOLATE)
+		CHMT F 1 A_WeaponOffset(-2.0,34.0,WOF_INTERPOLATE)
+		CHMT E 1 A_WeaponOffset(1.0,32.0,WOF_INTERPOLATE)
+		CHMT DCBA 1
+		CHMG A 2
+		Goto ReadyMain
+	Fire:
+		CHMF A 1 Bright {
+			A_GunFlash;
+			A_Recoil(20.0);
+			A_AlertMonsters;
+			A_PlaySound("Chton/Fire",1,1.0);
+			A_PlaySound("Chton/Add",5,0.7);
+			A_PlaySound("Chton/Fly",6,0.6);
+			A_FireCustomMissile("ChtonMeteor",0, 1, 10, 0, 0, 0);
+		
+			A_SetPitch(pitch-6.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle-5.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(1.0,33.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+		}
+		CHMF A 1 Bright {
+			A_WeaponOffset(2.0,34.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); }
+		}
+
+		CHMF B 1 Bright {
+			A_SetPitch(pitch-4.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle-3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(5.0,37.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); }
+		}
+		CHMF B 1 Bright {
+			A_WeaponOffset(10.0,42.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); }
+		}
+		CHMF C 1 Bright {
+			A_SetPitch(pitch-3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle-2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(13.0,45.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); }
+		}
+		CHMF C 1 Bright {
+			A_WeaponOffset(15.0,47.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.89); }
+		}
+
+		CHMF D 1 Bright {
+			A_SetPitch(pitch-2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle-1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(16.0,48.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); }
+		}
+		CHMF D 1 Bright { A_WeaponOffset(15.0,47.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } }
+		CHMF E 1 Bright { A_WeaponOffset(12.0,44.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } }
+		CHMF E 1 Bright { A_WeaponOffset(9.0,41.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		CHMT A 1 { A_WeaponOffset(7.0,39.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		CHMT A 1 { A_WeaponOffset(5.0,37.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		CHMT A 1 { A_WeaponOffset(3.0,35.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		CHMT A 1 { A_WeaponOffset(2.0,34.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		CHMT A 1   A_WeaponOffset(1.0,33.0,WOF_INTERPOLATE)
+		CHMT A 1 { A_WeaponOffset(0.0,32.0,WOF_INTERPOLATE); A_PlaySound("Chton/Reload1",0,0.5); }
+		
+		CHMT A 1 A_WeaponOffset(1.0,33.0,WOF_INTERPOLATE)
+		CHMT B 1 A_WeaponOffset(2.0,34.0,WOF_INTERPOLATE)
+		CHMT C 1 A_WeaponOffset(3.0,35.0,WOF_INTERPOLATE)
+		CHMT D 1 A_WeaponOffset(4.0,37.0,WOF_INTERPOLATE)
+		CHMT E 1 A_WeaponOffset(5.0,39.0,WOF_INTERPOLATE)
+		CHMT F 1 A_WeaponOffset(6.0,42.0,WOF_INTERPOLATE)
+		CHMT G 1 A_WeaponOffset(6.0,45.0,WOF_INTERPOLATE)
+		CHMT H 1 A_WeaponOffset(7.0,50.0,WOF_INTERPOLATE)
+		CHMT I 1 A_WeaponOffset(8.0,55.0,WOF_INTERPOLATE)
+		CHMT J 1 A_WeaponOffset(9.0,59.0,WOF_INTERPOLATE)
+		CHMT K 1 A_WeaponOffset(10.0,62.0,WOF_INTERPOLATE)
+		CHMT L 1 A_WeaponOffset(11.0,64.0,WOF_INTERPOLATE)
+		CHMT M 1 A_WeaponOffset(12.0,66.0,WOF_INTERPOLATE)
+		CHMT N 1 A_WeaponOffset(13.0,67.0,WOF_INTERPOLATE)
+		CHMT O 1 { A_WeaponOffset(14.0,68.0,WOF_INTERPOLATE); A_PlaySound("Chton/Reload2",0,0.5); }
+		CHMT P 18 
+		CHMT O 1 { A_WeaponOffset(13.0,67.0,WOF_INTERPOLATE); A_PlaySound("Chton/Reload3",1,0.5); }
+		CHMT N 1 A_WeaponOffset(12.0,66.0,WOF_INTERPOLATE)
+		CHMT M 1 A_WeaponOffset(11.0,64.0,WOF_INTERPOLATE)
+		CHMT L 1 A_WeaponOffset(10.0,62.0,WOF_INTERPOLATE)
+		CHMT K 1 A_WeaponOffset(9.0,59.0,WOF_INTERPOLATE)
+		CHMT J 1 A_WeaponOffset(8.0,55.0,WOF_INTERPOLATE)
+		CHMT H 1 A_WeaponOffset(7.0,50.0,WOF_INTERPOLATE)
+		CHMT G 1 A_WeaponOffset(6.0,45.0,WOF_INTERPOLATE)
+		CHMT F 1 A_WeaponOffset(6.0,42.0,WOF_INTERPOLATE)
+		CHMT E 1 A_WeaponOffset(5.0,39.0,WOF_INTERPOLATE)
+		CHMT D 1 A_WeaponOffset(4.0,37.0,WOF_INTERPOLATE)
+		CHMT C 1 A_WeaponOffset(3.0,35.0,WOF_INTERPOLATE)
+		CHMT B 1 A_WeaponOffset(2.0,34.0,WOF_INTERPOLATE)
+		CHMT A 1 A_WeaponOffset(1.0,33.0,WOF_INTERPOLATE)
+		CHMT A 10
+		TDGT A 0 A_ReFire
+		CHMT A 3
+		CHMG A 4
+		Goto ReadyMain
+	AltFire:
+		CHMF A 0 {
+			if(!CountInv("ChtonInfo") && !GetCvar("RO_IGotIt")) {
+				A_Print("\c[white]Meteor Shower beacon deployed; press \c[cyan]Reload/Tertiary firing mode \c[white]to execute meteor shower.");
+				A_GiveInventory("ChtonInfo",1);
+			}
+			A_GunFlash;
+			A_Recoil(9.0);
+			A_AlertMonsters;
+			A_PlaySound("Chton/Fire",1,1.0);
+			A_PlaySound("Chton/Alt",5,0.9);
+			A_FireCustomMissile("ChtonBeaconDropper",0, 1, 10, 0, 0, 0);
+		}
+		CHMF A 1 Bright {
+			A_SetPitch(pitch-3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle-2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(1.0,33.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+		}
+		CHMF A 1 Bright {
+			A_WeaponOffset(3.0,35.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+		}
+		CHMF B 1 Bright {
+			A_SetPitch(pitch-2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle-1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(5.0,37.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); }
+		}
+		CHMF B 1 Bright {
+			A_WeaponOffset(6.0,38.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.955); }
+		}
+		CHMF C 1 Bright {
+			A_SetPitch(pitch-1.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle-0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(5.0,37.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); }
+		}
+		CHMF C 1 Bright {
+			A_WeaponOffset(4.0,36.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); }
+		}
+		CHMF D 1 Bright {
+			A_SetPitch(pitch-0.5*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle-0.25*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_WeaponOffset(3.0,35.0,WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); }
+		}
+		CHMF D 1 Bright { A_WeaponOffset(2.0,34.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		CHMF E 1 Bright { A_WeaponOffset(1.0,33.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		CHMF E 1 Bright { A_WeaponOffset(0.0,32.0,WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		CHMT A 6 A_PlaySound("Chton/Reload1",0,0.5)
+		Goto ReadyMain
+	Reload:
+		CHMT A 6 A_PlaySound("Chton/Nope",1,0.6)
+		CHMT A 0 A_GiveInventory("ChtonDetonate",1)
+		CHMT A 1 A_WeaponOffset(1.0,33.0,WOF_INTERPOLATE)
+		CHMT A 1 A_WeaponOffset(2.0,34.0,WOF_INTERPOLATE)
+		CHMT A 1 A_WeaponOffset(4.0,36.0,WOF_INTERPOLATE)
+		CHMT A 1 A_WeaponOffset(5.0,37.0,WOF_INTERPOLATE)
+		CHMT A 1 A_WeaponOffset(5.0,38.0,WOF_INTERPOLATE)
+		CHMT A 1 A_WeaponOffset(5.0,37.0,WOF_INTERPOLATE)
+		CHMT A 1 A_WeaponOffset(4.0,36.0,WOF_INTERPOLATE)
+		CHMT A 1 A_WeaponOffset(3.0,35.0,WOF_INTERPOLATE)
+		CHMT A 1 A_WeaponOffset(2.0,34.0,WOF_INTERPOLATE)
+		CHMT A 1 A_WeaponOffset(1.0,33.0,WOF_INTERPOLATE)
+		CHMT A 0 A_TakeInventory("ChtonDetonate",1)
+		CHMT A 5 A_WeaponOffset(0.0,32.0,WOF_INTERPOLATE)
+		Goto ReadyMain
+	Flash:
+		TNT1 A 4 A_Light2
+		TNT1 A 6 A_Light1
+		TNT1 A 0 A_Light0
+		Stop
+	}
+}

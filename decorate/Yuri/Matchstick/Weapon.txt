@@ -1,0 +1,186 @@
+/*
+CREDITS:
+
+Sprites - ID Software (Original source - Rage), Sinael (Rip), Zrrion the Insect (Edit), Me (Just a liiiittle recolor)
+
+Up, Impact, Add - ID (Quake 4, Doom 3)
+Fire - Mashup (Surely ID, as there is a bit of Reznor's sound, Quake 4 missile launcher, and something else... can't point it out.)
+Flight - Valve (Half Life 2)
+
+*/
+
+actor MatchFired : Inventory { Inventory.MaxAmount 1 }
+
+actor Matchstick : Weapon
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Matchstick'' flare handcannon! Did your babushka never told you to stop playing with matches? (2)"
+	Obituary "%o got fucked with fire by %k's ''Matchstick''."
+	Weapon.UpSound "Matchstick/Up"
+	Weapon.SelectionOrder 6
+	Weapon.AmmoGive 0
+	Weapon.AmmoType "Boolet"
+	Weapon.AmmoUse 2
+	Weapon.AmmoGive2 0
+	Weapon.AmmoType2 "Boolet"
+	Weapon.AmmoUse2 10
+	Weapon.Kickback 5
+	Weapon.SlotNumber 2
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.6
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	//+NOAUTOFIRE
+	+WEAPON.CHEATNOTWEAPON
+	States
+	{
+	Spawn:
+		TNT1 A -1
+		Stop
+	DeadLowered:
+		TNT1 A -1
+		Stop
+	ZweiReady:
+		TNT1 A 0 {
+			A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1);
+			A_OverlayFlags(OverlayID(),PSPF_ADDWEAPON,0);
+			A_OverlayOffset(OverlayID(),0,32);
+		}
+		TNT1 A 1 A_JumpIfInventory("BasicUpgrade",1,1)
+		Wait
+		MSTG A 0 A_JumpIf(CountInv("Boolet") >= 10 && GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK && CountInv("MatchFired"), "AltFire")
+		MSTG A 1 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK && CountInv("MatchFired"), "Fire")
+		Goto ZweiReady+1
+	Ready:
+		MSTG A 0 A_Overlay(2,"ZweiReady")
+	ReadyMain:
+		MSTG A 0 A_JumpIf(CountInv("BasicUpgrade"),2)
+		MSTG A 1 A_WeaponReady
+		Loop
+		MSTG A 0 A_JumpIf(CountInv("Boolet") >= 10 && GetPlayerInput(INPUT_BUTTONS) & BT_ALTATTACK, "AltFire")
+		MSTG A 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ATTACK, "Fire")
+		MSTG A 1 A_WeaponReady(WRF_NOFIRE)
+		Loop
+   Deselect:
+   	TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		TNT1 A 0 {
+			A_WeaponOffset(0,32);
+			A_ZoomFactor(1.0);
+			If(CountInv("BasicUpgrade")) { A_Overlay(2,"ZweiDeselect"); }
+		}
+		MSTG A 1 A_Lower(12)
+		Wait
+   Select:
+   	TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		MSTG A 0 {
+			A_ZoomFactor(1.0);
+			If(random(1,100) <= GetCvar("RO_Voices")) { A_PlaySound("Matchstick/Zapalki",2); }
+			If(CountInv("BasicUpgrade")) { A_Overlay(2,"ZweiSelect"); }
+		}
+		MSTG A 1 A_Raise(12)
+		Wait
+	ZweiSelect:
+	ZweiDeselect:
+		MSTG A 0 A_OverlayFlags(OverlayID(),PSPF_MIRROR|PSPF_FLIP,1)
+		MSTG A 1
+		Wait
+   Fire:
+		MSTG A 0 A_CheckReload
+		TNT1 A 0 {
+			A_GiveInventory("BooletCasing",2);
+			A_PlaySound("Matchstick/Add",6,0.8);
+			A_PlaySound("Matchstick/Fire",1,0.9);
+			A_AlertMonsters;
+			If(OverlayID() == 1) { A_Overlay(3,"RightSide"); }
+			else				 { A_Overlay(4,"LeftSide"); }
+		}
+		Goto FireAnim
+	FireAnim:
+		MSTF A 1 Bright { If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } A_OverlayOffset(OverlayID(),3,2+32,WOF_INTERPOLATE); }
+		MSTR E 1 		{ If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } A_OverlayOffset(OverlayID(),213,82+32); }
+		//MSTR E 1 		{ If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } A_OverlayOffset(OverlayID(),220,67+32,WOF_INTERPOLATE); }
+		MSTR E 1 		{ If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } A_OverlayOffset(OverlayID(),230,53+32,WOF_INTERPOLATE); }
+		MSTR F 1 		{ If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9975); } A_OverlayOffset(OverlayID(),236,46+32,WOF_INTERPOLATE); }
+		MSTR F 1 		{ If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } A_OverlayOffset(OverlayID(),240,44+32,WOF_INTERPOLATE); }
+		MSTR F 1 A_OverlayOffset(OverlayID(),243,46+32,WOF_INTERPOLATE)
+		MSTR F 1 A_OverlayOffset(OverlayID(),244,48+32,WOF_INTERPOLATE)
+		MSTR F 2 A_OverlayOffset(OverlayID(),246,52+32,WOF_INTERPOLATE)
+		MSTR C 0 {
+			If(OverlayID() == 1) { A_GiveInventory("MatchFired",1); }
+			If(OverlayID() == 2) { A_TakeInventory("MatchFired",1); }
+		}
+		MSTR E 1 A_OverlayOffset(OverlayID(),243,57+32,WOF_INTERPOLATE)
+		MSTR D 1 A_OverlayOffset(OverlayID(),234,62+32,WOF_INTERPOLATE)
+		MSTR D 1 A_OverlayOffset(OverlayID(),228,67+32,WOF_INTERPOLATE)
+		MSTR C 1 A_OverlayOffset(OverlayID(),219,75+32,WOF_INTERPOLATE)
+		MSTR C 1 A_OverlayOffset(OverlayID(),212,81+32,WOF_INTERPOLATE)
+		MSTR B 1 A_OverlayOffset(OverlayID(),207,86+32,WOF_INTERPOLATE)
+		MSTR A 1 A_OverlayOffset(OverlayID(),203,88+32,WOF_INTERPOLATE)
+		MSTG A 1 A_OverlayOffset(OverlayID(),0,32)
+		MSTG A 0 A_ClearReFire
+		MSTG A 0 { If(OverlayID() == 1) { A_TakeInventory("MatchFired",1); } }
+		MSTG A 0 A_JumpIf(OverlayID() == 2, "ZweiReady")
+		Goto ReadyMain
+	RightSide: //Normally I'd just alter this with a user var, but "decorate".
+		 TNT1 A 1 { A_FireCustomMissile("MatchProjectile",0,1,12,0); A_SetAngle(Angle-0.8*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.8*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 TNT1 A 1 { A_SetAngle(Angle-0.4*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.4*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 TNT1 A 1 { A_SetAngle(Angle-0.2*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.2*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 Stop
+	LeftSide:
+		 TNT1 A 1 { A_FireCustomMissile("MatchProjectile",0,1,-12,0); A_SetAngle(Angle+0.8*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.8*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 TNT1 A 1 { A_SetAngle(Angle+0.4*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.4*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 TNT1 A 1 { A_SetAngle(Angle+0.2*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.2*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 Stop
+   AltFire:
+		MSTG A 0 A_CheckReload
+		TNT1 A 0 {
+			A_TakeInventory("Boolet",8,TIF_NOTAKEINFINITE);
+			A_GiveInventory("BooletCasing",10);
+			A_PlaySound("Matchstick/Add",6,0.8);
+			A_PlaySound("Matchstick/Fire",1,0.9);
+			A_AlertMonsters;
+			If(OverlayID() == 1) { A_Overlay(3,"AltRightSide"); }
+			else				 { A_Overlay(4,"AltLeftSide"); }
+		}
+		Goto AltFireAnim
+	AltFireAnim:
+		MSTF A 1 Bright { If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } A_OverlayOffset(OverlayID(),3,2+32,WOF_INTERPOLATE); }
+		MSTR E 1 		{ If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } A_OverlayOffset(OverlayID(),213,82+32); }
+		//MSTR E 1 		{ If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } A_OverlayOffset(OverlayID(),220,67+32,WOF_INTERPOLATE); }
+		MSTR E 1 		{ If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } A_OverlayOffset(OverlayID(),230,53+32,WOF_INTERPOLATE); }
+		MSTR F 1 		{ If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9975); } A_OverlayOffset(OverlayID(),236,46+32,WOF_INTERPOLATE); }
+		MSTR F 1 		{ If(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } A_OverlayOffset(OverlayID(),240,44+32,WOF_INTERPOLATE); }
+		MSTR F 1 A_OverlayOffset(OverlayID(),243,46+32,WOF_INTERPOLATE)
+		MSTR F 1 A_OverlayOffset(OverlayID(),244,48+32,WOF_INTERPOLATE)
+		MSTR F 2 A_OverlayOffset(OverlayID(),246,52+32,WOF_INTERPOLATE)
+		MSTR C 0 {
+			If(OverlayID() == 1) { A_GiveInventory("MatchFired",1); }
+			If(OverlayID() == 2) { A_TakeInventory("MatchFired",1); }
+		}
+		MSTR E 1 A_OverlayOffset(OverlayID(),243,57+32,WOF_INTERPOLATE)
+		MSTR D 1 A_OverlayOffset(OverlayID(),234,62+32,WOF_INTERPOLATE)
+		MSTR D 1 A_OverlayOffset(OverlayID(),228,67+32,WOF_INTERPOLATE)
+		MSTR C 1 A_OverlayOffset(OverlayID(),219,75+32,WOF_INTERPOLATE)
+		MSTR C 1 A_OverlayOffset(OverlayID(),212,81+32,WOF_INTERPOLATE)
+		MSTR B 1 A_OverlayOffset(OverlayID(),207,86+32,WOF_INTERPOLATE)
+		MSTR A 1 A_OverlayOffset(OverlayID(),203,88+32,WOF_INTERPOLATE)
+		MSTG A 5 A_OverlayOffset(OverlayID(),0,32)
+		MSTG A 0 A_ClearReFire
+		MSTG A 0 { If(OverlayID() == 1) { A_TakeInventory("MatchFired",1); } }
+		MSTG A 6
+		MSTG A 0 A_JumpIf(OverlayID() == 2, "ZweiReady")
+		Goto ReadyMain
+	AltRightSide: //Normally I'd just alter this with a user var, but "decorate".
+		 TNT1 A 1 { A_FireCustomMissile("MatchFlareProjectile",0,1,12,0); A_SetAngle(Angle-0.8*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.8*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 TNT1 A 1 { A_SetAngle(Angle-0.4*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.4*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 TNT1 A 1 { A_SetAngle(Angle-0.2*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.2*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 Stop
+	AltLeftSide:
+		 TNT1 A 1 { A_FireCustomMissile("MatchFlareProjectile",0,1,-12,0); A_SetAngle(Angle+0.8*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.8*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 TNT1 A 1 { A_SetAngle(Angle+0.4*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.4*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 TNT1 A 1 { A_SetAngle(Angle+0.2*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); A_SetPitch(Pitch-0.2*GetCvar("RO_WeaponRecoil"),SPF_INTERPOLATE); }
+		 Stop
+	}
+}

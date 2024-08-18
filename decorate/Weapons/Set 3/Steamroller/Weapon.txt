@@ -1,0 +1,308 @@
+/*
+CREDITS:
+Xaser - new stickybomb behaviour that actually puts Z height into account. (And old behaviour too! Please don't kill me~)
+
+Graphics:
+Gun graphics source - Bulletstorm (People can Fly, Epic Games)
+Gun graphics & sounds rip - Folks from AEoD, you save the day again, and I owe you huge thanks for that!
+Sticky bomb ammo & sticky bomb projectile - Shadow Warrior (3DRealms)
+Explosions - ??
+Pickup - Zrrion the Insect
+
+Sounds:
+Up, Reload - Bulletstorm (People can Fly, Epic Games)
+Fire - Serious Sam 1 & 2 & 3 (Croteam)
+Fly & Roll - ??
+Alt Fire - Wolfenstein:ET & Team Fortress (ID Software, Valve Software)
+KA-BOOOM!! - I think it's pretty obvious, buuut... Team Fortress 2. (Valve)
+Explode - ?? & Quake 2 (ID Software)
+*/
+
+ACTOR SteamClip : Ammo //Stickys loaded
+{
+	Inventory.MaxAmount 8
+	Inventory.Icon STKBZ0
+	+IGNORESKILL
+}
+
+ACTOR SteamSequence : Inventory { Inventory.MaxAmount 3 } //Reload sequence ammo tracker.
+ACTOR SteamrollerTrigger : Inventory { Inventory.MaxAmount 1 } //Detonator
+ACTOR SteamReloading : SteamrollerTrigger {} //Determines when you are holding the reload button to keep loading.
+ACTOR StickyOut : SteamSequence {}  //If you had put down this many stickies or more - the KHA-BOOOOM!! is played during detonation.
+Actor SteamInfo : SteamrollerTrigger {}
+
+
+actor SteamrollerGiver : CustomInventory
+{
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Steamroller'' cannon! Tell me you main demoman without telling me directly"
+	Obituary "%o was rolled over %k's ''Steamroller''."
+	States
+	{
+	Spawn:
+		STIG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Steamroller",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Steamroller",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("TankShellAmmo",12)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+ACTOR Steamroller : Weapon 24535
+{
+	//$Category Weapons
+	//$Title Pantokrator
+	//$Sprite STIGX0
+	Inventory.PickupSound "misc/w_pkup"
+	Inventory.PickupMessage "You got the ''Steamroller'' cannon! Tell me you main demoman without telling me directly"
+	Obituary "%o was rolled over %k's ''Steamroller''."
+	Weapon.UpSound "Steamroller/Up"
+	Weapon.SelectionOrder 4
+	Weapon.AmmoType "TankShellAmmo"
+	Weapon.AmmoGive 12
+	Weapon.AmmoUse 2
+	Weapon.AmmoType2 "SteamClip"
+	Weapon.AmmoGive2 0
+	Weapon.AmmoUse2 1
+	Weapon.Kickback 5
+	Weapon.SlotNumber 5
+	Weapon.SlotPriority 27.0
+	Weapon.BobStyle "InverseSmooth"
+	Weapon.BobSpeed 1.2
+	Weapon.BobRangeY 0.6
+	Weapon.BobRangeX 1.2
+	//+NOAUTOFIRE
+	+ALT_AMMO_OPTIONAL
+	Scale 1
+	States
+	{
+	Spawn:
+		STIG X -1
+		Stop
+	Ready:
+		STIG A 1 Offset(0,32) A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+	Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		STIG A 0 {
+			A_TakeInventory("SteamrollerTrigger",1);
+			A_ZoomFactor(1.0);
+		}
+		STIG A 1 A_Lower(12)
+		Wait
+	Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+		STIG A 0 A_Overlay(2,"DetonationHandler")
+		STIG A 1 A_Raise(12)
+		Wait
+	DetonationHandler:
+		TNT1 A 1 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_ZOOM,"Detonate")
+		Loop
+	Fire:
+		STIF A 1 Bright {
+			A_WeaponOffset(3.0, 35.0, WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.75); }
+			A_GunFlash;
+			A_Recoil(18.0);
+			A_AlertMonsters;
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(4,4,4,20,0,64,"none",QF_SCALEDOWN); }
+			A_PlaySound("Steamroller/Fire",1);
+			A_PlaySound("Weapons/FistcannonFire",5);
+			A_FireCustomMissile("SteamrollerCannonball",0,1,8,0);
+			A_FireCustomMissile("CannonMuzzle",0,0,10,11);
+			A_SetPitch(pitch - 4.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle - 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		} 
+		STIF A 1 Bright {
+			A_WeaponOffset(12.0, 44.0, WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.8); }
+			A_SetPitch(pitch - 3.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		}
+		STIF B 1 Bright { A_WeaponOffset(6.0, 38.0); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.825); } }
+		STIF B 1 Bright { A_WeaponOffset(12.0, 44.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.85); } }
+		STIF B 1 Bright { A_WeaponOffset(11.0, 43.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.875); } }
+		STIF C 1 Bright { A_WeaponOffset(10.0, 42.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); } }
+		STIF C 1 Bright { A_WeaponOffset(8.0,40.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } }
+		STIF D 1 Bright { A_WeaponOffset(7.0,39.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } }
+		STIF D 1 Bright { A_WeaponOffset(6.0,38.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		STIF E 1 Bright { A_WeaponOffset(5.0,37.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		STIF E 1 Bright { A_WeaponOffset(4.0,36.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } }
+		STIF F 1 Bright { A_WeaponOffset(3.0,35.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		STIF F 1 Bright { A_WeaponOffset(2.0,34.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		STIG A 1 { A_WeaponOffset(9.0,41.0); A_ZoomFactor(1.0); }
+		STIG A 1 A_WeaponOffset(6.0,38.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(4.0,36.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(3.0,35.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(2.0,34.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(1.0,33.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(0.0,32.0, WOF_INTERPOLATE)
+		STIG A 8
+		STIG A 3 A_ReFire
+		Goto Ready
+	AltFire:
+		STIG A 0 A_JumpIfInventory("SteamClip",1,1)
+		Goto Nope
+		STIG A 1 {
+			if(!CountInv("SteamInfo") && !GetCvar("RO_IGotIt")) {
+				A_Print("\c[white]To detonate sticky bombs, use \c[cyan]Zoom/Quaternary firing mode\c[white]. Remember to \c[cyan]reload\c[white] them too.");
+				A_GiveInventory("SteamInfo",1);
+			}
+			A_GiveInventory("StickyOut",1);
+			A_WeaponOffset(3.0, 35.0, WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); }
+			//A_GunFlash;
+			//A_Recoil(9.0);
+			A_AlertMonsters;
+			A_PlaySound("Steamroller/AltFire",1);
+			//A_PlaySound("Weapons/FistcannonFire",5);
+			A_FireCustomMissile("SteamrollerStickyBomb",0,1,8,0);
+			//A_FireCustomMissile("CannonMuzzle",0,0,10,11);
+			A_SetPitch(pitch - 4.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+			A_SetAngle(angle - 2.0*GetCvar("RO_WeaponRecoil"), SPF_INTERPOLATE);
+		} 
+		STIG A 1 Bright {
+			A_WeaponOffset(12.0, 44.0, WOF_INTERPOLATE);
+			if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); }
+			//A_SetPitch(pitch - 2.0, SPF_INTERPOLATE);
+			//A_SetAngle(angle - 1.0, SPF_INTERPOLATE);
+		}
+		STIG B 1 { A_WeaponOffset(6.0, 38.0); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		STIG B 1 { A_WeaponOffset(12.0, 44.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } }
+		STIG B 1 { A_WeaponOffset(11.0, 43.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.93); } }
+		STIG C 1 { A_WeaponOffset(10.0, 42.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		STIG C 1 { A_WeaponOffset(8.0,40.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.96); } }
+		STIG D 1 { A_WeaponOffset(7.0,39.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } }
+		STIG D 1 { A_WeaponOffset(6.0,38.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.975); } }
+		STIG E 1 { A_WeaponOffset(5.0,37.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } }
+		STIG E 1 { A_WeaponOffset(4.0,36.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.985); } }
+		STIG F 1 { A_WeaponOffset(3.0,35.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } }
+		STIG F 1 { A_WeaponOffset(2.0,34.0, WOF_INTERPOLATE); if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.995); } }
+		STIG A 1 { A_WeaponOffset(9.0,41.0); A_ZoomFactor(1.0); }
+		STIG A 1 A_WeaponOffset(6.0,38.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(4.0,36.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(3.0,35.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(2.0,34.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(1.0,33.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(0.0,32.0, WOF_INTERPOLATE)
+		STIG A 3 A_ReFire
+		Goto Ready
+   Nope:
+		STIG A 0 {
+			A_PlaySound("Comrade/Mode",6);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(1, 1, 1, 6, 0, 3, "none", QF_SCALEDOWN); }
+		}
+		STIG A 1 A_WeaponOffset(1.0, 33.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(2.0, 34.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(4.0, 36.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(3.0, 34.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(2.0, 33.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(1.0, 33.0, WOF_INTERPOLATE)
+		STIG A 5 A_WeaponOffset(0.0, 32.0, WOF_INTERPOLATE)
+		Goto Ready
+   Reload:
+		STIG A 0 A_JumpIfInventory("SteamReloading",1,"ReloadMain")
+		STIG A 0 A_JumpIfInventory("SteamClip",0,"Ready")
+		STIG A 0 A_JumpIfInventory("TankShellAmmo",3,1)
+		Goto Ready
+		STIG A 0 A_GiveInventory("SteamReloading",1)
+		STIG A 1 A_WeaponOffset(-1.0, 33.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-2.0, 34.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-3.0, 35.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-4.0, 36.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-7.0, 38.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-8.0, 40.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-10.0, 43.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-12.0, 44.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-13.0, 45.0, WOF_INTERPOLATE)
+	ReloadMain:
+		STIG A 0 A_JumpIfInventory("TankShellAmmo",3,1)
+		goto ReloadDone
+		STIG A 10 A_Overlay(-2,"HandLoad")
+		
+		STIG A 0 {
+			A_PlaySound("Steamroller/Reload",6);
+			if(GetCvar("RO_QuakeRecoil")) { A_QuakeEx(2, 2, 2, 6, 0, 3, "none", QF_SCALEDOWN); }
+		}
+		STIG A 1 A_WeaponOffset(-2.0, 3.0, WOF_ADD|WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-5.0, 7.0, WOF_ADD|WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-1.0, 4.0, WOF_ADD|WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(2.0, -4.0, WOF_ADD|WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(5.0, -7.0, WOF_ADD|WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(1.0, -3.0, WOF_ADD|WOF_INTERPOLATE)
+		
+		STIG A 11
+	InnerSequence:
+		STIG A 0 A_JumpifInventory("SteamClip",0,"Reset")
+		STIG A 0 A_JumpifInventory("TankShellAmmo",3,1)
+		Goto Reset
+		STIG A 0 A_GiveInventory("SteamSequence",1)
+		STIG A 0 A_GiveInventory("SteamClip",1)
+		STIG A 0 A_TakeInventory("TankShellAmmo",3,TIF_NOTAKEINFINITE)
+		STIG A 0 A_JumpifInventory("SteamSequence",2,"Reset")
+		Goto InnerSequence
+	Reset:
+		STIG A 0 A_TakeInventory("SteamSequence",2)
+		STIG A 0 A_JumpIfInventory("SteamClip",0,"ReloadDone")
+		STIG A 5 A_WeaponReady(WRF_ALLOWRELOAD|WRF_NOBOB|WRF_NOFIRE|WRF_NOSWITCH)
+	ReloadDone:
+		STIG A 1 A_WeaponOffset(-13.0, 45.0, WOF_INTERPOLATE)
+		STIG A 0 A_TakeInventory("SteamReloading",1)
+		STIG A 1 A_WeaponOffset(-12.0, 44.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-10.0, 43.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-8.0, 40.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-7.0, 38.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-4.0, 36.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-3.0, 35.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-2.0, 34.0, WOF_INTERPOLATE)
+		STIG A 1 A_WeaponOffset(-1.0, 33.0, WOF_INTERPOLATE)
+		STIG A 3 A_WeaponOffset(0.0, 32.0, WOF_INTERPOLATE)
+		Goto Ready
+	HandLoad:
+		TNT1 A 1 A_OverlayOffset(-2, 315.0, 159.0) //So it can get into position without any rolling across the screen/jitter.
+		STIH A 1
+		STIH A 1 A_OverlayOffset(-2, 311.0, 147.0, WOF_INTERPOLATE)
+		STIH A 1 A_OverlayOffset(-2, 307.0, 130.0, WOF_INTERPOLATE)
+		STIH A 1 A_OverlayOffset(-2, 311.0, 147.0, WOF_INTERPOLATE)
+		STIH A 1 A_OverlayOffset(-2, 303.0, 113.0, WOF_INTERPOLATE)
+		STIH A 1 A_OverlayOffset(-2, 290.0, 93.0, WOF_INTERPOLATE)
+		STIH A 1 A_OverlayOffset(-2, 282.0, 78.0, WOF_INTERPOLATE)
+		STIH A 1 A_OverlayOffset(-2, 272.0, 68.0, WOF_INTERPOLATE)
+		STIH A 1 A_OverlayOffset(-2, 259.0, 66.0, WOF_INTERPOLATE)
+
+		STIH A 1 A_OverlayOffset(-2, 243.0, 72.0, WOF_INTERPOLATE)
+		STIH A 1 A_OverlayOffset(-2, 226.0, 86.0, WOF_INTERPOLATE)
+		STIH A 1 A_OverlayOffset(-2, 214.0, 99.0, WOF_INTERPOLATE)
+		STIH A 1 A_OverlayOffset(-2, 204.0, 103.0, WOF_INTERPOLATE)
+		Stop
+	Detonate:
+		TNT1 A 0 A_JumpIfInventory("StickyOut",3,"KhaBoom")
+		TNT1 A 0 A_PlaySound("Steamroller/Trigger",5)
+		TNT1 A 0 A_TakeInventory("StickyOut",99)
+		TNT1 A 1 { A_WeaponOffset(1.0, 33.0, WOF_INTERPOLATE); A_GiveInventory("SteamrollerTrigger",1); }
+		TNT1 A 1 A_WeaponOffset(2.0, 34.0, WOF_INTERPOLATE)
+		TNT1 A 1 A_WeaponOffset(3.0, 35.0, WOF_INTERPOLATE)
+		TNT1 A 1 A_WeaponOffset(4.0, 36.0, WOF_INTERPOLATE)
+		TNT1 A 1 A_WeaponOffset(2.0, 34.0, WOF_INTERPOLATE)
+		TNT1 A 1 { A_WeaponOffset(1.0, 33.0, WOF_INTERPOLATE); A_TakeInventory("SteamrollerTrigger",1); }
+		TNT1 A 10 { A_WeaponOffset(0.0, 32.0, WOF_INTERPOLATE); }
+		TNT1 A 16
+		Goto DetonationHandler
+	KhaBoom:
+		STIG A 0 A_PlaySound("Weapons/KhaBoom",2,1.0,0,ATTN_NONE)
+		Goto Detonate+1
+	Flash:
+		TNT1 A 4 Bright A_Light2
+		TNT1 A 4 Bright A_Light1
+		TNT1 A 0 Bright A_Light0
+		Stop
+	}
+}

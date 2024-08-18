@@ -1,0 +1,50 @@
+/*
+CREDITS:
+Poor sense of humour.
+Use - Raven (Wolfenstein 3)
+*/
+
+actor Weegeesphere : CustomInventory replaces Infrared //IF YOU READ THIS THEN WEEGEE PROPABLY DEVOURED YOUR SOUL BY THAT TIME YOU TRIED TO READ THAT.
+{
+	Inventory.PickupMessage "Weegeesphere! (Infrared plus health drain.)"
+	Inventory.Amount 1
+	Inventory.MaxAmount 2
+	Inventory.InterHubAmount 2
+	Inventory.PickupSound "items/weegee"
+	Inventory.UseSound "used/weegee"
+	Inventory.Icon "ARTIWEEG"
+	Renderstyle "Add"
+	+INVENTORY.FANCYPICKUPSOUND
+	+INVBAR
+	+FLOATBOB
+	States
+	{
+	Use:
+		TNT1 A 0 {
+			A_GiveInventory("WeegeeStare",1);
+			A_GiveInventory("WeegeeGlare",1);
+		}
+		Stop
+	Spawn:
+		PVIS WXYZYX 3 Bright
+		Loop
+	}
+}
+
+ACTOR WeegeeStare : PowerupGiver
+{
+	Powerup.Duration -90
+	Powerup.Color "Black" 0.2
+	Powerup.Type "LightAmp"
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ADDITIVETIME
+}
+
+ACTOR WeegeeGlare : PowerupGiver
+{
+	Powerup.Duration -90
+	Powerup.Color "Green" 0.05
+	Powerup.Type "Drain"
+	+INVENTORY.AUTOACTIVATE
+	+INVENTORY.ADDITIVETIME
+}

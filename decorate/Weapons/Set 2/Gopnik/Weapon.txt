@@ -1,0 +1,446 @@
+/*
+CREDITS:
+
+Sprites:
+Weapon - 3DRealms
+Mines - LucasArts (SW:Dark Forces)
+Static Field - Blood 2, Monolith, I think (Ripped by Zero X. Diamond)
+
+Up, Mode - ID (ET:QW)
+Mode2 -Raven (Wolf3)
+Load - Raven\Lucasarts (JKIII)
+Alt - Epic Games (Unreal)
+Dry - ID (Doom 3)
+Charge - Runnning with Scissors (Postal)
+Fire - Mashup. One part is from ID, Quake 3 Team Arena. The other one, no idea.
+Bounce, Tick, Arm, Nuke Mine Arm, Nuke Mine Tick - ID (Quake 3 Team Arena)
+Explode - ID (Wolf:ET)
+Static Field activate - Blizzard (Starcraft 2)
+Static Loop, end - ?
+*/
+
+ACTOR GopnikCharge : Inventory { Inventory.MaxAmount 84 }
+ACTOR GopnikNukeMode : Inventory { Inventory.MaxAmount 1 }
+
+ACTOR GopnikTeslaMode : GopnikNukeMode {}
+ACTOR GopnikFartMode : GopnikNukeMode {}
+ACTOR DiscobolusMode : GopnikNukeMode {}
+
+ACTOR GopnikHeld : GopnikNukeMode {}
+ACTOR GopnikInfo : GopnikNukeMode {}
+ACTOR GopnikAlt : GopnikNukeMode {}
+
+actor GopnikGiver : CustomInventory
+{
+    Inventory.PickupSound "misc/w_pkup"
+    Inventory.PickupMessage "AI EM ''GOPNIK''! Finally,a good mine launcher"
+    Obituary "%o couldn't comprehend %k's ''Gopnik'' speech."
+	States
+	{
+	Spawn:
+		GOPG X 1 
+		Loop
+  Pickup:
+	TNT1 A 0 A_JumpIfInventory("Gopnik",1,"JustAmmo")
+  All:
+	TNT1 A 0 A_GiveInventory("Gopnik",1)
+	Stop
+  JustAmmo:
+	TNT1 A 0 A_GiveInventory("RawketAmmo",20)
+  Remove:
+    TNT1 A 0
+    Stop
+	}
+}
+
+ACTOR Gopnik : DoomWeapon 24522
+{
+    //$Category Weapons
+    //$Title Gopnik
+    //$Sprite GOPGX0
+    Inventory.PickupSound "misc/w_pkup"
+    Inventory.PickupMessage "AI EM ''GOPNIK''! Finally,a good mine launcher"
+    Obituary "%o couldn't comprehend %k's ''Gopnik'' speech."
+    Weapon.SelectionOrder 3
+    Weapon.UpSound "Gopnik/Up"
+    Weapon.AmmoType "RawketAmmo"
+    Weapon.AmmoGive 20
+    Weapon.AmmoUse 2
+    Weapon.Kickback 50
+    Weapon.SlotNumber 6
+	Weapon.SlotPriority 25.0
+    Weapon.BobStyle "InverseSmooth"
+    Weapon.BobSpeed 1.4
+    Weapon.BobRangeY 0.6
+    Weapon.BobRangeX 1.2
+	
+    +NOALERT
+    +AMMO_OPTIONAL
+    Scale 0.85
+    States
+    {
+    Spawn:
+		GOPG X -1
+		Stop
+	DeadLowered:
+		TNT1 A -1
+		Stop
+    Deselect:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,1,1,0)
+	DeselectLoop:
+		GOPG W 0 A_StopSound(5)
+		GOPG W 1 A_Lower(12)
+		Wait
+    Select:
+		TNT1 A 0 ACS_NamedExecuteAlways("SbarinfoFix",0,0,1,0)
+	SelectLoop:
+		GOPG W 0 {
+			A_Overlay(2,"RegularModeOverlay"); //If no other mode is specified, this one will get through.
+			If(CountInv("GopnikNukeMode")) { A_Overlay(2,"NukeModeOverlay"); }
+			If(CountInv("GopnikTeslaMode")) { A_Overlay(2,"TeslaModeOverlay"); }
+			If(CountInv("GopnikFartMode")) { A_Overlay(2,"FartModeOverlay"); }
+			If(CountInv("DiscobolusMode")) { A_Overlay(3,"DiscobolusModeOverlay"); }
+		}
+		GOPG W 1 A_Raise(12)
+		Wait
+	Ready:
+		GOPG A 0 {
+			/*if(!CountInv("GopnikInfo") && !GetCvar("RO_IGotIt"))
+			{
+				A_GiveInventory("GopnikInfo",1);
+				A_Print("$GOPNIK_INTEL",8);
+			}*/
+		}
+    ReadyMain:
+		GOPG A 1 A_WeaponReady(WRF_ALLOWRELOAD)
+		Loop
+		
+    Fire:
+		"####" "#" 0 A_JumpIfInventory("DiscobolusMode",1,"DiscFire") //Is the alternate mode active?
+		
+		"####" "#" 0 A_ReFire("ChargeSeq")
+		
+		"####" "#" 0
+		{
+			A_Recoil(CountInv("GopnikCharge") * 0.1);
+			If(CountInv("GopnikNukeMode") && CountInv("RawketAmmo") >= 100)
+			{
+				Return State("NukeLaunch");	
+			}
+			Else If(CountInv("GopnikTeslaMode") && CountInv("RawketAmmo") >= 8)
+			{
+				Return State("StaticLaunch");
+			}
+			Else If(CountInv("GopnikFartMode") && CountInv("RawketAmmo") >= 4)
+			{
+				Return State("FartLaunch");
+			}
+			Else If(CountInv("RawketAmmo") >= 2)
+			{
+				Return State("HELaunch");
+			}
+			Else
+			{
+				Return State("DiscDry");
+			}
+		}
+		Goto ReadyMain
+
+	//The projectile launch.
+	NukeLaunch:
+		"####" "#" 0 A_FireCustomMissile("NukeMine",0,0,11,0,0,0)
+		"####" "#" 0 A_TakeInventory("RawketAmmo", 100, TIF_NOTAKEINFINITE)
+		Goto FiringSeq
+	FartLaunch:
+		"####" "#" 0 A_FireCustomMissile("GasMine",0,0,11,0,0,0)
+		"####" "#" 0 A_TakeInventory("RawketAmmo", 4, TIF_NOTAKEINFINITE)
+		Goto FiringSeq		
+	StaticLaunch:
+		"####" "#" 0 A_FireCustomMissile("StaticMine",0,0,11,0,0,0)
+		"####" "#" 0 A_TakeInventory("RawketAmmo", 8, TIF_NOTAKEINFINITE)
+		Goto FiringSeq
+	HELaunch:
+		"####" "#" 0 A_FireCustomMissile("HEMine",0,0,11,0,0,0)
+		"####" "#" 0 A_TakeInventory("RawketAmmo", 2, TIF_NOTAKEINFINITE)
+		Goto FiringSeq
+		
+	//Where actual firing animation happens.
+	FiringSeq:
+		"####" "#" 0 {
+			A_StopSound(5);
+			A_GunFlash;
+			A_AlertMonsters;
+			A_PlaySound("Gopnik/Fire", 1);
+			A_PlaySound("Weapons/ErasusAmbient", 6);
+		}
+		GOPF A 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPF B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.925); } A_WeaponOffset(3.0, 3.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPF C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } A_WeaponOffset(5.0, 5.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPF D 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } A_WeaponOffset(2.0, 2.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPG A 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPG A 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPG A 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } }
+		GOPG A 1 A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE)
+		GOPG A 1 A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE)
+		GOPG A 1 A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE)
+		GOPG A 1 A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE)
+		GOPG A 1 A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE)
+		GOPG A 1 A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE)
+		GOPG A 1 A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE)
+		//GOPG A 1
+		GOPG A 0 A_ClearReFire
+		Goto ReadyMain
+		
+    FireDry:
+		GOPG A 21 {
+			A_PlaySound("Gopnik/Dry", 1);
+			If(CountInv("GopnikNukeMode"))		 { A_Overlay(2,"NukeModeOverlayFlicker"); }
+			Else If(CountInv("GopnikTeslaMode")) { A_Overlay(2,"TeslaModeOverlayFlicker"); }
+			Else If(CountInv("GopnikFartMode"))	 { A_Overlay(2,"FartModeOverlayFlicker"); }
+			Else 								 { A_Overlay(2,"RegularModeOverlayFlicker"); }
+		}
+		Goto ReadyMain
+		
+    ChargeSeq:
+		"####" "#" 0 {
+			If(CountInv("GopnikNukeMode") && CountInv("RawketAmmo") >= 100)
+			{
+				Return State("");	
+			}
+			Else If(CountInv("GopnikTeslaMode") && CountInv("RawketAmmo") >= 8)
+			{
+				Return State("");
+			}
+			Else If(CountInv("GopnikFartMode") && CountInv("RawketAmmo") >= 4)
+			{
+				Return State("");
+			}
+			Else If(CountInv("RawketAmmo") >= 2 &&
+				!CountInv("GopnikNukeMode") &&
+				!CountInv("GopnikTeslaMode") &&
+				!CountInv("GopnikFartMode"))
+			{
+				Return State("");
+			}
+			Else
+			{
+				Return State("FireDry");
+			}
+		}
+		"####" "#" 0 A_PlaySound("Gopnik/Charge",5)
+	ChargeSeqRepeat:
+		"####" "#" 0 A_GiveInventory("GopnikCharge",1)
+		GOPL F 0 A_JumpIf(CountInv("GopnikCharge") >= 84, "ChargeSeqAnim")
+		GOPL E 0 A_JumpIf(CountInv("GopnikCharge") >= 70, "ChargeSeqAnim")
+		GOPL D 0 A_JumpIf(CountInv("GopnikCharge") >= 56, "ChargeSeqAnim")
+		GOPL C 0 A_JumpIf(CountInv("GopnikCharge") >= 42, "ChargeSeqAnim")
+		GOPL B 0 A_JumpIf(CountInv("GopnikCharge") >= 28, "ChargeSeqAnim")
+		GOPL A 0 A_JumpIf(CountInv("GopnikCharge") >= 14, "ChargeSeqAnim")
+	
+	//HIGH CONTRAST AFRO VOODOOMANCY IN PROGRESS...
+	ChargeSeqAnim:
+		"####" "#" 1 A_WeaponReady(WRF_NOFIRE|WRF_NOSWITCH)
+		"####" "#" 0 A_Refire("ChargeSeqRepeat")
+		Goto Fire //Return to base fire state.
+		
+	DiscFire:
+		"####" "#" 0 {
+			A_Recoil(10.0);
+			If(CountInv("GopnikNukeMode") && CountInv("RawketAmmo") >= 100)
+			{
+				A_TakeInventory("RawketAmmo", 100);
+				A_FireCustomMissile("NukeDiscobolus",frandom(3.0,-3.0),0,11,0,0,frandom(3.0,-3.0));
+				Return State("DiscFiringSeq");
+			}
+			Else If(CountInv("GopnikTeslaMode") && CountInv("RawketAmmo") >= 8)
+			{
+				A_TakeInventory("RawketAmmo", 8);
+				A_FireCustomMissile("StaticDiscobolus",frandom(3.0,-3.0),0,11,0,0,frandom(3.0,-3.0));
+				Return State("DiscFiringSeq");
+			}
+			Else If(CountInv("GopnikFartMode") >= 1 && CountInv("RawketAmmo") >= 4)
+			{
+				A_TakeInventory("RawketAmmo", 4);
+				A_FireCustomMissile("GasDiscobolus",frandom(3.0,-3.0),0,11,0,0,frandom(3.0,-3.0));
+				Return State("DiscFiringSeq");
+			}
+			Else If(CountInv("RawketAmmo") >= 2 &&
+				!CountInv("GopnikNukeMode") &&
+				!CountInv("GopnikTeslaMode") &&
+				!CountInv("GopnikFartMode"))
+			{
+				A_TakeInventory("RawketAmmo", 2);
+				A_FireCustomMissile("HEDiscobolus",frandom(3.0,-3.0),0,11,0,0,frandom(3.0,-3.0));
+				Return State("DiscFiringSeq");
+			}
+			Else
+			{
+				Return State("FireDry");
+			}
+		}
+		
+	DiscFiringSeq:
+		"####" "#" 0 {
+			A_StopSound(5);
+			A_GunFlash;
+			A_AlertMonsters;
+			A_PlaySound("Gopnik/Fire",1);
+			A_PlaySound("Gopnik/Load",5);
+			A_PlaySound("Weapons/ErasusAmbient",6);
+		}
+		
+		GOPF A 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPF B 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); } A_WeaponOffset(3.0, 3.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPF C 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.89); } A_WeaponOffset(5.0, 5.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPF D 1 Bright { if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.9); } A_WeaponOffset(2.0, 2.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPG A 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.92); } A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPG A 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.94); } A_WeaponOffset(1.0, 1.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPG A 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.95); } }
+		GOPG A 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.97); } A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPG A 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.98); } A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPG A 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(0.99); } A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPG A 1 		{ if(GetCvar("RO_ZoomRecoil")) { A_ZoomFactor(1.0); } A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE); }
+		GOPG A 1 A_WeaponOffset(-3.0, -3.0, WOF_ADD|WOF_INTERPOLATE)
+		GOPG A 1 A_WeaponOffset(-2.0, -2.0, WOF_ADD|WOF_INTERPOLATE)
+		GOPG A 1 A_WeaponOffset(-1.0, -1.0, WOF_ADD|WOF_INTERPOLATE)
+		GOPG A 27
+		GO2G A 0 A_ClearReFire
+		Goto ReadyMain
+		
+	//Mode switch no. 1
+	Reload:
+		"####" "#" 0 A_PlaySound("Gopnik/Mode2",5,0.6)
+		
+		"####" "#" 0 A_JumpIfInventory("DiscobolusMode", 1, "Unload")
+		"####" "#" 0 A_GiveInventory("DiscobolusMode",1)
+		"####" "#" 0 A_Overlay(3,"DiscobolusModeOverlay")
+		"####" "#" 0 A_Print("\c[white]Launch Mode.",2)
+		GOPG W 25 A_WeaponReady(WRF_NOFIRE)
+		Goto ReadyMain
+		
+	Unload:
+		"####" "#" 0 A_TakeInventory("DiscobolusMode",1)
+		"####" "#" 0 A_Print("\c[white]Lobber Mode.",2)
+		"####" "#" 0 A_Overlay(3,"")
+		GOPG W 25 A_WeaponReady(WRF_NOFIRE)
+		Goto ReadyMain
+	
+	//Mode switch no. 2
+    AltFire:
+		"####" "#" 0 A_GiveInventory("GopnikAlt", 1)
+		"####" "#" 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & (BT_LEFT | BT_MOVELEFT), "NukeMineMode")
+		"####" "#" 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & BT_FORWARD, "TeslaMineMode")
+		"####" "#" 0 A_JumpIf(GetPlayerInput(INPUT_BUTTONS) & (BT_RIGHT | BT_MOVERIGHT), "FartMineMode")
+		"####" "#" 1 // kd: Empty frame so the info ticker can show stuff!
+		"####" "#" 0 A_TakeInventory("GopnikAlt", 1)
+		Goto ReadyMain
+	
+	NukeMineMode:
+		"####" "#" 0 A_JumpIfInventory("GopnikNukeMode",1,"StandardMineMode")
+		"####" "#" 0 {
+			A_TakeInventory("GopnikTeslaMode",1);
+			A_TakeInventory("GopnikFartMode",1);
+			A_GiveInventory("GopnikNukeMode",1);
+			A_Overlay(2,"NukeModeOverlaySwitch");
+		}
+		Goto MineModeAnim
+	
+	TeslaMineMode:
+		"####" "#" 0 A_JumpIfInventory("GopnikTeslaMode",1,"StandardMineMode")
+		"####" "#" 0 {
+			A_GiveInventory("GopnikTeslaMode",1);
+			A_TakeInventory("GopnikFartMode",1);
+			A_TakeInventory("GopnikNukeMode",1);
+			A_Overlay(2,"TeslaModeOverlaySwitch");
+		}
+		Goto MineModeAnim
+	
+	FartMineMode:
+		"####" "#" 0 A_JumpIfInventory("GopnikFartMode",1,"StandardMineMode")
+		"####" "#" 0 {
+			A_TakeInventory("GopnikTeslaMode",1);
+			A_GiveInventory("GopnikFartMode",1);
+			A_TakeInventory("GopnikNukeMode",1);
+			A_Overlay(2,"FartModeOverlaySwitch");
+		}
+		Goto MineModeAnim
+	
+	StandardMineMode:
+		"####" "#" 0 {
+			A_TakeInventory("GopnikTeslaMode",1);
+			A_TakeInventory("GopnikFartMode",1);
+			A_TakeInventory("GopnikNukeMode",1);
+			A_Overlay(2,"RegularModeOverlaySwitch");
+		}
+	MineModeAnim:
+		"####" "#" 0 A_PlaySound("Gopnik/Mode",5,0.6)
+		"####" "#" 1 A_TakeInventory("GopnikAlt", 1)
+		GOPG A 25 A_WeaponReady(WRF_NOFIRE)
+		Goto ReadyMain
+		
+	DiscobolusModeOverlay:
+		GOPS A 1
+		Wait
+		
+	//Overlay stuff.
+	RegularModeOverlaySwitch:
+		TNT1 A 15
+	RegularModeOverlay:
+		GOPM A 1 Bright
+		Loop
+	RegularModeOverlayFlicker:
+		TNT1 A 3
+		GOPM A 2 Bright
+		TNT1 A 3
+		GOPM A 2 Bright
+		TNT1 A 3
+		GOPM A 8 Bright
+		Goto RegularModeOverlay
+	
+	NukeModeOverlaySwitch:
+		TNT1 A 15
+	NukeModeOverlay:
+		GOPM D 1 Bright
+		Loop
+	NukeModeOverlayFlicker:
+		TNT1 A 3
+		GOPM D 2 Bright
+		TNT1 A 3
+		GOPM D 2 Bright
+		TNT1 A 3
+		GOPM D 8 Bright
+		Goto NukeModeOverlay
+	
+	TeslaModeOverlaySwitch:
+		TNT1 A 15
+	TeslaModeOverlay:
+		GOPM B 1 Bright
+		Loop
+	TeslaModeOverlayFlicker:
+		TNT1 A 3
+		GOPM B 2 Bright
+		TNT1 A 3
+		GOPM B 2 Bright
+		TNT1 A 3
+		GOPM B 8 Bright
+		Goto TeslaModeOverlay
+		
+	FartModeOverlaySwitch:
+		TNT1 A 15
+	FartModeOverlay:
+		GOPM C 1 Bright
+		Loop
+	FartModeOverlayFlicker:
+		TNT1 A 3
+		GOPM C 2 Bright
+		TNT1 A 3
+		GOPM C 2 Bright
+		TNT1 A 3
+		GOPM C 8 Bright
+		Goto FartModeOverlay
+		
+	ResetModeOverlay:
+		TNT1 A 0
+		Stop
+    } 
+}

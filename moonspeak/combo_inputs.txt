@@ -1,0 +1,390 @@
+/*
+
+May 2021
+
+kd: Spiritual successor to Stan's (Stan423321) combo input ACS that has served this mod for over a
+decade. God bless him and the script. Here is my from scratch version done in zscript. Half of it is
+related to gzd not having a function to remove colour escapes... very cool.
+
+*/
+
+class Ro_ComboScript : Ro_PlayerScript {
+	override void OnFirstTick (RoPlayer ro) {
+		// kd: Setup inputs.
+		combo_info.FromLang("combo_codes");
+		
+		combo_count = StringTable.Localize(combo_key .. "_combo_count", false).ToInt();
+		for(let ii = 0; ii < combo_count; ii++) {
+			
+			// kd: Retrieve all combos related to the key. Split the inputs up into directions,
+			// trigger and inventory.
+			Ro_ClipComboString clip;
+			let lang_key = combo_key .. "_combo_inputs_" .. ii;
+			
+			clip.FromLang(lang_key, combo_info);
+			
+			// kd: Of course, correctness is verified ♪
+			if(clip.IsValidCombo()) {
+				directions.Push(clip.Directions());
+				triggers.Push(combo_info.CodeToTrigger(clip.Trigger()) );
+				inventories.Push((class <Inventory>) (StringTable.Localize(combo_key .. "_combo_inv_" .. ii, false)) );
+			}
+			
+			else {
+				if(clip.HasBadDirs()) {
+					console.printf("%s: %s contains bad direction inputs.", GetClassName(), lang_key);
+				}
+				
+				if(clip.HasBadTrigger()) {
+					console.printf("%s: %s contains bad direction trigger.", GetClassName(), lang_key);
+				}
+			}
+		}
+	}
+	
+	override void OnEffectTick (RoPlayer ro) {
+		combo_loop.TickInputs(ro.player, combo_info);
+		
+		for(let ii = combo_count - 1; 0 <= ii; ii--) {
+			combo_loop.TickTrigger(ro, directions [ii], triggers [ii], inventories [ii]);
+		}
+	}
+	
+	int combo_count;
+	Array <string> 					directions;
+	Array <int>						triggers;
+	Array <class <Inventory> >		inventories;
+	
+	string combo_key;
+	property Key: combo_key;
+	
+	Ro_ComboLoop					combo_loop;
+	Ro_ComboStringInfo				combo_info;
+}
+
+class RoYuriComboScript : Ro_ComboScript { default { Ro_ComboScript.Key "cyborg"; } }
+class RoAloshaComboScript : Ro_ComboScript { default { Ro_ComboScript.Key "rambo"; } }
+class RoTreesComboScript : Ro_ComboScript { default { Ro_ComboScript.Key "trees"; } }
+
+struct Ro_ComboLoop play {
+	const max_buffer_len = 16;
+	
+	const hold_frames = 5;
+	const fire_key = BT_ATTACK;
+	const alt_fire_key = BT_ALTATTACK;
+	const check_keys = fire_key | alt_fire_key;
+	
+	int fire_timer;
+	int alt_fire_timer;
+	double old_input_ang;
+	vector2 old_input_diff;
+	double old_input_len2;
+	string inputs;
+	
+	string compare_str;
+	
+	void TickInputs (PlayerInfo player, Ro_ComboStringInfo combo_info) {
+		let bt			= player.buttons & check_keys;
+		let old_bt		= player.oldbuttons & check_keys;
+		
+		let input_tol	= 64;
+		let forw		= player.cmd.forwardmove;
+		let side		= player.cmd.sidemove;
+
+		let input_diff	= (side, forw);
+		let input_ang	= VectorAngle(input_diff.x, input_diff.y);
+		let input_len2	= input_diff dot input_diff;
+
+		let has_dir			= input_tol <= input_len2;
+		let cur_quadrant	= 1 + floor( ((45 + input_ang) % 360) / 90);
+		let old_quadrant	= 1 + floor( ((45 + old_input_ang) % 360) / 90);
+
+		let has_dir_changed	=
+			old_input_len2 < input_tol && input_tol <= input_len2 ||
+			input_tol < old_input_len2 && input_len2 <= input_tol ||
+			cur_quadrant != old_quadrant;
+
+		if(has_dir_changed && has_dir) {
+			if(max_buffer_len <= inputs.length()) {
+				inputs.Remove(1, 1);
+			}
+			
+			inputs.AppendCharacter(combo_info.QuadrantToCode(int(cur_quadrant)));
+		}
+
+		if(bt & fire_key) {
+			fire_timer++;
+		}
+
+		else {
+			fire_timer = 0;
+		}
+
+		if(bt & alt_fire_key) {
+			alt_fire_timer++;
+		}
+
+		else {
+			alt_fire_timer = 0;
+		}
+
+		old_input_diff	= input_diff;
+		old_input_ang	= input_ang;
+		old_input_len2	= input_len2;
+	}
+	
+	void TickTrigger (RoPlayer ro, string directions, int trigger, class <Inventory> success_inv) {
+		let do_trigger = false;
+		
+		switch(trigger) {
+		case 0:		// attack
+			do_trigger = 1 == fire_timer;
+			break;
+		case 1:		// alt attack
+			do_trigger = 1 == alt_fire_timer;
+			break;
+		case 2:		// hold attack
+			do_trigger = hold_frames == fire_timer;
+			break;
+		case 3:		// hold alt attack
+			do_trigger = hold_frames == alt_fire_timer;
+			break;
+		}
+		
+		if(do_trigger) {
+			let input_len = inputs.length();
+			let compare_len = min(input_len, directions.length());
+			
+			if(directions == inputs.mid(input_len - compare_len, compare_len)) {
+				if(success_inv) {
+					ro.GiveInventory(success_inv, 1);
+				}
+				
+				inputs.remove(0, input_len);
+			}
+		}
+	}
+}
+
+struct Ro_ComboStringInfo {
+	void FromLang (string lang_key) {
+		let characters			= StringTable.Localize(lang_key, false);
+		up_code					= characters.ByteAt(0);
+		left_code				= characters.ByteAt(1);
+		down_code				= characters.ByteAt(2);
+		right_code				= characters.ByteAt(3);
+		button_escape_code		= characters.ByteAt(4);
+		color_start_code		= characters.ByteAt(5);
+		color_end_code			= characters.ByteAt(6);
+		color_code				= characters.ByteAt(7);
+		escape_code				= 28; // kd: gzd will NEVER let you type a backslash anywhere!!!
+		
+		for(let ii = 0; ii < trigger_count; ii++) {
+			trigger_codes [ii] = characters.ByteAt(8 + ii);
+		}
+	}
+	
+	int QuadrantToCode (int quadrant) const {
+		switch(quadrant) {
+		case 1: return right_code;
+		case 2: return up_code;
+		case 3: return left_code;
+		case 4: return down_code;
+		}
+		
+		return up_code;
+	}
+	
+	int CodeToTrigger (int codepoint) const {
+		for(let ii = 0; ii < trigger_count; ii++)
+		if(codepoint == trigger_codes [ii]) {
+			return ii;
+		}
+		
+		return -1;
+	}
+	
+	bool IsSplitter (int codepoint) const {
+		return codepoint == button_escape_code;
+	}
+	
+	bool IsEscape (int codepoint) const {
+		return codepoint == escape_code;
+	}
+	
+	bool IsColorStart (int codepoint) const {
+		return codepoint == color_start_code;
+	}
+	
+	bool IsColorEnd (int codepoint) const {
+		return codepoint == color_end_code;
+	}
+	
+	bool IsQuadrant (int codepoint) const {
+		return
+			codepoint == up_code ||
+			codepoint == left_code ||
+			codepoint == right_code ||
+			codepoint == down_code;
+	}
+	
+	bool IsTrigger (int codepoint) const {
+		for(let ii = 0; ii < trigger_count; ii++)
+		if(codepoint == trigger_codes [ii]) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	int button_escape_code;
+	int color_start_code;
+	int color_end_code;
+	int escape_code;
+	int color_code;
+	int up_code;
+	int left_code;
+	int right_code;
+	int down_code;
+	
+	const trigger_count = 4;
+	int trigger_codes [trigger_count];
+}
+
+struct Ro_ClipComboString {
+	
+	// kd: Erases all escape codes and splits the string into a string of inputs readable from the
+	// script above, converts it into its directions and trigger components, and outputs whether the
+	// combo has a valid format.
+	void FromLang (string lang_key, Ro_ComboStringInfo combo_string_info) {
+		let str					= StringTable.Localize(lang_key, false);
+		let len					= str.CodePointCount();
+		int remove_start		= 0;
+		int codepoint			= 0;
+		int codepoint_index		= 0;
+		let copy_ii				= 0;
+		let copy_end_ii			= 0;
+		let is_in_combo_part	= true;
+		
+		is_valid_combo			= true;
+		let has_escape_closed	= false;
+		int escape_len			= 0;
+		has_bad_directions		= false;
+		has_bad_trigger			= false;
+		string out_str;
+		
+		// kd: ii, remove_start, len are measured in codepoints.
+		for(let ii = 0; ii < len; ii++) {
+			[codepoint, codepoint_index] = str.GetNextCodepoint(codepoint_index);
+			
+			if(has_escape_closed) {
+				copy_ii = ii;
+				escape_len = 0;
+				has_escape_closed = false;
+			}
+			
+			let has_string_ended	= len <= 1 + ii;
+			let was_escape_key		= false;
+			
+			if(has_string_ended && escape_len < 1) {
+				copy_end_ii = ii;
+			}
+			
+			if(0 < escape_len) {
+				escape_len++;
+			}
+			
+			// kd: Has bumped into a \ character.
+			if(combo_string_info.IsEscape(codepoint) && escape_len < 1) {
+				copy_end_ii = ii - 1;
+				remove_start = ii;
+				escape_len++;
+			}
+			
+			// kd: Found [ after an escape
+			else if(2 == escape_len && combo_string_info.IsColorStart(codepoint)) {
+				has_escape_closed = false;
+			}
+			
+			else if(2 < escape_len && combo_string_info.IsColorEnd(codepoint)) {
+				has_escape_closed = true;
+			}
+			
+			// kd: Done escaping.
+			else if(2 == escape_len) {
+				copy_ii = 1 + ii;
+				escape_len = 0;
+				was_escape_key = true;
+			}
+			
+			// kd: Copy this bit over.
+			if(copy_ii <= copy_end_ii && (has_string_ended || 1 == escape_len)) {
+				let copy_str = str.mid(copy_ii, 1 + copy_end_ii - copy_ii);
+				out_str.AppendFormat(copy_str);
+				
+				// console.printf(copy_str);
+				// console.printf(out_str);
+				// copy_ii = copy_end_ii;
+			}
+			
+			// kd: Reached trigger part, but the trigger isn't correct or not split from the rest.
+			if(has_string_ended && (!combo_string_info.IsTrigger(codepoint) || is_in_combo_part)) {
+				is_valid_combo = false;
+				has_bad_trigger = true;
+			}
+			
+			if(!is_in_combo_part && !has_string_ended) {
+				is_valid_combo = false;
+				has_bad_trigger = true;
+			}
+			
+			// kd: Verify that this key makes sense at this place.
+			if(escape_len < 1 && !was_escape_key) {
+				
+				// kd: The splitter separates the directional inputs from the trigger input.
+				if(combo_string_info.IsSplitter(codepoint)) {
+					is_in_combo_part = false;
+				}
+				
+				// kd: But directional inputs must be to the left of the trigger.
+				else if(is_in_combo_part && !combo_string_info.IsQuadrant(codepoint)) {
+					is_valid_combo = false;
+					has_bad_directions = true;
+				}
+			}
+		}
+		
+		if(is_valid_combo) {
+			len = out_str.length();
+			directions_str = out_str.Left(max(0, len - 2));
+			trigger_code = out_str.ByteAt(len - 1);
+		}
+	}
+	
+	string Directions () const {
+		return directions_str;
+	}
+	
+	int Trigger () const {
+		return trigger_code;
+	}
+	
+	bool IsValidCombo () const {
+		return is_valid_combo;
+	}
+	
+	bool HasBadDirs () const {
+		return has_bad_directions && !is_valid_combo;
+	}
+	
+	bool HasBadTrigger () const {
+		return has_bad_trigger && !is_valid_combo;
+	}
+	
+	string directions_str;
+	int trigger_code;
+	
+	bool is_valid_combo;
+	bool has_bad_directions;
+	bool has_bad_trigger;
+}
